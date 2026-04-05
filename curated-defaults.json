@@ -1,0 +1,12 @@
+{
+  "defaults": [
+    "journaling-assistant",
+    "claudes-inbox",
+    "encyclopedia-librarian",
+    "code-review:code-review",
+    "commit-commands:commit",
+    "frontend-design:frontend-design",
+    "google-drive",
+    "google-workspace"
+  ]
+}
