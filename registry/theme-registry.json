@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-07T02:46:53.414311+00:00",
+  "generatedAt": "2026-04-07T02:47:52.896566+00:00",
   "themes": [
     {
       "slug": "golden-sunbreak",
@@ -23,12 +23,12 @@
       "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/manifest.json",
       "assetUrls": {
         "assets/dust.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/dust.svg",
-        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/icon-send.svg",
-        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-idle.svg",
-        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-inquisitive.svg",
         "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-welcome.svg",
         "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/pattern.svg",
-        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/wallpaper.jpg"
+        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-idle.svg",
+        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-inquisitive.svg",
+        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/wallpaper.jpg",
+        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/icon-send.svg"
       }
     },
     {
