@@ -1,0 +1,90 @@
+name: Validate Theme PR
+
+on:
+  pull_request:
+    paths:
+      - 'themes/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find changed theme directories
+        id: changed
+        run: |
+          THEMES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^themes/' | cut -d'/' -f2 | sort -u)
+          echo "themes=$THEMES" >> $GITHUB_OUTPUT
+
+      - name: Validate manifests
+        run: |
+          for slug in ${{ steps.changed.outputs.themes }}; do
+            MANIFEST="themes/$slug/manifest.json"
+            if [ ! -f "$MANIFEST" ]; then
+              echo "::error::Missing manifest.json for theme '$slug'"
+              exit 1
+            fi
+
+            # Validate JSON syntax
+            if ! python3 -c "import json; json.load(open('$MANIFEST'))"; then
+              echo "::error::Invalid JSON in $MANIFEST"
+              exit 1
+            fi
+
+            # Check required fields
+            python3 -c "
+          import json, sys
+          m = json.load(open('$MANIFEST'))
+          required = ['name', 'slug', 'dark', 'tokens']
+          missing = [f for f in required if f not in m]
+          if missing:
+              print(f'::error::$MANIFEST missing required fields: {missing}')
+              sys.exit(1)
+          tokens = m.get('tokens', {})
+          req_tokens = ['canvas','panel','inset','well','accent','on-accent','fg','fg-2','fg-dim','fg-muted','fg-faint','edge','edge-dim','scrollbar-thumb','scrollbar-hover']
+          missing_tokens = [t for t in req_tokens if t not in tokens]
+          if missing_tokens:
+              print(f'::error::$MANIFEST missing tokens: {missing_tokens}')
+              sys.exit(1)
+          # Check for dangerous CSS patterns
+          css = m.get('custom_css', '')
+          import re
+          if re.search(r'@import', css, re.I):
+              print('::error::custom_css contains @import (not allowed)')
+              sys.exit(1)
+          if re.search(r'url\s*\(\s*[\"\\']?\s*(https?://|//|ftp://)', css, re.I):
+              print('::error::custom_css contains external url() (not allowed)')
+              sys.exit(1)
+          if re.search(r'expression\s*\(', css, re.I):
+              print('::error::custom_css contains expression() (not allowed)')
+              sys.exit(1)
+          if re.search(r'javascript\s*:', css, re.I):
+              print('::error::custom_css contains javascript: (not allowed)')
+              sys.exit(1)
+          print(f'✓ {m[\"name\"]} ({slug}) — valid')
+          "
+          done
+
+      - name: Check asset sizes
+        run: |
+          for slug in ${{ steps.changed.outputs.themes }}; do
+            THEME_DIR="themes/$slug"
+            SIZE=$(du -sb "$THEME_DIR" | cut -f1)
+            MAX=$((10 * 1024 * 1024))  # 10 MB
+            if [ "$SIZE" -gt "$MAX" ]; then
+              echo "::error::Theme '$slug' exceeds 10MB limit (${SIZE} bytes)"
+              exit 1
+            fi
+            echo "✓ $slug — ${SIZE} bytes (limit: ${MAX})"
+          done
+
+      - name: Check slug uniqueness
+        run: |
+          SLUGS=$(ls themes/ | sort)
+          UNIQUE=$(echo "$SLUGS" | sort -u)
+          if [ "$SLUGS" != "$UNIQUE" ]; then
+            echo "::error::Duplicate theme slugs detected"
+            exit 1
+          fi
+          echo "✓ All slugs unique"

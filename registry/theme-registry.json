@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-07T02:46:53.414311+00:00",
+  "themes": [
+    {
+      "slug": "golden-sunbreak",
+      "name": "Golden Sunbreak",
+      "author": "itsdestin",
+      "dark": true,
+      "description": "Weathering With You — Tokyo bathed in god-ray light. Deep violet-black panels, warm amber gold, soft dust-mote particles.",
+      "version": "1.0.0",
+      "created": "2026-03-28",
+      "updated": "2026-04-07",
+      "source": "destinclaude",
+      "features": [
+        "wallpaper",
+        "glassmorphism",
+        "particles",
+        "custom-icons",
+        "mascot",
+        "custom-css"
+      ],
+      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/manifest.json",
+      "assetUrls": {
+        "assets/dust.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/dust.svg",
+        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/icon-send.svg",
+        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-idle.svg",
+        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-inquisitive.svg",
+        "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-welcome.svg",
+        "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/pattern.svg",
+        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/wallpaper.jpg"
+      }
+    },
+    {
+      "slug": "kitty-pink-classic",
+      "name": "Kitty Pink Classic",
+      "author": "claude",
+      "dark": false,
+      "description": "A soft pastel pink theme inspired by Hello Kitty. Pill-shaped chat bubbles, rounded corners, and a subtle repeating kitty silhouette pattern.",
+      "version": "1.0.0",
+      "created": "2026-04-05",
+      "updated": "2026-04-07",
+      "source": "community",
+      "features": [],
+      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/manifest.json",
+      "assetUrls": {
+        "assets/kitty-pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/assets/kitty-pattern.svg"
+      }
+    }
+  ]
+}
