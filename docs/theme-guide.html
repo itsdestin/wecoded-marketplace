@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DestinCode Theme Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    line-height: 1.7;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    color: #8b949e;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  /* Section */
+  .section {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+  }
+  .section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .section-explain {
+    color: #8b949e;
+    font-size: 0.92rem;
+    margin-bottom: 1.25rem;
+    max-width: 720px;
+  }
+
+  /* "Claude picks" note */
+  .claude-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(188,140,255,0.06);
+    border: 1px solid rgba(188,140,255,0.15);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: #c8b8e0;
+  }
+  .claude-note .cn-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(188,140,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-top: 1px;
+  }
+  .claude-note strong { color: #d4bef5; }
+
+  /* Comparison */
+  .vs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 1rem 0;
+  }
+  @media (max-width: 700px) { .vs { grid-template-columns: 1fr; } }
+  .vs-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #21262d;
+  }
+  .vs-header {
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vs-header .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .vs-body {
+    padding: 14px 16px;
+  }
+
+  /* Dropdown / details */
+  details {
+    background: #1c2330;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+  summary {
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #58a6ff;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: '▸';
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  summary:hover { background: rgba(88,166,255,0.05); }
+  .details-body {
+    padding: 0 16px 16px;
+  }
+  .details-note {
+    font-size: 0.78rem;
+    color: #8b949e;
+    font-style: italic;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #21262d;
+  }
+
+  /* Mini mockups */
+  .app-mock {
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem;
+    position: relative;
+  }
+  .mock-header {
+    padding: 8px 12px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .mock-chat {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 100px;
+    justify-content: flex-end;
+  }
+  .mock-bubble {
+    max-width: 80%;
+    padding: 7px 11px;
+    line-height: 1.35;
+  }
+  .mock-bubble.left { align-self: flex-start; }
+  .mock-bubble.right { align-self: flex-end; }
+  .mock-input {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .mock-field {
+    flex: 1;
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid;
+    font-size: 0.68rem;
+    background: transparent;
+  }
+  .mock-send {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+  }
+  .mock-status {
+    padding: 3px 12px;
+    font-size: 0.58rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Swatch */
+  .swatch-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+  }
+  .swatch-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .swatch {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .swatch-label {
+    font-size: 0.58rem;
+    text-align: center;
+    color: #8b949e;
+    max-width: 48px;
+    line-height: 1.2;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
+  .tag-gold { background: rgba(255,192,48,0.15); color: #ffc030; }
+  .tag-pink { background: rgba(255,105,180,0.15); color: #ff69b4; }
+  .tag-green { background: rgba(63,185,80,0.12); color: #3fb950; }
+  .tag-blue { background: rgba(88,166,255,0.12); color: #58a6ff; }
+
+  /* Callout */
+  .callout {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .callout-blue { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); color: #8bb9e0; }
+  .callout-purple { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); color: #c8a8f0; }
+  .callout strong { color: #e6edf3; }
+
+  /* Explain list */
+  .explain-list {
+    list-style: none;
+    padding: 0;
+  }
+  .explain-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(33,38,45,0.8);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 0.88rem;
+    color: #c9d1d9;
+  }
+  .explain-list li:last-child { border-bottom: none; }
+  .explain-list .el-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    margin-top: 2px;
+  }
+  .explain-list .el-name {
+    font-weight: 700;
+    color: #e6edf3;
+    display: block;
+    font-size: 0.9rem;
+  }
+
+  /* Preset preview cards */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 1rem 0;
+  }
+  .preset-card {
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #161b22;
+  }
+  .preset-card .preview {
+    padding: 14px;
+    background: #0d1117;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+  }
+  .preset-card .info {
+    padding: 10px 14px;
+  }
+  .preset-card .info .name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .preset-card .info .desc {
+    font-size: 0.72rem;
+    color: #8b949e;
+    margin-top: 2px;
+  }
+
+  /* Effect demos */
+  .fx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 1rem 0;
+  }
+  .fx-demo {
+    height: 110px;
+    border-radius: 12px;
+    border: 1px solid #21262d;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px;
+  }
+  .fx-demo .fx-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+    z-index: 2;
+  }
+  .fx-demo .fx-desc {
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.7);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    z-index: 2;
+    text-align: center;
+  }
+
+  /* TOC */
+  .toc {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .toc-title { font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; font-weight: 600; }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px 20px;
+  }
+  .toc a {
+    color: #58a6ff;
+    text-decoration: none;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .toc a .tnum { color: #484f58; font-size: 0.75rem; width: 20px; text-align: right; flex-shrink: 0; }
+
+  /* Glass comparison */
+  .glass-box {
+    height: 140px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .glass-box .bg-layer { position: absolute; inset: 0; }
+  .glass-box .panel-demo {
+    width: 70%;
+    padding: 14px;
+    border-radius: 12px;
+    z-index: 1;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .glass-box .panel-label {
+    font-size: 0.62rem;
+    font-weight: 400;
+    opacity: 0.7;
+    display: block;
+    margin-top: 4px;
+  }
+
+  /* Summary table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin: 1rem 0;
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: #1c2330;
+    color: #e6edf3;
+    font-weight: 600;
+    border-bottom: 2px solid #30363d;
+  }
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #21262d;
+    color: #c9d1d9;
+  }
+  tr:hover td { background: rgba(88,166,255,0.03); }
+
+  @keyframes floaty { 0%,100% { transform: translateY(0) translateX(0); opacity:0.5; } 50% { transform: translateY(-15px) translateX(8px); opacity:0.8; } }
+</style>
+</head>
+<body>
+
+<h1>DestinCode Theme Guide</h1>
+<p class="subtitle">Everything you can customize about how DestinCode looks &mdash; explained in plain English, with real examples.</p>
+
+<!-- ═══ TOC ═══ -->
+<nav class="toc">
+  <div class="toc-title">Sections</div>
+  <div class="toc-grid">
+    <a href="#how"><span class="tnum">1</span> How Theming Works</a>
+    <a href="#meet"><span class="tnum">2</span> The Two Themes We're Comparing</a>
+    <a href="#colors"><span class="tnum">3</span> Colors</a>
+    <a href="#backgrounds"><span class="tnum">4</span> Backgrounds & Wallpapers</a>
+    <a href="#glass"><span class="tnum">5</span> Frosted Glass</a>
+    <a href="#bubbles"><span class="tnum">6</span> Chat Bubble Shapes</a>
+    <a href="#input"><span class="tnum">7</span> Input Bar</a>
+    <a href="#header"><span class="tnum">8</span> Header & Status Bar</a>
+    <a href="#chrome"><span class="tnum">9</span> Floating Chrome</a>
+    <a href="#corners"><span class="tnum">10</span> Corner Roundness</a>
+    <a href="#fonts"><span class="tnum">11</span> Fonts</a>
+    <a href="#effects"><span class="tnum">12</span> Visual Effects</a>
+    <a href="#assets"><span class="tnum">13</span> Custom Art & Icons</a>
+    <a href="#summary"><span class="tnum">14</span> Full Summary Table</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════ 1. HOW IT WORKS ═══════════════════ -->
+<div class="section" id="how">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(88,166,255,0.15); color:#58a6ff;">1</div>
+    How Theming Works
+  </div>
+  <p class="section-explain">Themes change how DestinCode looks without changing how it works. Think of it like redecorating a room &mdash; same furniture layout, completely different vibe.</p>
+
+  <p style="font-size:0.92rem; color:#c9d1d9; margin-bottom:1rem;">To create a theme, you just run <strong style="color:#58a6ff;">/theme-builder</strong> and describe the vibe you want in everyday language. For example:</p>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1.25rem;">
+    <div style="background:#1c2330; border:1px solid #21262d; border-radius:10px; padding:8px 14px; font-size:0.85rem; color:#c9d1d9;"><em>"cozy rainy night with warm lighting"</em></div>
+    <div style="background:#1c2330; border:1px solid #21262d; border-radius:10px; padding:8px 14px; font-size:0.85rem; color:#c9d1d9;"><em>"Hello Kitty pink and cute"</em></div>
+    <div style="background:#1c2330; border:1px solid #21262d; border-radius:10px; padding:8px 14px; font-size:0.85rem; color:#c9d1d9;"><em>"cyberpunk neon with glowing edges"</em></div>
+    <div style="background:#1c2330; border:1px solid #21262d; border-radius:10px; padding:8px 14px; font-size:0.85rem; color:#c9d1d9;"><em>"Minecraft-inspired"</em></div>
+  </div>
+
+  <p style="font-size:0.92rem; color:#c9d1d9;">Claude will show you concept previews, let you pick your favorite, refine it, and then generate the complete theme. <strong>You don't need to understand any of the technical details below to use it.</strong> This guide is here so you know what's <em>possible</em> to ask for.</p>
+
+  <div style="display:flex; flex-direction:column; gap:0; max-width:500px; margin:1.5rem auto;">
+    <div style="background:linear-gradient(90deg,#1c2330,#2d333b); padding:14px 20px; border-radius:14px 14px 0 0; border:1px solid #30363d; text-align:center;">
+      <div style="font-weight:700; font-size:0.9rem;">Colors &amp; Font</div>
+      <div style="font-size:0.72rem; color:#8b949e;">15 colors that paint every surface and text + optional font</div>
+    </div>
+    <div style="background:linear-gradient(90deg,#388bfd,#58a6ff); padding:11px 20px; color:#000; text-align:center;">
+      <div style="font-weight:700; font-size:0.85rem;">Layout Choices</div>
+      <div style="font-size:0.72rem; opacity:0.7;">Bubble shapes, input bar style, header visibility</div>
+    </div>
+    <div style="background:linear-gradient(90deg,#2ea043,#3fb950); padding:11px 20px; color:#000; text-align:center;">
+      <div style="font-weight:700; font-size:0.85rem;">Background & Glass</div>
+      <div style="font-size:0.72rem; opacity:0.7;">Wallpaper, gradient, frosted glass effect, patterns</div>
+    </div>
+    <div style="background:linear-gradient(90deg,#b87d10,#d29922); padding:11px 20px; color:#000; text-align:center;">
+      <div style="font-weight:700; font-size:0.85rem;">Visual Effects</div>
+      <div style="font-size:0.72rem; opacity:0.7;">Floating particles, vignette, film grain, scan lines</div>
+    </div>
+    <div style="background:linear-gradient(90deg,#e05592,#f778ba); padding:11px 20px; border-radius:0 0 14px 14px; color:#000; text-align:center;">
+      <div style="font-weight:700; font-size:0.85rem;">Custom Art</div>
+      <div style="font-size:0.72rem; opacity:0.7;">Themed icons, mascot accessories, cursors, scrollbars</div>
+    </div>
+  </div>
+  <p style="text-align:center; font-size:0.78rem; color:#8b949e;">Each layer is optional. A theme can be as simple as "just colors" or go all-in with every feature.</p>
+</div>
+
+<!-- ═══════════════════ 2. MEET THEMES ═══════════════════ -->
+<div class="section" id="meet">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(188,140,255,0.15); color:#bc8cff;">2</div>
+    The Two Themes We're Comparing
+  </div>
+  <p class="section-explain">Throughout this guide, we'll show the same feature in two real themes so you can see exactly what each setting changes. These are both community themes built with /theme-builder.</p>
+
+  <div class="vs">
+    <!-- Golden Sunbreak -->
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak <span class="tag tag-gold">Dark theme</span>
+      </div>
+      <div class="vs-body">
+        <div class="app-mock">
+          <div style="position:absolute;inset:0;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.98;border-radius:11px;"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%);border-radius:11px;z-index:1;pointer-events:none;"></div>
+          <div style="position:absolute;width:5px;height:5px;background:#ffc030;border-radius:50%;top:25%;left:35%;opacity:0.5;animation:floaty 3.5s infinite ease-in-out;z-index:2;"></div>
+          <div style="position:absolute;width:7px;height:7px;background:#ffc030;border-radius:50%;top:50%;left:65%;opacity:0.3;animation:floaty 4.5s infinite ease-in-out 1s;z-index:2;"></div>
+          <div style="position:absolute;width:4px;height:4px;background:#ffc030;border-radius:50%;top:35%;left:80%;opacity:0.4;animation:floaty 3s infinite ease-in-out 2s;z-index:2;"></div>
+          <div class="mock-header" style="background:rgba(20,14,26,0.55);backdrop-filter:blur(12px);color:#f8e8c8;border-bottom:1px solid #281e10;position:relative;z-index:3;">
+            <span>DestinCode</span>
+            <span style="font-size:0.6rem;color:#b09060;">&#9881;</span>
+          </div>
+          <div class="mock-chat" style="background:transparent;position:relative;z-index:3;">
+            <div class="mock-bubble left" style="background:rgba(28,20,40,0.5);backdrop-filter:blur(8px);color:#f8e8c8;border-radius:16px 16px 16px 4px;">The rain finally stopped...</div>
+            <div class="mock-bubble right" style="background:rgba(255,192,48,0.35);backdrop-filter:blur(8px);color:#000;border-radius:16px 16px 4px 16px;">Look at that golden light!</div>
+          </div>
+          <div class="mock-input" style="background:rgba(20,14,26,0.55);backdrop-filter:blur(12px);position:relative;z-index:3;margin:6px;border-radius:20px;border:1px solid #281e10;">
+            <div class="mock-field" style="border-color:#281e10;color:#b09060;">Type a message...</div>
+            <div class="mock-send" style="background:#ffc030;color:#000;">&#9654;</div>
+          </div>
+          <div class="mock-status" style="background:rgba(20,14,26,0.55);backdrop-filter:blur(12px);color:#b09060;position:relative;z-index:3;">golden-sunbreak</div>
+        </div>
+        <div style="margin-top:12px; font-size:0.82rem; color:#dcc898;">
+          Anime-inspired &mdash; <em>Weathering With You</em> aesthetic. Deep violet-black with warm amber gold. Full wallpaper, frosted glass panels, floating golden dust particles, darkened edges. Goes all-in on atmosphere.
+        </div>
+      </div>
+    </div>
+    <!-- Kitty Pink -->
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFFFFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic <span class="tag tag-pink">Light theme</span>
+      </div>
+      <div class="vs-body">
+        <div class="app-mock" style="background:#F8E0EA;">
+          <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;border-radius:11px;"></div>
+          <div class="mock-header" style="background:#FFFFFF;color:#3B0A1F;border-bottom:1px solid #F48FB1;position:relative;z-index:3;">
+            <span>DestinCode</span>
+            <span style="font-size:0.6rem;color:#9E6080;">&#9881;</span>
+          </div>
+          <div class="mock-chat" style="background:transparent;position:relative;z-index:3;">
+            <div class="mock-bubble left" style="background:#FFF5F8;color:#3B0A1F;border-radius:24px;padding:8px 16px;">Hi there! Welcome back!</div>
+            <div class="mock-bubble right" style="background:#FF69B4;color:#FFF;border-radius:24px;padding:8px 16px;">Thank you, this is so cute!</div>
+          </div>
+          <div class="mock-input" style="background:#FFFFFF;position:relative;z-index:3;border-top:1px solid #F48FB1;">
+            <div class="mock-field" style="border-color:#F48FB1;color:#9E6080;">Type a message...</div>
+            <div class="mock-send" style="background:#FF69B4;color:#FFF;">&#9654;</div>
+          </div>
+          <div class="mock-status" style="background:#FFFFFF;color:#9E6080;position:relative;z-index:3;border-top:1px solid #F48FB1;">kitty-pink-classic</div>
+        </div>
+        <div style="margin-top:12px; font-size:0.82rem; color:#5D2040;">
+          Hello Kitty inspired. Soft pastel pinks and whites. No wallpaper, no particles &mdash; just clean rounded pill bubbles with a repeating Hello Kitty image pattern. Cuteness through simplicity.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ 3. COLORS ═══════════════════ -->
+<div class="section" id="colors">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(255,192,48,0.15); color:#ffc030;">3</div>
+    Colors
+  </div>
+  <p class="section-explain">Colors are the foundation of every theme. There are 15 color slots that paint every surface, text element, border, and scrollbar in the app. Think of it like a paint palette &mdash; each color has a specific job.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude picks all 15 colors</strong> based on your vibe description. You'll see them in the concept preview and can ask for adjustments ("make the accent warmer" or "lighter background").</div>
+  </div>
+
+  <ul class="explain-list">
+    <li>
+      <div class="el-icon" style="background:#161b22; border:1px solid #30363d;"></div>
+      <div><span class="el-name">4 Surface Colors</span> <strong>Canvas</strong> (main background), <strong>Panel</strong> (header/input/status bars), <strong>Inset</strong> (Claude's bubbles, cards), and <strong>Well</strong> (deepest recessed areas). These create the depth and layering of the app.</div>
+    </li>
+    <li>
+      <div class="el-icon" style="background:#58a6ff;"></div>
+      <div><span class="el-name">Accent Color</span> The personality of your theme. This colors your chat bubbles, buttons, and anything interactive. Plus an <strong>on-accent</strong> color (text on top of it) that's auto-picked to be readable.</div>
+    </li>
+    <li>
+      <div class="el-icon" style="background:#333; color:#e6edf3; font-size:0.6rem; font-weight:700;">Aa</div>
+      <div><span class="el-name">5 Text Colors</span> A range from bold to barely-visible: primary, secondary, dimmed, muted, and faint. This lets the app create visual hierarchy &mdash; important text stands out, hints fade into the background.</div>
+    </li>
+    <li>
+      <div class="el-icon" style="background:transparent; border:2px solid #30363d;"></div>
+      <div><span class="el-name">2 Border Colors + 2 Scrollbar Colors</span> Lines between sections (full and dimmed), and the scrollbar handle (normal and hovered).</div>
+    </li>
+  </ul>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.5rem 0 0.5rem; color:#8b949e;">How the two themes use colors:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#0a0a10;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak
+      </div>
+      <div class="vs-body" style="padding:12px;">
+        <div style="font-size:0.75rem; color:#f8e8c8; font-weight:600; margin-bottom:6px;">Surfaces</div>
+        <div class="swatch-row">
+          <div class="swatch-group"><div class="swatch" style="background:#08080e;"></div><div class="swatch-label">canvas</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;"></div><div class="swatch-label">panel</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#1c1428;"></div><div class="swatch-label">inset</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#050408;"></div><div class="swatch-label">well</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#ffc030;"></div><div class="swatch-label">accent</div></div>
+        </div>
+        <div style="font-size:0.75rem; color:#f8e8c8; font-weight:600; margin:8px 0 4px;">Text (shown on panel)</div>
+        <div class="swatch-row">
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;display:flex;align-items:center;justify-content:center;color:#f8e8c8;font-size:0.5rem;font-weight:700;">Aa</div><div class="swatch-label">primary</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;display:flex;align-items:center;justify-content:center;color:#dcc898;font-size:0.5rem;font-weight:700;">Aa</div><div class="swatch-label">secondary</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;display:flex;align-items:center;justify-content:center;color:#b09060;font-size:0.5rem;font-weight:700;">Aa</div><div class="swatch-label">dimmed</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;display:flex;align-items:center;justify-content:center;color:#806840;font-size:0.5rem;font-weight:700;">Aa</div><div class="swatch-label">muted</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#140e1a;display:flex;align-items:center;justify-content:center;color:#504028;font-size:0.5rem;font-weight:700;">Aa</div><div class="swatch-label">faint</div></div>
+        </div>
+        <div style="font-size:0.78rem; color:#b09060; margin-top:8px;">Warm ambers and golds on deep violet-black. Like candlelight in a dark room.</div>
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA; position:relative; overflow:hidden;">
+      <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;pointer-events:none;"></div>
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1; position:relative; z-index:1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic
+      </div>
+      <div class="vs-body" style="padding:12px; position:relative; z-index:1;">
+        <div style="font-size:0.75rem; color:#3B0A1F; font-weight:600; margin-bottom:6px;">Surfaces</div>
+        <div class="swatch-row">
+          <div class="swatch-group"><div class="swatch" style="background:#F8E0EA;border-color:#F48FB1;"></div><div class="swatch-label" style="color:#7B3A5E;">canvas</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFFFFF;border-color:#F48FB1;"></div><div class="swatch-label" style="color:#7B3A5E;">panel</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;border-color:#F48FB1;"></div><div class="swatch-label" style="color:#7B3A5E;">inset</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FCE4EC;border-color:#F48FB1;"></div><div class="swatch-label" style="color:#7B3A5E;">well</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FF69B4;"></div><div class="swatch-label" style="color:#7B3A5E;">accent</div></div>
+        </div>
+        <div style="font-size:0.75rem; color:#3B0A1F; font-weight:600; margin:8px 0 4px;">Text (shown on inset)</div>
+        <div class="swatch-row">
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;display:flex;align-items:center;justify-content:center;color:#3B0A1F;font-size:0.5rem;font-weight:700;border-color:#F48FB1;">Aa</div><div class="swatch-label" style="color:#7B3A5E;">primary</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;display:flex;align-items:center;justify-content:center;color:#5D2040;font-size:0.5rem;font-weight:700;border-color:#F48FB1;">Aa</div><div class="swatch-label" style="color:#7B3A5E;">secondary</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;display:flex;align-items:center;justify-content:center;color:#7B3A5E;font-size:0.5rem;font-weight:700;border-color:#F48FB1;">Aa</div><div class="swatch-label" style="color:#7B3A5E;">dimmed</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;display:flex;align-items:center;justify-content:center;color:#9E6080;font-size:0.5rem;font-weight:700;border-color:#F48FB1;">Aa</div><div class="swatch-label" style="color:#7B3A5E;">muted</div></div>
+          <div class="swatch-group"><div class="swatch" style="background:#FFF5F8;display:flex;align-items:center;justify-content:center;color:#C090A8;font-size:0.5rem;font-weight:700;border-color:#F48FB1;">Aa</div><div class="swatch-label" style="color:#7B3A5E;">faint</div></div>
+        </div>
+        <div style="font-size:0.78rem; color:#7B3A5E; margin-top:8px;">Hot pink and deep plum on soft pastel cream. Like a Hello Kitty stationery set.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ 4. BACKGROUNDS ═══════════════════ -->
+<div class="section" id="backgrounds">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(63,185,80,0.15); color:#3fb950;">4</div>
+    Backgrounds & Wallpapers
+  </div>
+  <p class="section-explain">The background is what sits behind everything in the app. Some themes use a simple flat color, others use a full image or a color gradient. You can also layer a subtle repeating pattern on top for texture.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude picks the best background type</strong> for your vibe. A "cozy fireplace" theme might get a warm gradient, while a "Studio Ghibli" theme would get a scenic wallpaper image. You can always request changes.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use backgrounds:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak
+      </div>
+      <div class="vs-body" style="font-size:0.82rem; color:#dcc898;">
+        <div style="height:70px;background:linear-gradient(135deg,#3a1808,#d4a030,#8a6020);border-radius:8px;margin-bottom:10px;border:1px solid #281e10;display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#f8e8c8;font-weight:600;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;opacity:0.15;background-image:url('destinclaude-themes/themes/golden-sunbreak/assets/pattern.svg');background-size:40px 40px;"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.35) 100%);"></div>
+          <span style="position:relative;z-index:1;">Full wallpaper image (anime golden sky)</span>
+        </div>
+        <strong style="color:#f8e8c8;">Type:</strong> Image wallpaper<br>
+        <strong style="color:#f8e8c8;">Pattern:</strong> Dust-mote shapes repeating very faintly<br>
+        <strong style="color:#f8e8c8;">Opacity:</strong> Nearly full strength (98%)
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic
+      </div>
+      <div class="vs-body" style="font-size:0.82rem; color:#5D2040;">
+        <div style="height:70px;background:#F8E0EA;border-radius:8px;margin-bottom:10px;border:1px solid #F48FB1;display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#3B0A1F;font-weight:600;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;"></div>
+          <span style="position:relative;z-index:1;">Solid pastel pink + repeating Hello Kitty</span>
+        </div>
+        <strong style="color:#3B0A1F;">Type:</strong> Solid color<br>
+        <strong style="color:#3B0A1F;">Pattern:</strong> Real Hello Kitty image repeating (very subtle)<br>
+        <strong style="color:#3B0A1F;">Opacity:</strong> Full (100%)
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all available background options</summary>
+    <div class="details-body">
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:1rem 0;">
+        <div style="text-align:center;">
+          <div style="height:70px;background:#F8E0EA;border-radius:10px;border:1px solid #21262d;display:flex;align-items:center;justify-content:center;font-size:0.78rem;color:#5D2040;font-weight:600;">Solid Color</div>
+          <div style="font-size:0.75rem;color:#8b949e;margin-top:6px;">One flat color. Clean and simple.</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:70px;background:linear-gradient(135deg,#1a0a2e,#0a3d62,#1a3a4a);border-radius:10px;border:1px solid #21262d;display:flex;align-items:center;justify-content:center;font-size:0.78rem;color:#aac8e0;font-weight:600;">Gradient</div>
+          <div style="font-size:0.75rem;color:#8b949e;margin-top:6px;">Colors blending into each other.</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:70px;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;border-radius:10px;border:1px solid #21262d;display:flex;align-items:center;justify-content:center;font-size:0.78rem;color:#f8e8c8;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.8);">Wallpaper Image</div>
+          <div style="font-size:0.75rem;color:#8b949e;margin-top:6px;">A photo or artwork fills the background.</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.88rem; margin:1rem 0 0.5rem; color:#e6edf3;">Additional options for any background type:</h4>
+      <ul style="list-style:none; padding:0; font-size:0.82rem; color:#c9d1d9;">
+        <li style="padding:6px 0; border-bottom:1px solid #21262d;"><strong>Opacity</strong> &mdash; How strong the background is (0% = invisible, 100% = full strength)</li>
+        <li style="padding:6px 0; border-bottom:1px solid #21262d;"><strong>Pattern overlay</strong> &mdash; A small image that tiles/repeats across the background for texture (kept very faint)</li>
+        <li style="padding:6px 0;"><strong>Frosted glass</strong> &mdash; Makes panels see-through with a blur effect (see next section)</li>
+      </ul>
+
+      <div class="details-note">Claude can also create custom combinations &mdash; for example, a gradient with a pattern overlay on top, or a wallpaper at half opacity so it's subtle rather than bold. Just describe what you want.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 5. FROSTED GLASS ═══════════════════ -->
+<div class="section" id="glass">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(210,153,34,0.15); color:#d29922;">5</div>
+    Frosted Glass
+  </div>
+  <p class="section-explain">When a theme has a wallpaper or gradient background, the panels (header, input bar, bubbles) can be made semi-transparent with a blur &mdash; like looking through frosted glass. The background peeks through, creating a layered, atmospheric look.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude enables this automatically</strong> when it makes sense &mdash; usually when there's a wallpaper. You can ask for "more frosted" or "less transparent" to fine-tune it.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use frosted glass:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak
+      </div>
+      <div class="vs-body">
+        <div class="glass-box" style="background:#08080e; height:120px;">
+          <div class="bg-layer" style="background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.98;"></div>
+          <div class="bg-layer" style="opacity:0.15;background-image:url('destinclaude-themes/themes/golden-sunbreak/assets/pattern.svg');background-size:40px 40px;"></div>
+          <div class="bg-layer" style="background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.35) 100%);"></div>
+          <div class="panel-demo" style="background:rgba(20,14,26,0.55); backdrop-filter:blur(18px); color:#f8e8c8;">
+            Glass ON
+            <span class="panel-label">Golden light bleeds through</span>
+          </div>
+        </div>
+        <div style="font-size:0.82rem; color:#dcc898; margin-top:10px;">
+          <strong style="color:#f8e8c8;">Blur:</strong> Medium (18px frost)<br>
+          <strong style="color:#f8e8c8;">Transparency:</strong> 28% see-through<br>
+          Warm golden light bleeds through panels = dreamy look
+        </div>
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic
+      </div>
+      <div class="vs-body">
+        <div class="glass-box" style="background:#F8E0EA; height:120px;">
+          <div class="bg-layer" style="opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;"></div>
+          <div class="panel-demo" style="background:#FFFFFF; color:#3B0A1F; border-color:#F48FB1;">
+            Glass OFF
+            <span class="panel-label" style="color:#7B3A5E;">Panels are solid white</span>
+          </div>
+        </div>
+        <div style="font-size:0.82rem; color:#5D2040; margin-top:10px;">
+          <strong style="color:#3B0A1F;">Blur:</strong> None<br>
+          <strong style="color:#3B0A1F;">Transparency:</strong> Fully solid<br>
+          Clean and crisp &mdash; no wallpaper to show through anyway
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all frosted glass options</summary>
+    <div class="details-body">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:1rem 0;">
+        <div class="glass-box" style="background:#0d1117; height:90px;">
+          <div class="bg-layer" style="background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.9;"></div>
+          <div class="panel-demo" style="background:rgba(22,27,34,0.95); color:#e6edf3; font-size:0.68rem; width:85%; padding:8px;">No blur<span class="panel-label">Solid panels</span></div>
+        </div>
+        <div class="glass-box" style="background:#0d1117; height:90px;">
+          <div class="bg-layer" style="background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.9;"></div>
+          <div class="panel-demo" style="background:rgba(22,27,34,0.78); backdrop-filter:blur(8px); color:#e6edf3; font-size:0.68rem; width:85%; padding:8px;">Light frost<span class="panel-label">Subtle glow</span></div>
+        </div>
+        <div class="glass-box" style="background:#0d1117; height:90px;">
+          <div class="bg-layer" style="background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.9;"></div>
+          <div class="panel-demo" style="background:rgba(22,27,34,0.72); backdrop-filter:blur(18px); color:#e6edf3; font-size:0.68rem; width:85%; padding:8px;">Standard<span class="panel-label">Balanced look</span></div>
+        </div>
+        <div class="glass-box" style="background:#0d1117; height:90px;">
+          <div class="bg-layer" style="background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.9;"></div>
+          <div class="panel-demo" style="background:rgba(22,27,34,0.5); backdrop-filter:blur(30px); color:#e6edf3; font-size:0.68rem; width:85%; padding:8px;">Heavy frost<span class="panel-label">Very transparent</span></div>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; color:#c9d1d9;">Two knobs to turn: <strong>blur amount</strong> (how frosted the glass is) and <strong>transparency</strong> (how much background shows through). More blur + more transparency = more dramatic effect.</p>
+      <div class="details-note">Claude can set these to any value, not just the four shown above. You can ask for very specific looks like "just barely frosted" or "almost fully transparent with heavy blur."</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 6. CHAT BUBBLES ═══════════════════ -->
+<div class="section" id="bubbles">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(247,120,186,0.15); color:#f778ba;">6</div>
+    Chat Bubble Shapes
+  </div>
+  <p class="section-explain">The shape of message bubbles sets the personality of the whole chat. There are 4 preset shapes to start from, and each one can be further customized: bubbles can be <strong>filled</strong> (solid background color), <strong>transparent</strong> (see-through), <strong>bordered</strong> (outline), or any combination. When a bubble is both filled and bordered, the fill color and border color can be different.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude picks the bubble style</strong> that fits the mood of your theme. Cute themes tend to get pills, developer themes get flat, and so on. You can always ask for a specific shape or tell Claude to mix things up.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use bubbles:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak &mdash; Default shape
+      </div>
+      <div class="vs-body">
+        <div style="position:relative; border-radius:10px; overflow:hidden; padding:14px; margin-bottom:10px;">
+          <!-- Wallpaper background -->
+          <div style="position:absolute;inset:0;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.98;"></div>
+          <!-- Vignette -->
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);"></div>
+          <!-- Dust pattern -->
+          <div style="position:absolute;inset:0;opacity:0.15;background-image:url('destinclaude-themes/themes/golden-sunbreak/assets/pattern.svg');background-size:40px 40px;"></div>
+          <!-- Particles -->
+          <div style="position:absolute;width:5px;height:5px;background:#ffc030;border-radius:50%;top:15%;left:70%;opacity:0.5;animation:floaty 3.5s infinite ease-in-out;"></div>
+          <div style="position:absolute;width:7px;height:7px;background:#ffc030;border-radius:50%;top:55%;left:25%;opacity:0.3;animation:floaty 4.5s infinite ease-in-out 1s;"></div>
+          <!-- Bubbles -->
+          <div style="display:flex; flex-direction:column; gap:6px; position:relative; z-index:1;">
+            <div style="background:rgba(28,20,40,0.5);backdrop-filter:blur(8px);color:#f8e8c8;padding:8px 12px;font-size:0.75rem;border-radius:16px 16px 16px 4px;align-self:flex-start;max-width:85%;">Rounded with a small squared corner &mdash; like iMessage</div>
+            <div style="background:rgba(255,192,48,0.35);backdrop-filter:blur(8px);color:#000;padding:8px 12px;font-size:0.75rem;border-radius:16px 16px 4px 16px;align-self:flex-end;max-width:85%;">Filled + frosted glass = see-through gold</div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem; color:#b09060;">Frosted glass makes the filled bubbles semi-transparent, so the golden wallpaper glows through them.</div>
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic &mdash; Pill shape
+      </div>
+      <div class="vs-body">
+        <div style="position:relative; border-radius:10px; overflow:hidden; padding:14px; margin-bottom:10px; background:#F8E0EA;">
+          <!-- Kitty pattern overlay -->
+          <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;"></div>
+          <!-- Bubbles -->
+          <div style="display:flex; flex-direction:column; gap:6px; position:relative; z-index:1;">
+            <div style="background:#FFF5F8;color:#3B0A1F;padding:8px 18px;font-size:0.75rem;border-radius:24px;align-self:flex-start;max-width:85%;">Fully rounded on all sides like a capsule</div>
+            <div style="background:#FF69B4;color:#FFF;padding:8px 18px;font-size:0.75rem;border-radius:24px;align-self:flex-end;max-width:85%;">Soft, friendly, cute &mdash; no sharp corners at all</div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem; color:#7B3A5E;">Solid filled with opaque colors. No glass, no borders &mdash; clean and simple.</div>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all bubble shapes and fill options</summary>
+    <div class="details-body">
+      <h4 style="font-size:0.9rem; margin:0.75rem 0 0.5rem; color:#e6edf3;">4 Base Shapes</h4>
+      <div class="preset-grid">
+        <!-- Default -->
+        <div class="preset-card">
+          <div class="preview">
+            <div style="background:#1c2330;color:#e6edf3;padding:6px 10px;font-size:0.7rem;border-radius:14px 14px 14px 3px;align-self:flex-start;max-width:85%;">One corner is squared</div>
+            <div style="background:#58a6ff;color:#000;padding:6px 10px;font-size:0.7rem;border-radius:14px 14px 3px 14px;align-self:flex-end;max-width:85%;">Like iMessage</div>
+          </div>
+          <div class="info"><div class="name">Default</div><div class="desc">Familiar chat-app feel with a speech-bubble corner</div></div>
+        </div>
+        <!-- Pill -->
+        <div class="preset-card">
+          <div class="preview">
+            <div style="background:#1c2330;color:#e6edf3;padding:7px 16px;font-size:0.7rem;border-radius:22px;align-self:flex-start;max-width:85%;">Fully rounded capsules</div>
+            <div style="background:#58a6ff;color:#000;padding:7px 16px;font-size:0.7rem;border-radius:22px;align-self:flex-end;max-width:85%;">Cute and soft</div>
+          </div>
+          <div class="info"><div class="name">Pill</div><div class="desc">Lozenge/capsule shape, very friendly and round</div></div>
+        </div>
+        <!-- Flat -->
+        <div class="preset-card">
+          <div class="preview">
+            <div style="background:#1c2330;color:#e6edf3;padding:6px 10px;font-size:0.7rem;border-radius:0;border-left:2px solid #58a6ff;align-self:flex-start;max-width:85%;">No rounding at all</div>
+            <div style="background:#58a6ff;color:#000;padding:6px 10px;font-size:0.7rem;border-radius:0;align-self:flex-end;max-width:85%;">Accent stripe on side</div>
+          </div>
+          <div class="info"><div class="name">Flat</div><div class="desc">Sharp corners, colored side stripe &mdash; minimal, developer-ish</div></div>
+        </div>
+        <!-- Bordered -->
+        <div class="preset-card">
+          <div class="preview">
+            <div style="background:transparent;color:#e6edf3;padding:6px 10px;font-size:0.7rem;border-radius:8px;border:1px solid #30363d;align-self:flex-start;max-width:85%;">Outlined, no fill</div>
+            <div style="background:transparent;color:#58a6ff;padding:6px 10px;font-size:0.7rem;border-radius:8px;border:1px solid #58a6ff;align-self:flex-end;max-width:85%;">Clean and airy</div>
+          </div>
+          <div class="info"><div class="name">Bordered</div><div class="desc">Just an outline, no solid fill &mdash; light and open feel</div></div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.9rem; margin:1.25rem 0 0.5rem; color:#e6edf3;">Fill Options (can be combined with any shape)</h4>
+      <p style="font-size:0.82rem; color:#c9d1d9; margin-bottom:1rem;">Each shape above is just the starting point. The fill, transparency, and border can all be mixed:</p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin:0.5rem 0;">
+        <!-- Filled -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center;">
+          <div style="background:#58a6ff;color:#000;padding:7px 14px;font-size:0.72rem;border-radius:14px;display:inline-block;">Solid filled</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px;"><strong style="color:#e6edf3;">Filled</strong><br>Solid background color</div>
+        </div>
+        <!-- Transparent -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center;">
+          <div style="background:rgba(88,166,255,0.15);color:#58a6ff;padding:7px 14px;font-size:0.72rem;border-radius:14px;display:inline-block;">See-through</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px;"><strong style="color:#e6edf3;">Transparent</strong><br>Background shows through</div>
+        </div>
+        <!-- Bordered only -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center;">
+          <div style="background:transparent;color:#e6edf3;padding:7px 14px;font-size:0.72rem;border-radius:14px;border:1.5px solid #58a6ff;display:inline-block;">Outline only</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px;"><strong style="color:#e6edf3;">Bordered only</strong><br>No fill, just an outline</div>
+        </div>
+        <!-- Filled + bordered, different colors -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center;">
+          <div style="background:#1c2330;color:#e6edf3;padding:7px 14px;font-size:0.72rem;border-radius:14px;border:1.5px solid #58a6ff;display:inline-block;">Fill + border</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px;"><strong style="color:#e6edf3;">Filled + Bordered</strong><br>Different fill and border colors</div>
+        </div>
+        <!-- Transparent + bordered -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center;">
+          <div style="background:rgba(88,166,255,0.1);color:#58a6ff;padding:7px 14px;font-size:0.72rem;border-radius:14px;border:1.5px solid rgba(88,166,255,0.4);display:inline-block;">Glass + border</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px;"><strong style="color:#e6edf3;">Transparent + Bordered</strong><br>See-through with an outline</div>
+        </div>
+        <!-- Frosted glass -->
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:14px; text-align:center; position:relative; overflow:hidden;">
+          <div style="position:absolute;inset:0;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.5;"></div>
+          <div style="background:rgba(28,20,40,0.4);backdrop-filter:blur(10px);color:#f8e8c8;padding:7px 14px;font-size:0.72rem;border-radius:14px;display:inline-block;position:relative;z-index:1;">Frosted</div>
+          <div style="font-size:0.72rem; color:#8b949e; margin-top:8px; position:relative; z-index:1;"><strong style="color:#e6edf3;">Frosted Glass</strong><br>Blurred background peeks through</div>
+        </div>
+      </div>
+
+      <div class="details-note">These are the preset shapes, but Claude can go beyond them. You could ask for something specific like "rounded on top but flat on the bottom" or "bordered with a thick accent line on the left side" and Claude will create custom styling to match.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 7. INPUT BAR ═══════════════════ -->
+<div class="section" id="input">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(88,166,255,0.15); color:#58a6ff;">7</div>
+    Input Bar
+  </div>
+  <p class="section-explain">The input bar is where you type your messages, at the bottom of the screen. Its style affects how the typing area feels &mdash; from a clean standard bar to a floating capsule to a terminal prompt.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude matches the input style to your theme's mood.</strong> Atmospheric themes often get a floating input, minimal themes get a clean bar, and retro/hacker themes get the terminal style.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes style the input bar:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak &mdash; Floating
+      </div>
+      <div class="vs-body">
+        <div style="position:relative; border-radius:10px; overflow:hidden; padding:14px 10px;">
+          <!-- Wallpaper background -->
+          <div style="position:absolute;inset:0;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.98;"></div>
+          <!-- Vignette -->
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);"></div>
+          <!-- Dust pattern -->
+          <div style="position:absolute;inset:0;opacity:0.15;background-image:url('destinclaude-themes/themes/golden-sunbreak/assets/pattern.svg');background-size:40px 40px;"></div>
+          <!-- Particles -->
+          <div style="position:absolute;width:4px;height:4px;background:#ffc030;border-radius:50%;top:20%;left:80%;opacity:0.5;animation:floaty 3s infinite ease-in-out;"></div>
+          <div style="position:absolute;width:6px;height:6px;background:#ffc030;border-radius:50%;top:60%;left:15%;opacity:0.3;animation:floaty 4s infinite ease-in-out 1.5s;"></div>
+          <!-- Content -->
+          <div style="position:relative; z-index:1;">
+            <div style="font-size:0.62rem; color:#b09060; text-align:center; margin-bottom:8px;">...chat area above...</div>
+            <div style="background:rgba(20,14,26,0.55);backdrop-filter:blur(12px);padding:10px 14px;border-radius:20px;border:1px solid #281e10;box-shadow:0 2px 12px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;padding:5px 10px;border:1px solid #281e10;border-radius:12px;font-size:0.7rem;color:#b09060;">Type a message...</div>
+              <div style="width:24px;height:24px;background:#ffc030;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:#000;">&#9654;</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem; color:#b09060; margin-top:10px;">Detached from edges, rounded, with a shadow underneath. Floats over the wallpaper like a frosted glass capsule.</div>
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic &mdash; Default
+      </div>
+      <div class="vs-body">
+        <div style="position:relative; border-radius:10px; overflow:hidden; padding:14px 10px; background:#F8E0EA;">
+          <!-- Kitty pattern overlay -->
+          <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;"></div>
+          <!-- Content -->
+          <div style="position:relative; z-index:1;">
+            <div style="font-size:0.62rem; color:#9E6080; text-align:center; margin-bottom:8px;">...chat area above...</div>
+            <div style="background:#FFFFFF;padding:10px 14px;border-top:1px solid #F48FB1;display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;padding:5px 10px;border:1px solid #F48FB1;border-radius:8px;font-size:0.7rem;color:#9E6080;">Type a message...</div>
+              <div style="width:24px;height:24px;background:#FF69B4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:#FFF;">&#9654;</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem; color:#7B3A5E; margin-top:10px;">Standard bar that stretches edge to edge with a top border. Clean and straightforward.</div>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all input bar styles</summary>
+    <div class="details-body">
+      <div class="preset-grid">
+        <div class="preset-card">
+          <div class="preview" style="justify-content:flex-end; padding-bottom:0;">
+            <div style="background:#161b22;padding:8px 12px;border-top:1px solid #30363d;display:flex;align-items:center;gap:6px;width:100%;">
+              <div style="flex:1;padding:4px 8px;border:1px solid #30363d;border-radius:6px;font-size:0.62rem;color:#8b949e;">Type a message...</div>
+              <div style="width:20px;height:20px;background:#58a6ff;border-radius:50%;"></div>
+            </div>
+          </div>
+          <div class="info"><div class="name">Default</div><div class="desc">Standard bar, edge to edge, top border line</div></div>
+        </div>
+        <div class="preset-card">
+          <div class="preview" style="justify-content:flex-end;">
+            <div style="background:#161b22;padding:8px 12px;border-radius:18px;border:1px solid #30363d;box-shadow:0 2px 10px rgba(0,0,0,0.3);display:flex;align-items:center;gap:6px;width:92%;margin:0 auto;">
+              <div style="flex:1;padding:4px 8px;border:1px solid #30363d;border-radius:10px;font-size:0.62rem;color:#8b949e;">Type a message...</div>
+              <div style="width:20px;height:20px;background:#58a6ff;border-radius:50%;"></div>
+            </div>
+          </div>
+          <div class="info"><div class="name">Floating</div><div class="desc">Detached with rounded corners and a shadow. Hovers over the chat.</div></div>
+        </div>
+        <div class="preset-card">
+          <div class="preview" style="justify-content:flex-end; padding-bottom:0;">
+            <div style="padding:8px 12px;display:flex;align-items:center;gap:6px;width:100%;">
+              <div style="flex:1;padding:4px 8px;border:none;border-bottom:1px solid #30363d;border-radius:0;font-size:0.62rem;color:#8b949e;background:transparent;">Type a message...</div>
+              <div style="width:20px;height:20px;background:#58a6ff;border-radius:50%;"></div>
+            </div>
+          </div>
+          <div class="info"><div class="name">Minimal</div><div class="desc">Transparent background, blends into the chat area. Nearly invisible.</div></div>
+        </div>
+        <div class="preset-card">
+          <div class="preview" style="justify-content:flex-end; padding-bottom:0;">
+            <div style="background:#161b22;padding:8px 12px;border-top:1px solid #30363d;display:flex;align-items:center;gap:6px;width:100%;">
+              <div style="flex:1;padding:4px 8px;border:1px solid #30363d;border-radius:0;font-size:0.62rem;color:#8b949e;font-family:monospace;">$ type a message...</div>
+              <div style="width:20px;height:20px;background:#58a6ff;border-radius:50%;"></div>
+            </div>
+          </div>
+          <div class="info"><div class="name">Terminal</div><div class="desc">Sharp corners, monospace font, command-line aesthetic. For hacker/retro vibes.</div></div>
+        </div>
+      </div>
+      <div class="details-note">These are the 4 presets, but Claude can go further with custom styling &mdash; for example, a glowing border, a gradient background, or an animated accent line underneath the input area.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 8. HEADER & STATUS ═══════════════════ -->
+<div class="section" id="header">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(139,148,158,0.15); color:#8b949e;">8</div>
+    Header & Status Bar
+  </div>
+  <p class="section-explain">The <strong>header</strong> is the bar at the very top of the app (shows "DestinCode" and the settings icon). The <strong>status bar</strong> is the thin strip at the very bottom (shows the current theme name and status). Both can be styled differently or hidden entirely.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude picks header and status bar styles</strong> that complement the rest of your theme. Immersive themes might hide the header; minimal themes might make the status bar nearly invisible. You can ask for any combination.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes handle these:</h3>
+  <div class="vs">
+    <div style="background:rgba(255,192,48,0.06); border:1px solid rgba(255,192,48,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#dcc898;">
+      <strong style="color:#ffc030;">Golden Sunbreak</strong><br>
+      <strong>Header:</strong> Default &mdash; visible bar with frosted glass, so golden light glows through it<br>
+      <strong>Status bar:</strong> Default &mdash; visible, also frosted glass
+    </div>
+    <div style="background:rgba(255,105,180,0.06); border:1px solid rgba(255,105,180,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#c090a8;">
+      <strong style="color:#FF69B4;">Kitty Pink Classic</strong><br>
+      <strong>Header:</strong> Default &mdash; clean white bar with a pink border line<br>
+      <strong>Status bar:</strong> Default &mdash; clean white bar
+    </div>
+  </div>
+
+  <details>
+    <summary>See all header and status bar styles</summary>
+    <div class="details-body">
+      <h4 style="font-size:0.88rem; margin:0.5rem 0; color:#e6edf3;">Header (3 options)</h4>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.25rem;">
+        <div style="text-align:center;">
+          <div style="background:#161b22; padding:8px 12px; border:1px solid #30363d; border-radius:10px; font-size:0.72rem; color:#e6edf3; font-weight:600;">DestinCode</div>
+          <div style="font-size:0.75rem; color:#8b949e; margin-top:6px;"><strong>Default</strong><br>Visible bar with a bottom border</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="padding:8px 12px; border:1px dashed #30363d; border-radius:10px; font-size:0.72rem; color:#8b949e;">DestinCode</div>
+          <div style="font-size:0.75rem; color:#8b949e; margin-top:6px;"><strong>Minimal</strong><br>Transparent, just floating text</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="padding:8px 12px; border:1px dashed #30363d; border-radius:10px; font-size:0.72rem; color:#484f58; font-style:italic;">( removed entirely )</div>
+          <div style="font-size:0.75rem; color:#8b949e; margin-top:6px;"><strong>Hidden</strong><br>Gone completely for a full-screen feel</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.88rem; margin:0.5rem 0; color:#e6edf3;">Status Bar (2 options)</h4>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
+        <div style="text-align:center;">
+          <div style="background:#161b22; padding:4px 12px; border:1px solid #30363d; border-radius:8px; font-size:0.65rem; color:#8b949e;">midnight &bull; idle</div>
+          <div style="font-size:0.75rem; color:#8b949e; margin-top:6px;"><strong>Default</strong> &mdash; visible strip</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="padding:3px 12px; border:1px dashed #30363d; border-radius:8px; font-size:0.5rem; color:#6e7681;">midnight</div>
+          <div style="font-size:0.75rem; color:#8b949e; margin-top:6px;"><strong>Minimal</strong> &mdash; tiny, transparent, barely visible</div>
+        </div>
+      </div>
+      <div class="details-note">Claude can also customize these further &mdash; for example, making the header frosted glass, or adding a subtle glow to the status bar.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 9. FLOATING CHROME ═══════════════════ -->
+<div class="section" id="chrome">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(188,140,255,0.15); color:#bc8cff;">9</div>
+    Floating Chrome
+  </div>
+  <p class="section-explain">"Chrome" means all the interface bars together &mdash; header, input bar, and status bar. Normally they touch the edges of the window. In <strong>floating</strong> mode, they all detach and become rounded cards that hover over the content with shadows underneath. It's a more spacious, modern look.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude enables floating chrome</strong> when the theme has a strong visual background that benefits from the extra breathing room. Most themes use the default. You can request it specifically.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes handle chrome:</h3>
+  <div class="vs">
+    <div style="background:rgba(255,192,48,0.06); border:1px solid rgba(255,192,48,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#dcc898;">
+      <strong style="color:#ffc030;">Golden Sunbreak:</strong> Default chrome (bars touch the edges), but the <em>input bar</em> is individually set to floating. So the input floats while the header and status don't.
+    </div>
+    <div style="background:rgba(255,105,180,0.06); border:1px solid rgba(255,105,180,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#c090a8;">
+      <strong style="color:#FF69B4;">Kitty Pink Classic:</strong> Default chrome. Everything is flush and clean. Fits the simple, tidy aesthetic.
+    </div>
+  </div>
+
+  <details>
+    <summary>See the difference</summary>
+    <div class="details-body">
+      <div class="vs">
+        <div style="text-align:center;">
+          <div style="background:#0d1117; border:1px solid #21262d; border-radius:12px; overflow:hidden; height:170px; display:flex; flex-direction:column;">
+            <div style="background:#161b22; padding:6px 10px; font-size:0.65rem; color:#e6edf3; border-bottom:1px solid #30363d;">header (flush)</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:0.62rem; color:#484f58;">chat area</div>
+            <div style="background:#161b22; padding:6px 10px; font-size:0.65rem; color:#e6edf3; border-top:1px solid #30363d;">input (flush)</div>
+            <div style="background:#161b22; padding:3px 10px; font-size:0.52rem; color:#8b949e; border-top:1px solid #30363d;">status</div>
+          </div>
+          <div style="font-size:0.82rem; font-weight:600; margin-top:8px;">Default</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Bars touch the edges of the window</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="background:#0d1117; border:1px solid #21262d; border-radius:12px; overflow:hidden; height:170px; display:flex; flex-direction:column; padding:6px;">
+            <div style="background:#161b22; padding:6px 10px; font-size:0.65rem; color:#e6edf3; border:1px solid #30363d; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">header (floating)</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:0.62rem; color:#484f58;">chat area</div>
+            <div style="background:#161b22; padding:6px 10px; font-size:0.65rem; color:#e6edf3; border:1px solid #30363d; border-radius:10px; box-shadow:0 -2px 8px rgba(0,0,0,0.3); margin-bottom:4px;">input (floating)</div>
+            <div style="background:#161b22; padding:2px 14px; font-size:0.52rem; color:#8b949e; border:1px solid #30363d; border-radius:20px; align-self:center;">status</div>
+          </div>
+          <div style="font-size:0.82rem; font-weight:600; margin-top:8px;">Floating</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Bars hover with gaps and shadows</div>
+        </div>
+      </div>
+      <div class="details-note">Floating chrome can be combined with the individual header/input/status bar styles. Claude can also create custom chrome layouts beyond these two presets if you describe what you want.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 10. CORNERS ═══════════════════ -->
+<div class="section" id="corners">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(63,185,80,0.15); color:#3fb950;">10</div>
+    Corner Roundness
+  </div>
+  <p class="section-explain">Every surface in the app has corners &mdash; bubbles, buttons, panels, cards. A theme controls how rounded or sharp those corners are across the entire app at once. This alone can make the same app feel sleek and techy (sharp corners) or soft and friendly (round corners).</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude picks corner roundness to match the vibe.</strong> Cute themes get rounder corners, tech themes get sharper ones. There are 7 levels from nearly square to fully circular, and Claude can set each level independently.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use corners:</h3>
+  <div class="vs">
+    <div style="background:rgba(255,192,48,0.06); border:1px solid rgba(255,192,48,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#dcc898;">
+      <strong style="color:#ffc030;">Golden Sunbreak:</strong> Generously rounded (8px to 36px). Everything feels smooth and organic, matching the warm dreamy aesthetic. Nothing has a sharp edge.
+    </div>
+    <div style="background:rgba(255,105,180,0.06); border:1px solid rgba(255,105,180,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#c090a8;">
+      <strong style="color:#FF69B4;">Kitty Pink Classic:</strong> Also very rounded (7px to 36px). Combined with the pill bubble shape, everything has a soft, toylike quality. Not a sharp corner in sight.
+    </div>
+  </div>
+
+  <details>
+    <summary>See the full roundness scale</summary>
+    <div class="details-body">
+      <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; justify-content:center; margin:1rem 0;">
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:2px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Nearly<br>square</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:7px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Slightly<br>rounded</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:14px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Medium</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:20px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Very<br>round</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:28px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Extra<br>round</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:36px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Maximum</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:54px;height:54px;background:#58a6ff;border-radius:9999px;margin:0 auto;"></div>
+          <div style="font-size:0.72rem;color:#8b949e;margin-top:6px;">Full<br>circle</div>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; color:#c9d1d9;">These 7 levels are applied to different sized elements &mdash; small buttons use the smaller values, large panels use the larger ones. The theme sets all 7 levels at once to create a consistent feel.</p>
+      <div class="details-note">Claude can set each level to any value, so you can have very specific looks like "sharp corners on panels but rounded bubbles." Just describe the feel you want.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 11. FONTS ═══════════════════ -->
+<div class="section" id="fonts">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(139,148,158,0.15); color:#c9d1d9;">11</div>
+    Fonts
+  </div>
+  <p class="section-explain">A theme can override the font for the entire app. This is great for themes with strong character &mdash; a retro pixel font for an arcade theme, a handwritten style for a cozy journal theme, or an elegant serif for something formal.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude selects a font when it fits the vibe.</strong> Most themes use the default system font, which looks clean on every device. Fonts are loaded automatically from Google Fonts &mdash; you don't need to install anything.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes handle fonts:</h3>
+  <div class="vs">
+    <div style="background:rgba(255,192,48,0.06); border:1px solid rgba(255,192,48,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#dcc898;">
+      <strong style="color:#ffc030;">Golden Sunbreak:</strong> Default system font. The vibe comes from colors and effects, not typography.
+    </div>
+    <div style="background:rgba(255,105,180,0.06); border:1px solid rgba(255,105,180,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#c090a8;">
+      <strong style="color:#FF69B4;">Kitty Pink Classic:</strong> Default system font. The cuteness comes from the shapes and colors instead.
+    </div>
+  </div>
+
+  <details>
+    <summary>See font examples</summary>
+    <div class="details-body">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin:1rem 0;">
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:1.1rem; color:#e6edf3; margin-bottom:4px;">Hello World</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Default system font<br>(what most themes use)</div>
+        </div>
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:1.1rem; color:#e6edf3; font-family:serif;">Hello World</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Elegant serif<br>(formal or literary vibes)</div>
+        </div>
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:1.1rem; color:#e6edf3; font-family:monospace; letter-spacing:1px;">Hello World</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Monospace<br>(retro, hacker, terminal)</div>
+        </div>
+        <div style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:1.1rem; color:#e6edf3; font-family:cursive;">Hello World</div>
+          <div style="font-size:0.72rem; color:#8b949e;">Handwritten/cursive<br>(cozy, personal, journal)</div>
+        </div>
+      </div>
+      <div class="details-note">Claude can use any font from Google Fonts (thousands of options). You can request a specific font by name, or just describe the feel and Claude will pick one that fits.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 12. VISUAL EFFECTS ═══════════════════ -->
+<div class="section" id="effects">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(210,153,34,0.15); color:#d29922;">12</div>
+    Visual Effects
+  </div>
+  <p class="section-explain">These are atmospheric overlays that float on top of the app. They don't affect how you use it &mdash; they're purely vibes. Think of them like lighting and ambiance in a room. There are four types: floating particles, darkened edges (vignette), film grain texture, and retro scan lines.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude adds effects that match the atmosphere.</strong> A cozy night theme might get slow-floating dust and a vignette. A cyberpunk theme might get scan lines and neon particles. A clean cute theme usually gets no effects at all. Each effect's intensity is carefully tuned so it enhances rather than distracts.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use effects:</h3>
+  <div class="vs">
+    <div class="vs-card" style="background:#08080e;">
+      <div class="vs-header" style="background:#140e1a; color:#f8e8c8; border-bottom:1px solid #281e10;">
+        <div class="dot" style="background:#ffc030;"></div>
+        Golden Sunbreak
+      </div>
+      <div class="vs-body">
+        <div style="height:80px; background:#08080e; border-radius:8px; position:relative; overflow:hidden; margin-bottom:10px;">
+          <!-- Wallpaper -->
+          <div style="position:absolute;inset:0;background:url(destinclaude-themes/themes/golden-sunbreak/assets/wallpaper.jpg) center/cover;opacity:0.98;"></div>
+          <!-- Dust pattern -->
+          <div style="position:absolute;inset:0;opacity:0.15;background-image:url('destinclaude-themes/themes/golden-sunbreak/assets/pattern.svg');background-size:40px 40px;"></div>
+          <!-- Vignette -->
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);"></div>
+          <!-- Particles -->
+          <div style="position:absolute;width:5px;height:5px;background:#ffc030;border-radius:50%;top:20%;left:30%;opacity:0.5;animation:floaty 3.5s infinite ease-in-out;"></div>
+          <div style="position:absolute;width:8px;height:8px;background:#ffc030;border-radius:50%;top:45%;left:65%;opacity:0.3;animation:floaty 4.5s infinite ease-in-out 1s;"></div>
+          <div style="position:absolute;width:4px;height:4px;background:#ffc030;border-radius:50%;top:60%;left:20%;opacity:0.6;animation:floaty 3s infinite ease-in-out 0.5s;"></div>
+          <div style="position:absolute;width:6px;height:6px;background:#ffc030;border-radius:50%;top:30%;left:80%;opacity:0.4;animation:floaty 4s infinite ease-in-out 2s;"></div>
+        </div>
+        <div style="font-size:0.82rem; color:#dcc898;">
+          <strong style="color:#f8e8c8;">Particles:</strong> 35 golden dust motes drifting gently<br>
+          <strong style="color:#f8e8c8;">Vignette:</strong> Edges darkened 30% for a cinematic feel<br>
+          <strong style="color:#f8e8c8;">Noise &amp; Scan lines:</strong> Off
+        </div>
+      </div>
+    </div>
+    <div class="vs-card" style="background:#F8E0EA;">
+      <div class="vs-header" style="background:#FFF; color:#3B0A1F; border-bottom:1px solid #F48FB1;">
+        <div class="dot" style="background:#FF69B4;"></div>
+        Kitty Pink Classic
+      </div>
+      <div class="vs-body">
+        <div style="height:80px; background:#F8E0EA; border-radius:8px; border:1px solid #F48FB1; display:flex; align-items:center; justify-content:center; margin-bottom:10px; position:relative; overflow:hidden;">
+          <!-- Kitty pattern overlay -->
+          <div style="position:absolute;inset:0;opacity:0.06;background-image:url('https://www.svgrepo.com/show/436023/hello-kitty.svg');background-size:70px 70px;background-repeat:repeat;"></div>
+          <div style="font-size:0.78rem; color:#9E6080; font-style:italic; position:relative; z-index:1;">No effects &mdash; clean and simple</div>
+        </div>
+        <div style="font-size:0.82rem; color:#5D2040;">
+          <strong style="color:#3B0A1F;">Particles:</strong> None<br>
+          <strong style="color:#3B0A1F;">Vignette:</strong> Off<br>
+          <strong style="color:#3B0A1F;">Noise &amp; Scan lines:</strong> Off<br>
+          <em style="font-size:0.78rem; color:#9E6080;">Cuteness comes from colors and shapes, not atmosphere.</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all visual effects</summary>
+    <div class="details-body">
+      <div class="fx-grid">
+        <div class="fx-demo" style="background:linear-gradient(180deg,#08080e,#1c1428);">
+          <div style="position:absolute;width:5px;height:5px;background:#ffc030;border-radius:50%;top:20%;left:25%;opacity:0.5;animation:floaty 3.5s infinite ease-in-out;"></div>
+          <div style="position:absolute;width:8px;height:8px;background:#ffc030;border-radius:50%;top:45%;left:60%;opacity:0.3;animation:floaty 4.5s infinite ease-in-out 1s;"></div>
+          <div style="position:absolute;width:4px;height:4px;background:#ffc030;border-radius:50%;top:30%;left:80%;opacity:0.6;animation:floaty 3s infinite ease-in-out 0.5s;"></div>
+          <div style="position:absolute;width:6px;height:6px;background:#ffc030;border-radius:50%;top:60%;left:40%;opacity:0.4;animation:floaty 4s infinite ease-in-out 2s;"></div>
+          <div class="fx-name">Particles</div>
+          <div class="fx-desc">Floating shapes drifting across the screen</div>
+        </div>
+        <div class="fx-demo" style="background:linear-gradient(135deg,#0d1117,#1c2330);">
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);"></div>
+          <div class="fx-name">Vignette</div>
+          <div class="fx-desc">Darkened edges, like a camera lens</div>
+        </div>
+        <div class="fx-demo" style="background:#0d1117;">
+          <div style="position:absolute;inset:0;opacity:0.18;">
+            <svg width="100%" height="100%"><filter id="nfx"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4"/></filter><rect width="100%" height="100%" filter="url(#nfx)"/></svg>
+          </div>
+          <div class="fx-name">Film Grain</div>
+          <div class="fx-desc">Subtle static texture, like old film</div>
+        </div>
+        <div class="fx-demo" style="background:#0d1117;">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px);"></div>
+          <div class="fx-name">Scan Lines</div>
+          <div class="fx-desc">Horizontal stripes, like an old CRT TV</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.88rem; margin:1rem 0 0.5rem; color:#e6edf3;">Particle types</h4>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem;">
+        <div style="background:#161b22; border:1px solid #21262d; border-radius:8px; padding:7px 12px; font-size:0.78rem; color:#c9d1d9;">&#x1F327; <strong>Rain</strong> &mdash; fast streaks falling down</div>
+        <div style="background:#161b22; border:1px solid #21262d; border-radius:8px; padding:7px 12px; font-size:0.78rem; color:#c9d1d9;">&#x2728; <strong>Dust</strong> &mdash; slow floating motes</div>
+        <div style="background:#161b22; border:1px solid #21262d; border-radius:8px; padding:7px 12px; font-size:0.78rem; color:#c9d1d9;">&#x1F525; <strong>Ember</strong> &mdash; rising warm specks</div>
+        <div style="background:#161b22; border:1px solid #21262d; border-radius:8px; padding:7px 12px; font-size:0.78rem; color:#c9d1d9;">&#x2744; <strong>Snow</strong> &mdash; gentle falling flakes</div>
+        <div style="background:#161b22; border:1px solid #21262d; border-radius:8px; padding:7px 12px; font-size:0.78rem; color:#c9d1d9;">&#x1F3A8; <strong>Custom</strong> &mdash; any shape (hearts, stars, leaves, paws...)</div>
+      </div>
+
+      <p style="font-size:0.82rem; color:#c9d1d9;">Each effect has adjustable intensity. Particles have speed, count, drift (wind), and size settings. Vignette and grain have opacity controls. Everything is carefully balanced so it enhances the theme without being distracting.</p>
+      <div class="details-note">Claude can combine effects and tune them precisely. You can ask for things like "very subtle snow, barely noticeable" or "heavy scan lines like an old arcade machine." Claude can also create custom particle shapes that match your theme &mdash; like cherry blossoms, lightning bolts, or musical notes.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 13. CUSTOM ART ═══════════════════ -->
+<div class="section" id="assets">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(247,120,186,0.15); color:#f778ba;">13</div>
+    Custom Art & Icons
+  </div>
+  <p class="section-explain">Themes can replace the default icons in the app and add themed accessories to the DestinCode mascot character. There are 6 icon slots, 3 mascot expressions, and a few bonus slots for cursor and scrollbar art. All of these are optional &mdash; many themes don't use any custom art.</p>
+
+  <div class="claude-note">
+    <div class="cn-icon">&#10024;</div>
+    <div><strong>Claude creates all art assets automatically</strong> when they fit the vibe. Brand/IP themes (like "Star Wars" or "Minecraft") get the most custom art. Abstract vibe themes often skip custom art and focus on colors and effects instead.</div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size:1rem; margin:1.25rem 0 0.5rem; color:#8b949e;">How the two themes use custom art:</h3>
+  <div class="vs">
+    <div style="background:rgba(255,192,48,0.06); border:1px solid rgba(255,192,48,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#dcc898;">
+      <strong style="color:#ffc030;">Golden Sunbreak:</strong> Goes all-in on art.<br>
+      &#8226; Custom send button icon<br>
+      &#8226; All 3 mascot expressions with themed accessories<br>
+      &#8226; Gold-tinted scrollbar<br>
+      &#8226; Default cursor (no need for a themed one)
+    </div>
+    <div style="background:rgba(255,105,180,0.06); border:1px solid rgba(255,105,180,0.15); border-radius:12px; padding:14px 18px; font-size:0.82rem; color:#c090a8;">
+      <strong style="color:#FF69B4;">Kitty Pink Classic:</strong> No custom art at all.<br>
+      &#8226; All default icons<br>
+      &#8226; No mascot customization<br>
+      &#8226; Default cursor and scrollbar<br>
+      <em style="font-size:0.78rem;">The cuteness is all in the colors and shapes.</em>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all customizable art slots</summary>
+    <div class="details-body">
+      <h4 style="font-size:0.88rem; margin:0.5rem 0; color:#e6edf3;">6 Replaceable Icons</h4>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:0.75rem 0;">
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">&#9654;</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">Send<br>(default)</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#140e1a;border:1px solid #ffc030;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+            <img src="destinclaude-themes/themes/golden-sunbreak/assets/icon-send.svg" alt="Custom send icon" style="width:28px;height:28px;filter:brightness(0) saturate(100%) invert(78%) sepia(60%) saturate(500%) hue-rotate(5deg);">
+          </div>
+          <div style="font-size:0.68rem;color:#ffc030;margin-top:4px;">Send<br>(Sunbreak)</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">+</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">New chat</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">&#9881;</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">Settings</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">&#9788;</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">Theme<br>switcher</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">&#10005;</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">Close</div>
+        </div>
+        <div style="text-align:center; min-width:65px;">
+          <div style="width:44px;height:44px;background:#161b22;border:1px solid #21262d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto;">&#9776;</div>
+          <div style="font-size:0.68rem;color:#8b949e;margin-top:4px;">Menu</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.88rem; margin:1.25rem 0 0.5rem; color:#e6edf3;">Mascot (3 expressions)</h4>
+      <p style="font-size:0.82rem; color:#c9d1d9; margin-bottom:0.75rem;">The DestinCode mascot is a little character that appears in the app. Themes add accessories (hats, capes, items) while keeping the same base shape:</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin:0.75rem 0;">
+        <div style="text-align:center; background:#0d1117; border:1px solid #21262d; border-radius:12px; padding:14px 20px;">
+          <img src="destinclaude-themes/themes/golden-sunbreak/assets/mascot-idle.svg" alt="Idle mascot" style="width:80px;height:80px;">
+          <div style="font-size:0.75rem; font-weight:600; color:#e6edf3; margin-top:6px;">Idle</div>
+          <div style="font-size:0.65rem; color:#8b949e;">Relaxed, chilling</div>
+        </div>
+        <div style="text-align:center; background:#0d1117; border:1px solid #21262d; border-radius:12px; padding:14px 20px;">
+          <img src="destinclaude-themes/themes/golden-sunbreak/assets/mascot-welcome.svg" alt="Welcome mascot" style="width:80px;height:80px;">
+          <div style="font-size:0.75rem; font-weight:600; color:#e6edf3; margin-top:6px;">Welcome</div>
+          <div style="font-size:0.65rem; color:#8b949e;">Sparkly, waving hi</div>
+        </div>
+        <div style="text-align:center; background:#0d1117; border:1px solid #21262d; border-radius:12px; padding:14px 20px;">
+          <img src="destinclaude-themes/themes/golden-sunbreak/assets/mascot-inquisitive.svg" alt="Inquisitive mascot" style="width:80px;height:80px;">
+          <div style="font-size:0.75rem; font-weight:600; color:#e6edf3; margin-top:6px;">Inquisitive</div>
+          <div style="font-size:0.65rem; color:#8b949e;">Curious, looking around</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.88rem; margin:1.25rem 0 0.5rem; color:#e6edf3;">Bonus art slots</h4>
+      <ul style="list-style:none; padding:0; font-size:0.82rem; color:#c9d1d9;">
+        <li style="padding:5px 0; border-bottom:1px solid #21262d;"><strong>Custom cursor</strong> &mdash; Replace the mouse pointer (magic wand, pickaxe, paw print, etc.)</li>
+        <li style="padding:5px 0; border-bottom:1px solid #21262d;"><strong>Scrollbar thumb</strong> &mdash; Custom art on the scroll handle</li>
+        <li style="padding:5px 0;"><strong>Scrollbar track</strong> &mdash; Color for the scrollbar background</li>
+      </ul>
+
+      <div class="details-note">Claude generates all art to match the theme. For brand/IP themes, the mascot might get a Hello Kitty bow, a lightsaber, or a wizard hat. Custom particle shapes and pattern overlays are also generated as unique art. You can request specific additions.</div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════════════════ 14. SUMMARY TABLE ═══════════════════ -->
+<div class="section" id="summary">
+  <div class="section-title">
+    <div class="icon" style="background:rgba(88,166,255,0.15); color:#58a6ff;">14</div>
+    Full Summary Table
+  </div>
+  <p class="section-explain">Everything in one place. Green = every theme must have this. Blue = optional, Claude adds it when it fits.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="border-radius:8px 0 0 0;">Feature</th>
+        <th style="text-align:center;">Required?</th>
+        <th style="background:rgba(255,192,48,0.08); color:#ffc030;">Golden Sunbreak</th>
+        <th style="background:rgba(255,105,180,0.08); color:#FF69B4; border-radius:0 8px 0 0;">Kitty Pink Classic</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="font-weight:600;">15 Colors</td>
+        <td style="text-align:center;"><span class="tag tag-green" style="font-size:0.62rem;">Required</span></td>
+        <td>Violet-black + amber gold</td>
+        <td>Pastel pink + hot pink</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Dark or Light</td>
+        <td style="text-align:center;"><span class="tag tag-green" style="font-size:0.62rem;">Required</span></td>
+        <td>Dark</td>
+        <td>Light</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Corner roundness</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Generously rounded</td>
+        <td>Generously rounded</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Font</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Default</td>
+        <td>Default</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Background</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Full wallpaper image</td>
+        <td>Solid color</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Frosted glass</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Yes &mdash; medium frost</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Pattern overlay</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Dust motes (very faint)</td>
+        <td>Repeating Hello Kitty image (subtle)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Bubble style</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Default (speech-bubble corners)</td>
+        <td>Pill (fully rounded capsules)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Input bar style</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Floating (detached, shadowed)</td>
+        <td>Default (flush bar)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Header style</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Default (visible, frosted glass)</td>
+        <td>Default (visible, solid white)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Status bar style</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Default (visible, frosted glass)</td>
+        <td>Default (visible, solid white)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Floating chrome</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>No (input floats individually)</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Particles</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>35 custom golden dust motes</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Vignette</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>30% edge darkening</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Film grain / Scan lines</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Off</td>
+        <td>Off</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Custom icons</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Custom send button</td>
+        <td>All default</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Mascot art</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>3 themed variants</td>
+        <td>Default</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Cursor / Scrollbar art</td>
+        <td style="text-align:center;"><span class="tag tag-blue" style="font-size:0.62rem;">Optional</span></td>
+        <td>Gold-tinted scrollbar</td>
+        <td>Default</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-purple" style="margin-top:1.25rem;">
+    <strong>Golden Sunbreak</strong> goes all-in: wallpaper, frosted glass, floating particles, vignette, custom art. <strong>Kitty Pink Classic</strong> takes the opposite path: solid colors, rounded pill bubbles, and a repeating Hello Kitty image pattern. Both work beautifully. When you run <strong style="color:#58a6ff;">/theme-builder</strong>, just describe the mood you want and Claude figures out which features to use.
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center; padding:2rem 0 1rem; color:#484f58; font-size:0.75rem; border-top:1px solid #21262d; margin-top:2rem;">
+  DestinCode Theme Guide &bull; April 2026 &bull; To create a theme: <strong style="color:#58a6ff;">/theme-builder "your vibe here"</strong>
+</div>
+
+</body>
+</html>
