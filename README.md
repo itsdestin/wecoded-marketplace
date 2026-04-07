@@ -1,56 +1,46 @@
-# DestinCode Marketplace Registry
+# DestinCode Marketplace
 
-Central registry for the DestinCode skill marketplace. Contains 151 entries: 29 DestinClaude-specific skills and 122 auto-imported from Anthropic's official Claude Code plugin registry.
+The skill store for [DestinCode](https://github.com/itsdestin/destincode). Browse and install skills from within the app.
 
-Design doc: `~/destincode/docs/plans/plugin-marketplace-design (04-06-2026).md`
+Contains 151 entries: 29 DestinClaude-specific skills and 122 imported from Anthropic's official Claude Code plugin registry.
+
+## How It Works
+
+- The DestinCode app fetches `index.json` to populate the skill marketplace
+- `curated-defaults.json` determines which skills appear pre-selected for new users
+- `featured.json` drives the featured section at the top of the marketplace
+- `stats.json` provides usage counts (rebuilt daily by CI)
+- Plugin installation is handled by the app — not this repo
 
 ## Structure
 
 ```
-index.json                 # Flat array of all registry entries (151 entries)
-curated-defaults.json      # IDs of skills shown by default in the marketplace
-featured.json              # Featured skill highlights with taglines
-stats.json                 # Usage stats (rebuilt daily by CI)
-overrides/                 # Per-plugin custom metadata (merged on sync)
+index.json                 # All registry entries (151 entries)
+curated-defaults.json      # Default skills for new users
+featured.json              # Featured skill highlights
+stats.json                 # Usage stats (rebuilt by CI)
+overrides/                 # Per-plugin custom metadata
 scripts/
   sync.js                  # Imports plugins from upstream Anthropic registries
-registry/
-  prompts/                 # Individual prompt shortcut entries (*.json)
-  plugins/                 # Individual plugin entries (*.json)
 ```
 
 ## Upstream Sync
 
-`scripts/sync.js` imports all plugins from Anthropic's official marketplace (`claude-plugins-official`, 123 plugins). Each entry gets a `sourceMarketplace` label and source type info for the installer.
-
 ```bash
-# Sync from a local clone of the marketplace repo
-node scripts/sync.js --local ~/.claude/plugins/marketplaces/claude-plugins-official
-
-# Sync from GitHub (no local clone needed)
-node scripts/sync.js
+node scripts/sync.js                                    # Sync from GitHub
+node scripts/sync.js --local <path-to-marketplace-clone> # Sync from local clone
 ```
 
-The sync preserves all DestinClaude entries (identified by `sourceMarketplace: "destinclaude"`) and appends upstream entries alphabetically. Duplicate IDs are skipped.
+Preserves all DestinClaude entries, imports upstream alphabetically, applies `overrides/<id>.json` patches.
 
-### Overrides
+## Adding a Skill
 
-Drop a JSON file in `overrides/<plugin-id>.json` to customize any upstream entry:
+1. Create a JSON file in `registry/prompts/` or `registry/plugins/`
+2. Open a pull request — CI rebuilds `index.json`
 
-```json
-{
-  "displayName": "Playwright Browser",
-  "description": "Control a real browser from Claude",
-  "category": "development",
-  "tags": ["browser", "testing"]
-}
-```
-
-Override fields merge on top of upstream data. The `id` and `sourceMarketplace` fields cannot be overridden.
+Or create a skill inside DestinCode and share it via the app's share feature.
 
 ## Registry Entry Format
-
-Each entry in `index.json`:
 
 ```json
 {
@@ -58,27 +48,10 @@ Each entry in `index.json`:
   "type": "prompt | plugin",
   "displayName": "Human-Readable Name",
   "description": "One-line description",
-  "category": "personal | work | development | security | testing | ...",
-  "author": "@handle or Anthropic",
-  "version": "1.0.0",
-  "publishedAt": "2026-04-06T00:00:00Z",
+  "category": "personal | work | development | ...",
+  "author": "@handle",
   "sourceMarketplace": "destinclaude | claude-plugins-official",
   "sourceType": "prompt | local | url | git-subdir",
-  "sourceRef": "./plugins/code-review | https://github.com/user/repo.git",
-  "repoUrl": "https://github.com/owner/repo or null",
   "tags": []
 }
 ```
-
-## Adding a DestinClaude Entry
-
-1. Create a JSON file in `registry/prompts/` or `registry/plugins/`.
-2. Open a pull request. CI rebuilds `index.json`, or trigger manually.
-
-## How It Works
-
-- The marketplace UI fetches `index.json` to populate browse and search results.
-- `curated-defaults.json` determines which skills appear pre-selected for new users.
-- `featured.json` drives the featured section at the top of the marketplace.
-- `stats.json` provides download/usage counts (populated by CI).
-- Plugin install is handled by the app (PluginInstaller) -- not this repo.
