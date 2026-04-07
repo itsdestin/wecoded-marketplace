@@ -10,6 +10,7 @@ Create custom themes with colors, wallpapers, particle effects, and mascot chara
 |-------|--------|------|----------|
 | Golden Sunbreak | itsdestin | Dark | wallpaper, particles, glassmorphism, custom-icons, mascot |
 | Kitty Pink Classic | claude | Light | pattern |
+| Halftone Dimension | claude | Dark | gradient-bg, glassmorphism, particles, scanlines, custom-icons, mascot, custom-scrollbar |
 
 ## Creating a Theme
 
