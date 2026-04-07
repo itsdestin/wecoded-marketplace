@@ -1,0 +1,24 @@
+{
+  "name": "destinclaude-themes-repo",
+  "version": "1.0.0",
+  "description": "Community theme registry for [DestinCode](https://github.com/itsdestin/destinclaude).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsdestin/destinclaude-themes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/itsdestin/destinclaude-themes/issues"
+  },
+  "homepage": "https://github.com/itsdestin/destinclaude-themes#readme",
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

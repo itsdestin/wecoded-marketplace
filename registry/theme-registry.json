@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-07T03:17:28.795968+00:00",
+  "generatedAt": "2026-04-07T03:25:42.667744+00:00",
   "themes": [
     {
       "slug": "golden-sunbreak",
@@ -8,6 +8,7 @@
       "author": "itsdestin",
       "dark": true,
       "description": "Weathering With You — Tokyo bathed in god-ray light. Deep violet-black panels, warm amber gold, soft dust-mote particles.",
+      "preview": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/preview.png",
       "previewTokens": {
         "canvas": "#08080e",
         "panel": "#140e1a",
@@ -46,6 +47,7 @@
       "author": "claude",
       "dark": false,
       "description": "A soft pastel pink theme inspired by Hello Kitty. Pill-shaped chat bubbles, rounded corners, and a subtle repeating kitty silhouette pattern.",
+      "preview": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/preview.png",
       "previewTokens": {
         "canvas": "#F8E0EA",
         "panel": "#FFFFFF",

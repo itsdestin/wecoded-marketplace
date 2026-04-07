@@ -82,12 +82,21 @@ def build_registry():
             if k in tokens
         }
 
+        # Check for preview.png
+        preview_path = os.path.join(theme_dir, "preview.png")
+        preview_url = (
+            f"{REPO_BASE}/themes/{slug}/preview.png"
+            if os.path.isfile(preview_path)
+            else None
+        )
+
         entry = {
             "slug": slug,
             "name": manifest.get("name", slug),
             "author": author,
             "dark": manifest.get("dark", False),
             "description": manifest.get("description"),
+            "preview": preview_url,
             "previewTokens": preview_tokens if len(preview_tokens) >= 5 else None,
             "version": manifest.get("version", "1.0.0"),
             "created": manifest.get("created"),
