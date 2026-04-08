@@ -1,0 +1,396 @@
+{
+  "name": "destincode-marketplace",
+  "description": "DestinCode skills and plugins — productivity tools, personal knowledge management, and developer utilities",
+  "owner": {
+    "name": "DestinCode"
+  },
+  "plugins": [
+    {
+      "name": "code-review:code-review",
+      "description": "Review a pull request with specialized agents",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/code-review.git"
+      },
+      "homepage": "https://github.com/destinationunknown/code-review",
+      "prompt": "/code-review",
+      "displayName": "Code Review"
+    },
+    {
+      "name": "feature-dev:feature-dev",
+      "description": "Guided feature development with architecture focus",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/feature-dev.git"
+      },
+      "homepage": "https://github.com/destinationunknown/feature-dev",
+      "prompt": "/feature-dev",
+      "displayName": "Feature Dev"
+    },
+    {
+      "name": "commit-commands:commit",
+      "description": "Create a git commit with a well-crafted message",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/commit-commands.git"
+      },
+      "homepage": "https://github.com/destinationunknown/commit-commands",
+      "prompt": "/commit",
+      "displayName": "Commit"
+    },
+    {
+      "name": "commit-commands:commit-push-pr",
+      "description": "Commit, push, and open a pull request",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/commit-commands.git"
+      },
+      "homepage": "https://github.com/destinationunknown/commit-commands",
+      "prompt": "/commit-push-pr",
+      "displayName": "Commit & PR"
+    },
+    {
+      "name": "commit-commands:clean_gone",
+      "description": "Remove local branches deleted on remote",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/commit-commands.git"
+      },
+      "homepage": "https://github.com/destinationunknown/commit-commands",
+      "prompt": "/clean_gone",
+      "displayName": "Clean Branches"
+    },
+    {
+      "name": "frontend-design:frontend-design",
+      "description": "Build polished, distinctive frontend interfaces",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/frontend-design.git"
+      },
+      "homepage": "https://github.com/destinationunknown/frontend-design",
+      "prompt": "/frontend-design",
+      "displayName": "Frontend Design"
+    },
+    {
+      "name": "plugin-dev:create-plugin",
+      "description": "Guided end-to-end plugin creation workflow",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/plugin-dev.git"
+      },
+      "homepage": "https://github.com/destinationunknown/plugin-dev",
+      "prompt": "/create-plugin",
+      "displayName": "Create Plugin"
+    },
+    {
+      "name": "claude-md-management:revise-claude-md",
+      "description": "Update CLAUDE.md with learnings from this session",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/claude-md-management.git"
+      },
+      "homepage": "https://github.com/destinationunknown/claude-md-management",
+      "prompt": "/revise-claude-md",
+      "displayName": "Revise CLAUDE.md"
+    },
+    {
+      "name": "claude-md-management:claude-md-improver",
+      "description": "Scan and improve CLAUDE.md files across repos",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/claude-md-management.git"
+      },
+      "homepage": "https://github.com/destinationunknown/claude-md-management",
+      "prompt": "/claude-md-improver",
+      "displayName": "Audit CLAUDE.md"
+    },
+    {
+      "name": "skill-creator:skill-creator",
+      "description": "Create, modify, eval, and benchmark skills",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "admin",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/skill-creator.git"
+      },
+      "homepage": "https://github.com/destinationunknown/skill-creator",
+      "prompt": "/skill-creator",
+      "displayName": "Skill Creator"
+    },
+    {
+      "name": "simplify",
+      "description": "Review changed code for reuse, quality, and efficiency",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/simplify.git"
+      },
+      "homepage": "https://github.com/destinationunknown/simplify",
+      "prompt": "/simplify",
+      "displayName": "Simplify Code"
+    },
+    {
+      "name": "hookify:hookify",
+      "description": "Create hooks to prevent unwanted behaviors",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/hookify.git"
+      },
+      "homepage": "https://github.com/destinationunknown/hookify",
+      "prompt": "/hookify",
+      "displayName": "Create Hook Rule"
+    },
+    {
+      "name": "firecrawl:firecrawl-cli",
+      "description": "Search the web, scrape pages, and research topics",
+      "author": {
+        "name": "@destin"
+      },
+      "category": "work",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/destinationunknown/firecrawl.git"
+      },
+      "homepage": "https://github.com/destinationunknown/firecrawl",
+      "prompt": "search the web for",
+      "displayName": "Web Search"
+    },
+    {
+      "name": "journaling-assistant",
+      "description": "Write about your day in a guided conversation",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "let's journal",
+      "displayName": "Journal"
+    },
+    {
+      "name": "claudes-inbox",
+      "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "check my inbox",
+      "displayName": "Inbox"
+    },
+    {
+      "name": "encyclopedia-librarian",
+      "description": "Get a briefing or deep-search your journal and encyclopedia",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "brief me on",
+      "displayName": "Briefing"
+    },
+    {
+      "name": "encyclopedia-update",
+      "description": "Sync journal entries into your encyclopedia source files",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "update my encyclopedia",
+      "displayName": "Encyclopedia Update"
+    },
+    {
+      "name": "encyclopedia-compile",
+      "description": "Build the full Encyclopedia from source files",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "compile my encyclopedia",
+      "displayName": "Encyclopedia Compile"
+    },
+    {
+      "name": "encyclopedia-interviewer",
+      "description": "Fill gaps in your encyclopedia through guided questions",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "interview me",
+      "displayName": "Encyclopedia Interview"
+    },
+    {
+      "name": "fork-file",
+      "description": "Track groceries, pantry inventory, and fast food spending",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "type": "prompt",
+      "prompt": "check my food inventory",
+      "displayName": "Food Tracker"
+    },
+    {
+      "name": "google-drive",
+      "description": "Upload, download, and manage files on Google Drive",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "work",
+      "type": "prompt",
+      "prompt": "/google-drive",
+      "displayName": "Google Drive"
+    },
+    {
+      "name": "google-workspace",
+      "description": "Slides, Sheets, Gmail, Calendar, and Docs via API",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "work",
+      "type": "prompt",
+      "prompt": "/google-workspace",
+      "displayName": "Google Workspace"
+    },
+    {
+      "name": "skill-creator",
+      "description": "Create a new skill from a workflow you describe",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "I want to teach you a new workflow â€” use the skill creator to ask me questions and build a skill for it",
+      "displayName": "Teach Workflow"
+    },
+    {
+      "name": "sync",
+      "description": "Check project sync status and onboard new projects",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/sync",
+      "displayName": "Sync"
+    },
+    {
+      "name": "update",
+      "description": "Check for toolkit updates and install the latest version",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/update",
+      "displayName": "Update"
+    },
+    {
+      "name": "health",
+      "description": "Verify all toolkit components are working",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/health",
+      "displayName": "Health Check"
+    },
+    {
+      "name": "setup-wizard",
+      "description": "Install dependencies and configure the toolkit",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/setup-wizard",
+      "displayName": "Setup Wizard"
+    },
+    {
+      "name": "toolkit",
+      "description": "See all features, commands, and useful phrases",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/toolkit",
+      "displayName": "Toolkit Overview"
+    },
+    {
+      "name": "remote-setup",
+      "description": "Set up remote access -- installs Tailscale, configures your password, and gets your phone connected",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "admin",
+      "type": "prompt",
+      "prompt": "/remote-setup",
+      "displayName": "Remote Setup"
+    }
+  ]
+}
