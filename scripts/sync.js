@@ -76,14 +76,21 @@ function parseSource(upstream) {
     return { sourceType: "local", sourceRef: src };
   }
   if (src && src.source === "url") {
-    return { sourceType: "url", sourceRef: src.url };
+    // Preserve upstream SHA for future update detection
+    const result = { sourceType: "url", sourceRef: src.url };
+    if (src.sha) result.sourceSha = src.sha;
+    return result;
   }
   if (src && src.source === "git-subdir") {
-    return {
+    // Preserve upstream SHA and ref (branch) for future update detection
+    const result = {
       sourceType: "git-subdir",
       sourceRef: src.url.startsWith("http") ? src.url : `https://github.com/${src.url}.git`,
       sourceSubdir: src.path,
     };
+    if (src.sha) result.sourceSha = src.sha;
+    if (src.ref) result.sourceGitRef = src.ref;
+    return result;
   }
   if (src && src.source === "github") {
     return { sourceType: "url", sourceRef: `https://github.com/${src.repo}.git` };
