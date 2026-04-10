@@ -31,8 +31,10 @@ jobs:
           echo "Found changed plugins: $PLUGINS"
 
       - name: Validate plugin.json exists with required fields
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
         run: |
-          for id in ${{ steps.changed.outputs.plugins }}; do
+          for id in $PLUGINS; do
             PLUGIN_DIR="plugins/$id"
             if [ ! -d "$PLUGIN_DIR" ]; then
               echo "::error::Plugin directory '$PLUGIN_DIR' does not exist"
@@ -50,19 +52,21 @@ jobs:
               exit 1
             fi
 
-            # Validate JSON syntax and required fields
+            # Validate JSON syntax and required fields — pass path via env, not shell interpolation
+            export PLUGIN_JSON
             python3 -c "
-          import json, sys
+          import json, sys, os
+          pj = os.environ['PLUGIN_JSON']
           try:
-              m = json.load(open('$PLUGIN_JSON'))
+              m = json.load(open(pj))
           except json.JSONDecodeError as e:
-              print(f'::error::Invalid JSON in $PLUGIN_JSON: {e}')
+              print(f'::error::Invalid JSON in {pj}: {e}')
               sys.exit(1)
 
           required = ['name', 'description']
           missing = [f for f in required if f not in m or not m[f]]
           if missing:
-              print(f'::error::$PLUGIN_JSON missing required fields: {missing}')
+              print(f'::error::{pj} missing required fields: {missing}')
               sys.exit(1)
 
           print(f'OK: {m[\"name\"]} — plugin.json valid')
@@ -70,9 +74,11 @@ jobs:
           done
 
       - name: Check for sensitive files
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
         run: |
           FOUND_SECRETS=0
-          for id in ${{ steps.changed.outputs.plugins }}; do
+          for id in $PLUGINS; do
             PLUGIN_DIR="plugins/$id"
 
             # Check for .env files
@@ -110,8 +116,10 @@ jobs:
           echo "OK: No sensitive files detected"
 
       - name: Check total size
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
         run: |
-          for id in ${{ steps.changed.outputs.plugins }}; do
+          for id in $PLUGINS; do
             PLUGIN_DIR="plugins/$id"
             SIZE=$(du -sb "$PLUGIN_DIR" | cut -f1)
             MAX=$((50 * 1024 * 1024))  # 50 MB
@@ -123,16 +131,20 @@ jobs:
           done
 
       - name: Check plugin ID uniqueness
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
         run: |
-          for id in ${{ steps.changed.outputs.plugins }}; do
+          for id in $PLUGINS; do
             # Check against marketplace.json (DestinCode entries)
+            export PLUGIN_ID="$id"
             if python3 -c "
-          import json, sys
+          import json, sys, os
+          pid = os.environ['PLUGIN_ID']
           try:
               data = json.load(open('marketplace.json'))
               names = [p.get('name', '').split(':')[0] for p in data.get('plugins', [])]
-              if '$id' in names:
-                  print(f'::error::Plugin ID \"$id\" already exists in marketplace.json')
+              if pid in names:
+                  print(f'::error::Plugin ID \"{pid}\" already exists in marketplace.json')
                   sys.exit(1)
           except FileNotFoundError:
               pass  # No marketplace.json yet — OK
@@ -143,16 +155,19 @@ jobs:
             fi
 
             # Check against skills/index.json (includes Anthropic imports)
+            # Fix: parse .entries from the wrapper object, not the root dict
             if python3 -c "
-          import json, sys
+          import json, sys, os
+          pid = os.environ['PLUGIN_ID']
           try:
-              entries = json.load(open('skills/index.json'))
+              data = json.load(open('skills/index.json'))
+              entries = data.get('entries', []) if isinstance(data, dict) else data
               ids = [e.get('id', '') for e in entries]
-              if '$id' in ids:
+              if pid in ids:
                   # Allow if sourceMarketplace is 'community' (re-submission)
-                  entry = next((e for e in entries if e.get('id') == '$id'), None)
+                  entry = next((e for e in entries if e.get('id') == pid), None)
                   if entry and entry.get('sourceMarketplace') != 'community':
-                      print(f'::error::Plugin ID \"$id\" conflicts with existing entry in skills/index.json')
+                      print(f'::error::Plugin ID \"{pid}\" conflicts with existing entry in skills/index.json')
                       sys.exit(1)
           except FileNotFoundError:
               pass  # No index.json yet — OK
@@ -189,6 +204,8 @@ jobs:
           echo "Merged plugins: $PLUGINS"
 
       - name: Auto-add entries to marketplace.json
+        env:
+          MERGED_PLUGINS: ${{ steps.merged.outputs.plugins }}
         run: |
           python3 -c "
           import json, os, sys
@@ -198,7 +215,7 @@ jobs:
           plugins = data.get('plugins', [])
           existing_names = {p.get('name', '').split(':')[0] for p in plugins}
 
-          merged_ids = '${{ steps.merged.outputs.plugins }}'.split()
+          merged_ids = os.environ.get('MERGED_PLUGINS', '').split()
           added = 0
 
           for pid in merged_ids:

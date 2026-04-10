@@ -205,7 +205,7 @@ function mapEntry(upstream, sourceMarketplace, ownerName, isPrompt) {
 function hasChanges(oldEntry, newEntry) {
   // Fields that indicate real content changes
   const compareKeys = [
-    "description", "category", "author", "displayName",
+    "description", "category", "author", "displayName", "type", "authorGithub",
     "sourceType", "sourceRef", "sourceSubdir", "sourceSha", "sourceGitRef",
     "repoUrl", "prompt", "tags",
   ];
@@ -266,7 +266,7 @@ async function main() {
   const localEntries = [];
   for (const upstream of (localMarketplace.plugins || [])) {
     const isPrompt = upstream.type === "prompt";
-    const entry = mapEntry(upstream, "destincode", localMarketplace.owner?.name || "DestinCode", isPrompt);
+    const entry = mapEntry(upstream, "destinclaude", localMarketplace.owner?.name || "DestinCode", isPrompt);
 
     // For local-source plugins, compute content hash if flag is set
     if (computeLocalHash && !isPrompt && entry.sourceType === "local") {
@@ -447,6 +447,16 @@ async function main() {
   } else {
     fs.writeFileSync(SKILLS_INDEX_PATH, newContent);
     console.log(`\nWritten ${finalEntries.length} entries to skills/index.json`);
+  }
+
+  // Also regenerate root index.json (raw entries array) for backward compat.
+  // Both desktop skill-provider.ts and Android MarketplaceFetcher.kt fetch this.
+  const rootIndexPath = path.join(__dirname, "..", "index.json");
+  const rootContent = JSON.stringify(finalEntries, null, 2) + "\n";
+  const prevRoot = fs.existsSync(rootIndexPath) ? fs.readFileSync(rootIndexPath, "utf8") : null;
+  if (prevRoot !== rootContent) {
+    fs.writeFileSync(rootIndexPath, rootContent);
+    console.log(`Written ${finalEntries.length} entries to root index.json`);
   }
 
   // Summary
