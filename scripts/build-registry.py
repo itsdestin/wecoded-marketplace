@@ -42,18 +42,42 @@ def detect_features(manifest: dict) -> list[str]:
     return features
 
 
-def collect_asset_urls(slug: str, theme_dir: str) -> dict[str, str]:
-    """Walk the assets/ directory and build URL map."""
-    asset_urls = {}
-    assets_dir = os.path.join(theme_dir, "assets")
-    if not os.path.isdir(assets_dir):
-        return asset_urls
+def extract_manifest_assets(manifest: dict) -> set[str]:
+    """Extract all asset paths referenced in the manifest."""
+    # Collect every value that looks like a relative asset path (assets/...)
+    refs = set()
 
-    for root, _, files in os.walk(assets_dir):
-        for fname in files:
-            abs_path = os.path.join(root, fname)
-            rel_path = os.path.relpath(abs_path, theme_dir).replace("\\", "/")
+    def walk(obj):
+        if isinstance(obj, str) and obj.startswith("assets/"):
+            refs.add(obj)
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v)
+
+    walk(manifest)
+    return refs
+
+
+def collect_asset_urls(slug: str, theme_dir: str, manifest: dict) -> dict[str, str]:
+    """Build URL map for assets that the manifest actually references.
+
+    Only includes files that (a) are referenced in the manifest and
+    (b) exist on disk. Warns on mismatches so broken themes are caught
+    during registry builds rather than at download time.
+    """
+    referenced = extract_manifest_assets(manifest)
+    asset_urls = {}
+
+    for rel_path in sorted(referenced):
+        abs_path = os.path.join(theme_dir, rel_path)
+        if os.path.isfile(abs_path):
             asset_urls[rel_path] = f"{REPO_BASE}/themes/{slug}/{rel_path}"
+        else:
+            # Manifest references a file that doesn't exist — flag it
+            print(f"  ⚠ {slug}: manifest references '{rel_path}' but file is missing")
 
     return asset_urls
 
@@ -104,7 +128,7 @@ def build_registry():
             "source": source,
             "features": detect_features(manifest),
             "manifestUrl": f"{REPO_BASE}/themes/{slug}/manifest.json",
-            "assetUrls": collect_asset_urls(slug, theme_dir),
+            "assetUrls": collect_asset_urls(slug, theme_dir, manifest),
         }
 
         themes.append(entry)

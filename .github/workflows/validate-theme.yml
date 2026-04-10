@@ -66,6 +66,42 @@ jobs:
           "
           done
 
+      - name: Check manifest asset references exist
+        run: |
+          for slug in ${{ steps.changed.outputs.themes }}; do
+            MANIFEST="themes/$slug/manifest.json"
+            if [ ! -f "$MANIFEST" ]; then continue; fi
+
+            # Extract all string values starting with "assets/" from the manifest
+            # and verify each file exists on disk
+            python3 -c "
+          import json, sys, os
+          m = json.load(open('$MANIFEST'))
+
+          def walk(obj):
+              if isinstance(obj, str) and obj.startswith('assets/'):
+                  yield obj
+              elif isinstance(obj, dict):
+                  for v in obj.values():
+                      yield from walk(v)
+              elif isinstance(obj, list):
+                  for v in obj:
+                      yield from walk(v)
+
+          missing = []
+          for ref in sorted(set(walk(m))):
+              path = os.path.join('themes/$slug', ref)
+              if not os.path.isfile(path):
+                  missing.append(ref)
+
+          if missing:
+              for f in missing:
+                  print(f'::error::Theme $slug manifest references missing asset: {f}')
+              sys.exit(1)
+          print(f'✓ $slug — all manifest asset references exist')
+          "
+          done
+
       - name: Check asset sizes
         run: |
           for slug in ${{ steps.changed.outputs.themes }}; do
