@@ -1,8 +1,14 @@
 {
-  "featured": [
+  "skills": [
     {
       "id": "code-review:code-review",
       "tagline": "AI-powered PR analysis with specialized review agents"
+    }
+  ],
+  "themes": [
+    {
+      "slug": "golden-sunbreak",
+      "tagline": "Weathering With You — Tokyo bathed in god-ray light"
     }
   ]
 }

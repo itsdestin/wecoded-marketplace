@@ -1,5 +1,5 @@
 {
-  "defaults": [
+  "skills": [
     "journaling-assistant",
     "claudes-inbox",
     "encyclopedia-librarian",
@@ -8,5 +8,8 @@
     "frontend-design:frontend-design",
     "google-drive",
     "google-workspace"
+  ],
+  "themes": [
+    "golden-sunbreak"
   ]
 }

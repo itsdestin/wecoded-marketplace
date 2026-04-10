@@ -1,0 +1,278 @@
+# Phase 4b: CI validation for community plugin PRs.
+# Validates structure, security, and uniqueness on PR; auto-rebuilds
+# marketplace.json and skills/index.json on merge to main.
+# Modeled after destinclaude-themes validate-theme.yml / update-registry.yml.
+
+name: Validate Plugin PR
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/**'
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+
+jobs:
+  # ── Validation (runs on PRs) ───────────────────────────────────────────────
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find changed plugin directories
+        id: changed
+        run: |
+          PLUGINS=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} \
+            | grep '^plugins/' | cut -d'/' -f2 | sort -u)
+          echo "plugins=$PLUGINS" >> $GITHUB_OUTPUT
+          echo "Found changed plugins: $PLUGINS"
+
+      - name: Validate plugin.json exists with required fields
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
+        run: |
+          for id in $PLUGINS; do
+            PLUGIN_DIR="plugins/$id"
+            if [ ! -d "$PLUGIN_DIR" ]; then
+              echo "::error::Plugin directory '$PLUGIN_DIR' does not exist"
+              exit 1
+            fi
+
+            # Check for plugin.json in either location
+            PLUGIN_JSON=""
+            if [ -f "$PLUGIN_DIR/.claude-plugin/plugin.json" ]; then
+              PLUGIN_JSON="$PLUGIN_DIR/.claude-plugin/plugin.json"
+            elif [ -f "$PLUGIN_DIR/plugin.json" ]; then
+              PLUGIN_JSON="$PLUGIN_DIR/plugin.json"
+            else
+              echo "::error::Missing plugin.json for plugin '$id' (checked .claude-plugin/plugin.json and plugin.json)"
+              exit 1
+            fi
+
+            # Validate JSON syntax and required fields — pass path via env, not shell interpolation
+            export PLUGIN_JSON
+            python3 -c "
+          import json, sys, os
+          pj = os.environ['PLUGIN_JSON']
+          try:
+              m = json.load(open(pj))
+          except json.JSONDecodeError as e:
+              print(f'::error::Invalid JSON in {pj}: {e}')
+              sys.exit(1)
+
+          required = ['name', 'description']
+          missing = [f for f in required if f not in m or not m[f]]
+          if missing:
+              print(f'::error::{pj} missing required fields: {missing}')
+              sys.exit(1)
+
+          print(f'OK: {m[\"name\"]} — plugin.json valid')
+          "
+          done
+
+      - name: Check for sensitive files
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
+        run: |
+          FOUND_SECRETS=0
+          for id in $PLUGINS; do
+            PLUGIN_DIR="plugins/$id"
+
+            # Check for .env files
+            if find "$PLUGIN_DIR" -name '.env' -o -name '.env.*' | grep -q .; then
+              echo "::error::Plugin '$id' contains .env files — remove before submitting"
+              FOUND_SECRETS=1
+            fi
+
+            # Check for common secret file patterns
+            if find "$PLUGIN_DIR" \
+                -name 'credentials.json' -o \
+                -name 'secrets.json' -o -name 'secrets.yaml' -o -name 'secrets.yml' -o \
+                -name 'secret.json' -o -name 'secret.yaml' -o -name 'secret.yml' -o \
+                -name '*.pem' -o -name '*.key' -o \
+                -name 'tokens.json' -o -name 'token.json' -o -name 'token.txt' \
+                | grep -q .; then
+              echo "::error::Plugin '$id' contains files matching secret patterns"
+              FOUND_SECRETS=1
+            fi
+
+            # Scan file contents for hardcoded API keys/tokens (common patterns)
+            if grep -rl \
+                -e 'sk-[a-zA-Z0-9]\{20,\}' \
+                -e 'AKIA[A-Z0-9]\{16\}' \
+                -e 'ghp_[a-zA-Z0-9]\{36\}' \
+                -e 'gho_[a-zA-Z0-9]\{36\}' \
+                "$PLUGIN_DIR" 2>/dev/null | head -3; then
+              echo "::warning::Plugin '$id' may contain hardcoded API keys — please review"
+            fi
+          done
+
+          if [ "$FOUND_SECRETS" -eq 1 ]; then
+            exit 1
+          fi
+          echo "OK: No sensitive files detected"
+
+      - name: Check total size
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
+        run: |
+          for id in $PLUGINS; do
+            PLUGIN_DIR="plugins/$id"
+            SIZE=$(du -sb "$PLUGIN_DIR" | cut -f1)
+            MAX=$((50 * 1024 * 1024))  # 50 MB
+            if [ "$SIZE" -gt "$MAX" ]; then
+              echo "::error::Plugin '$id' exceeds 50MB limit (${SIZE} bytes)"
+              exit 1
+            fi
+            echo "OK: $id — ${SIZE} bytes (limit: ${MAX})"
+          done
+
+      - name: Check plugin ID uniqueness
+        env:
+          PLUGINS: ${{ steps.changed.outputs.plugins }}
+        run: |
+          for id in $PLUGINS; do
+            # Check against marketplace.json (DestinCode entries)
+            export PLUGIN_ID="$id"
+            if python3 -c "
+          import json, sys, os
+          pid = os.environ['PLUGIN_ID']
+          try:
+              data = json.load(open('marketplace.json'))
+              names = [p.get('name', '').split(':')[0] for p in data.get('plugins', [])]
+              if pid in names:
+                  print(f'::error::Plugin ID \"{pid}\" already exists in marketplace.json')
+                  sys.exit(1)
+          except FileNotFoundError:
+              pass  # No marketplace.json yet — OK
+          "; then
+              echo "OK: '$id' not in marketplace.json"
+            else
+              exit 1
+            fi
+
+            # Check against skills/index.json (includes Anthropic imports)
+            # Fix: parse .entries from the wrapper object, not the root dict
+            if python3 -c "
+          import json, sys, os
+          pid = os.environ['PLUGIN_ID']
+          try:
+              data = json.load(open('skills/index.json'))
+              entries = data.get('entries', []) if isinstance(data, dict) else data
+              ids = [e.get('id', '') for e in entries]
+              if pid in ids:
+                  # Allow if sourceMarketplace is 'community' (re-submission)
+                  entry = next((e for e in entries if e.get('id') == pid), None)
+                  if entry and entry.get('sourceMarketplace') != 'community':
+                      print(f'::error::Plugin ID \"{pid}\" conflicts with existing entry in skills/index.json')
+                      sys.exit(1)
+          except FileNotFoundError:
+              pass  # No index.json yet — OK
+          "; then
+              echo "OK: '$id' not conflicting in skills/index.json"
+            else
+              exit 1
+            fi
+          done
+
+  # ── Auto-rebuild on merge (runs on push to main) ──────────────────────────
+  rebuild:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect changes
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Find merged plugin directories
+        id: merged
+        run: |
+          PLUGINS=$(git diff --name-only HEAD~1 HEAD \
+            | grep '^plugins/' | cut -d'/' -f2 | sort -u)
+          echo "plugins=$PLUGINS" >> $GITHUB_OUTPUT
+          echo "Merged plugins: $PLUGINS"
+
+      - name: Auto-add entries to marketplace.json
+        env:
+          MERGED_PLUGINS: ${{ steps.merged.outputs.plugins }}
+        run: |
+          python3 -c "
+          import json, os, sys
+
+          mp_path = 'marketplace.json'
+          data = json.load(open(mp_path))
+          plugins = data.get('plugins', [])
+          existing_names = {p.get('name', '').split(':')[0] for p in plugins}
+
+          merged_ids = os.environ.get('MERGED_PLUGINS', '').split()
+          added = 0
+
+          for pid in merged_ids:
+              if not pid.strip():
+                  continue
+              if pid in existing_names:
+                  print(f'  SKIP: {pid} already in marketplace.json')
+                  continue
+
+              # Read plugin.json from the merged directory
+              pj_path = f'plugins/{pid}/.claude-plugin/plugin.json'
+              if not os.path.exists(pj_path):
+                  pj_path = f'plugins/{pid}/plugin.json'
+              if not os.path.exists(pj_path):
+                  print(f'  WARN: No plugin.json for {pid} — skipping')
+                  continue
+
+              pj = json.load(open(pj_path))
+
+              # Build marketplace entry with sourceMarketplace: community
+              entry = {
+                  'name': pj.get('name', pid),
+                  'description': pj.get('description', ''),
+                  'author': {'name': pj.get('author', 'community')},
+                  'category': pj.get('category', 'other'),
+                  'source': {
+                      'source': 'local',
+                      'path': f'plugins/{pid}'
+                  },
+                  'sourceMarketplace': 'community',
+                  'displayName': pj.get('displayName', pj.get('name', pid))
+              }
+              plugins.append(entry)
+              added += 1
+              print(f'  ADD: {pid} -> marketplace.json (community)')
+
+          if added > 0:
+              data['plugins'] = plugins
+              with open(mp_path, 'w') as f:
+                  json.dump(data, f, indent=2, ensure_ascii=False)
+                  f.write('\n')
+              print(f'Added {added} new plugin(s) to marketplace.json')
+          else:
+              print('No new plugins to add')
+          "
+
+      - name: Rebuild skills/index.json
+        run: node scripts/sync.js
+
+      - name: Commit updated marketplace files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marketplace.json skills/index.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: auto-add community plugin(s) and rebuild index [skip ci]"
+            git push
+          fi
