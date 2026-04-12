@@ -1,0 +1,22 @@
+{
+  "name": "destinclaude-encyclopedia",
+  "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["destinclaude"],
+  "provides": {
+    "encyclopedia-update": {
+      "description": "Writes facts and observations to the user's personal encyclopedia",
+      "skill": "encyclopedia-update"
+    },
+    "encyclopedia-query": {
+      "description": "Reads and compiles info from the user's personal encyclopedia",
+      "skill": "encyclopedia-librarian"
+    },
+    "journaling": {
+      "description": "Daily journaling with encyclopedia integration",
+      "skill": "journaling-assistant"
+    }
+  }
+}

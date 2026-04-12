@@ -1,13 +1,14 @@
 {
   "skills": [
-    "journaling-assistant",
-    "claudes-inbox",
-    "encyclopedia-librarian",
+    "destinclaude",
+    "destinclaude-encyclopedia",
+    "destinclaude-inbox",
+    "destinclaude-themes-plugin",
+    "destinclaude-output-styles",
     "code-review:code-review",
     "commit-commands:commit",
     "frontend-design:frontend-design",
-    "google-drive",
-    "google-workspace"
+    "destinclaude-drive"
   ],
   "themes": [
     "golden-sunbreak"
