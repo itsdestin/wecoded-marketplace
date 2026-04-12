@@ -1,0 +1,74 @@
+{
+  "name": "Kuromi Dreamer",
+  "slug": "kuromi-dreamer",
+  "dark": false,
+  "author": "claude",
+  "created": "2026-04-12",
+  "description": "Darker purple Hello Kitty x Kuromi crossover — lavender dusk, floating chrome, pill bubbles, dust drift over a pastel gothic wallpaper.",
+  "tokens": {
+    "canvas": "#C9B8E0",
+    "panel": "#D4C5E6",
+    "inset": "#EFE3F6",
+    "well": "#B5A2CE",
+    "accent": "#8158ad",
+    "on-accent": "#FFFFFF",
+    "fg": "#1A0F28",
+    "fg-2": "#3A2850",
+    "fg-dim": "#5C4476",
+    "fg-muted": "#7E6899",
+    "fg-faint": "#A896C2",
+    "edge": "#8466A8",
+    "edge-dim": "#8466A880",
+    "scrollbar-thumb": "#6E3FA0",
+    "scrollbar-hover": "#562E80"
+  },
+  "shape": {
+    "radius": "18px",
+    "radius-sm": "16px",
+    "radius-md": "26px",
+    "radius-lg": "32px",
+    "radius-full": "9999px"
+  },
+  "font": {
+    "family": "'Comfortaa', 'Cascadia Mono', monospace",
+    "google-font-url": "https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap"
+  },
+  "background": {
+    "type": "image",
+    "value": "theme-asset://kuromi-dreamer/assets/wallpaper.webp",
+    "terminal-value": "theme-asset://kuromi-dreamer/assets/wallpaper-terminal.webp",
+    "opacity": 1,
+    "panels-blur": 18,
+    "panels-opacity": 0.74,
+    "bubble-blur": 14,
+    "bubble-opacity": 0.78,
+    "pattern": "theme-asset://kuromi-dreamer/assets/pattern.svg",
+    "pattern-opacity": 0.06
+  },
+  "layout": {
+    "chrome-style": "floating",
+    "input-style": "floating",
+    "bubble-style": "pill",
+    "header-style": "default",
+    "statusbar-style": "default"
+  },
+  "effects": {
+    "particles": "dust",
+    "particle-count": 24,
+    "particle-speed": 0.3,
+    "particle-drift": 0.3,
+    "particle-size-range": [
+      3,
+      8
+    ],
+    "vignette": 0.14,
+    "noise": 0
+  },
+  "mascot": {
+    "idle": "theme-asset://kuromi-dreamer/assets/mascot-idle.svg",
+    "welcome": "theme-asset://kuromi-dreamer/assets/mascot-welcome.svg",
+    "shocked": "theme-asset://kuromi-dreamer/assets/mascot-shocked.svg",
+    "dizzy": "theme-asset://kuromi-dreamer/assets/mascot-dizzy.svg"
+  },
+  "custom_css": "::selection { background: rgba(110,63,160,0.32); color: #FFFFFF; }\nbody::after { content: ''; position: fixed; inset: 0; background-image: url('theme-asset://kuromi-dreamer/assets/pattern.svg'); background-size: 40px 40px; background-repeat: repeat; opacity: 0.06; pointer-events: none; z-index: 0; }"
+}
