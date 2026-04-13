@@ -42,32 +42,6 @@
       }
     },
     {
-      "slug": "kitty-pink-classic",
-      "name": "Kitty Pink Classic",
-      "author": "claude",
-      "dark": false,
-      "description": "A soft pastel pink theme inspired by Hello Kitty. Pill-shaped chat bubbles, rounded corners, and a subtle repeating kitty silhouette pattern.",
-      "preview": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/preview.png",
-      "previewTokens": {
-        "canvas": "#F8E0EA",
-        "panel": "#FFFFFF",
-        "accent": "#FF69B4",
-        "on-accent": "#FFFFFF",
-        "fg": "#3B0A1F",
-        "fg-muted": "#9E6080",
-        "edge": "#F48FB1"
-      },
-      "version": "1.0.0",
-      "created": "2026-04-05",
-      "updated": "2026-04-07",
-      "source": "community",
-      "features": [],
-      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/manifest.json",
-      "assetUrls": {
-        "assets/kitty-pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/kitty-pink-classic/assets/kitty-pattern.svg"
-      }
-    },
-    {
       "slug": "halftone-dimension",
       "name": "Halftone Dimension",
       "author": "claude",
