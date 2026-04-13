@@ -1,0 +1,35 @@
+name = "destincode-marketplace-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "marketplace"
+database_id = "e31c0476-df4e-45aa-960e-24410879aca8"
+migrations_dir = "migrations"
+
+[ai]
+binding = "AI"
+
+[env.test]
+# Test environment inherits config but omits AI binding — vitest-pool-workers /
+# miniflare in this toolchain version can't resolve the wrapped AI worker.
+[[env.test.d1_databases]]
+binding = "DB"
+database_name = "marketplace"
+database_id = "e31c0476-df4e-45aa-960e-24410879aca8"
+migrations_dir = "migrations"
+
+[env.test.vars]
+GH_CLIENT_ID = "test"
+GH_CLIENT_SECRET = "test"
+ADMIN_USER_IDS = "github:admin"
+
+[vars]
+GH_CLIENT_ID = "set-via-secret-in-prod"
+# GH_CLIENT_SECRET set via `wrangler secret put GH_CLIENT_SECRET`
+# ADMIN_USER_IDS comma-separated list set via secret
+
+[observability]
+enabled = true
