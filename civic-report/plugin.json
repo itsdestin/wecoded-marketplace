@@ -1,0 +1,10 @@
+{
+  "name": "civic-report",
+  "version": "0.1.0",
+  "description": "Generate a source-linked report on your federal representatives from your address, personalized by angle/tone/depth.",
+  "author": {
+    "name": "@destin"
+  },
+  "homepage": "https://github.com/itsdestin/destincode-marketplace/tree/master/civic-report",
+  "keywords": ["civic", "politics", "representatives", "voting", "research"]
+}

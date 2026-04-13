@@ -1,6 +1,6 @@
 {
   "name": "destincode-marketplace",
-  "description": "DestinCode skills and plugins — productivity tools, personal knowledge management, and developer utilities",
+  "description": "DestinCode skills and plugins ï¿½ productivity tools, personal knowledge management, and developer utilities",
   "owner": {
     "name": "DestinCode"
   },
@@ -109,6 +109,21 @@
       "homepage": "https://github.com/destinationunknown/plugin-dev",
       "prompt": "/create-plugin",
       "displayName": "Create Plugin"
+    },
+    {
+      "name": "civic-report",
+      "displayName": "Civic Report",
+      "description": "Generate a source-linked report on your federal representatives from your address, personalized by angle/tone/depth.",
+      "author": {
+        "name": "@destin",
+        "github": "itsdestin"
+      },
+      "category": "personal",
+      "source": {
+        "source": "local",
+        "path": "civic-report"
+      },
+      "prompt": "/civic-report"
     },
     {
       "name": "claude-md-management:revise-claude-md",

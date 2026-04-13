@@ -1,0 +1,58 @@
+[
+  {
+    "id": { "bioguide": "S000001", "govtrack": 400001, "fec": ["S1DC00001"], "opensecrets": "N00099991", "wikipedia": "Jane Senator", "ballotpedia": "Jane Senator" },
+    "name": { "official_full": "Jane Senator", "first": "Jane", "last": "Senator" },
+    "terms": [
+      {
+        "type": "sen",
+        "state": "DC",
+        "class": 1,
+        "party": "Democrat",
+        "start": "2021-01-03",
+        "end": "2027-01-03"
+      }
+    ]
+  },
+  {
+    "id": { "bioguide": "S000002" },
+    "name": { "official_full": "John Senator", "first": "John", "last": "Senator" },
+    "terms": [
+      {
+        "type": "sen",
+        "state": "DC",
+        "class": 2,
+        "party": "Republican",
+        "start": "2023-01-03",
+        "end": "2029-01-03"
+      }
+    ]
+  },
+  {
+    "id": { "bioguide": "R000001" },
+    "name": { "official_full": "Alex Rep", "first": "Alex", "last": "Rep" },
+    "terms": [
+      {
+        "type": "rep",
+        "state": "DC",
+        "district": 0,
+        "party": "Democrat",
+        "start": "2025-01-03",
+        "end": "2027-01-03"
+      }
+    ]
+  },
+  {
+    "id": { "bioguide": "R000002" },
+    "name": { "official_full": "Ca Rep", "first": "Ca", "last": "Rep" },
+    "terms": [
+      {
+        "type": "rep",
+        "state": "CA",
+        "district": 12,
+        "party": "Democrat",
+        "start": "2025-01-03",
+        "end": "2027-01-03"
+      }
+    ]
+  }
+]

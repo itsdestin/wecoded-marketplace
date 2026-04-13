@@ -1,0 +1,14 @@
+{
+  "objects": [
+    {
+      "vote": {
+        "id": 1,
+        "question": "H.R. 123",
+        "result": "Passed",
+        "created": "2026-03-01T00:00:00Z",
+        "category_label": "passage"
+      },
+      "option": { "value": "Yea" }
+    }
+  ]
+}
