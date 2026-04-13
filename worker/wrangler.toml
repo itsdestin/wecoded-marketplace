@@ -26,10 +26,10 @@ GH_CLIENT_ID = "test"
 GH_CLIENT_SECRET = "test"
 ADMIN_USER_IDS = "github:admin"
 
-[vars]
-GH_CLIENT_ID = "set-via-secret-in-prod"
-# GH_CLIENT_SECRET set via `wrangler secret put GH_CLIENT_SECRET`
-# ADMIN_USER_IDS comma-separated list set via secret
+# Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
+# are injected as secrets by CI (see .github/workflows/worker-deploy.yml).
+# Do NOT add them as [vars] here — a var with the same name as a secret wins
+# on deploy and silently clobbers the secret, breaking OAuth in prod.
 
 [observability]
 enabled = true
