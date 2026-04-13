@@ -6,6 +6,17 @@ import { hasInstall } from "../db";
 import { classifyReview, validateReviewText } from "./moderation";
 import { checkRateLimit } from "../lib/rate-limit";
 
+// Shape returned by GET /ratings/:plugin_id for a single review entry.
+interface RatingListEntry {
+  id: string;            // "<user_id>:<plugin_id>" — stable opaque key for React list rendering
+  user_id: string;
+  user_login: string;
+  user_avatar_url: string | null;
+  stars: number;
+  review_text: string | null;
+  created_at: number;   // unix seconds, matches the ratings table column
+}
+
 export const ratingRoutes = new Hono<HonoEnv>();
 
 // Submit or update a rating. Gated on the caller having previously installed
@@ -57,6 +68,58 @@ ratingRoutes.post("/ratings", requireAuth, async (c) => {
     .run();
 
   return c.json({ ok: true, hidden: hidden === 1 });
+});
+
+// Public listing of visible reviews for a plugin. No auth required — same as
+// GET /stats. Results are capped at 50 rows (newest first) to keep payloads
+// bounded; no pagination in v1. Hidden ratings (moderated out) are excluded.
+// Rate-limited by IP via Cache API (60 req/min) to deter scraping.
+ratingRoutes.get("/ratings/:plugin_id", async (c) => {
+  const pluginId = c.req.param("plugin_id");
+  if (!pluginId || pluginId.length > 128) throw badRequest("invalid plugin_id");
+
+  // Modest IP-based rate limit for a public read endpoint. The Cache API is
+  // per-colo so this prevents per-edge abuse, not perfect global throttling —
+  // acceptable for v1 (see PITFALLS: "Rate limits via the Cache API are per-colo").
+  const ip = c.req.raw.headers.get("CF-Connecting-IP") ?? "unknown";
+  if (!(await checkRateLimit(`ratings-list:${ip}`, 60, 60))) {
+    throw tooMany("too many requests");
+  }
+
+  // JOIN users so the React UI gets login + avatar in one round-trip.
+  // LIMIT 50: hardcoded cap, no pagination for v1.
+  const { results } = await c.env.DB
+    .prepare(
+      `SELECT r.user_id, u.github_login, u.github_avatar_url,
+              r.stars, r.review_text, r.created_at
+       FROM ratings r
+       JOIN users u ON u.id = r.user_id
+       WHERE r.plugin_id = ? AND r.hidden = 0
+       ORDER BY r.created_at DESC
+       LIMIT 50`
+    )
+    .bind(pluginId)
+    .all<{
+      user_id: string;
+      github_login: string;
+      github_avatar_url: string | null;
+      stars: number;
+      review_text: string | null;
+      created_at: number;
+    }>();
+
+  const ratings: RatingListEntry[] = results.map((row) => ({
+    // Stable composite key for React list rendering — no separate id column exists.
+    id: `${row.user_id}:${pluginId}`,
+    user_id: row.user_id,
+    user_login: row.github_login,
+    user_avatar_url: row.github_avatar_url,
+    stars: row.stars,
+    review_text: row.review_text,
+    created_at: row.created_at,
+  }));
+
+  return c.json({ ratings });
 });
 
 // Delete the caller's own rating for a plugin. Scoped by user_id so one user

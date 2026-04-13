@@ -44,6 +44,10 @@ echo "== GET /stats =="
 curl -sf "$HOST/stats" | python -m json.tool | head -40
 
 echo
+echo "== GET /ratings/:plugin_id =="
+curl -sS "$HOST/ratings/$(printf %s 'destinclaude:core' | jq -sRr @uri)" | jq .
+
+echo
 echo "== DELETE /ratings/smoke-test:hello =="
 curl -sf -X DELETE "$HOST/ratings/smoke-test:hello" \
   -H "Authorization: Bearer $TOKEN" | python -m json.tool
