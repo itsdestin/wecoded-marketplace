@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import type { HonoEnv } from "../types";
 import { requireAuth } from "../auth/middleware";
-import { badRequest, forbidden } from "../lib/errors";
+import { badRequest, forbidden, tooMany } from "../lib/errors";
 import { hasInstall } from "../db";
 import { classifyReview, validateReviewText } from "./moderation";
+import { checkRateLimit } from "../lib/rate-limit";
 
 export const ratingRoutes = new Hono<HonoEnv>();
 
@@ -11,6 +12,12 @@ export const ratingRoutes = new Hono<HonoEnv>();
 // the plugin (seen in the installs table) so ratings correspond to real use.
 // Review text is validated, and flagged reviews are stored with hidden=1.
 ratingRoutes.post("/ratings", requireAuth, async (c) => {
+  // Rate limit: cap casual abuse (bots/mass-review scripts) before we do any
+  // expensive work like moderation classification.
+  const userId = c.get("userId");
+  if (!(await checkRateLimit(`ratings:${userId}`, 30, 3600))) {
+    throw tooMany("too many ratings per hour");
+  }
   const body = await c.req.json<{ plugin_id?: string; stars?: number; review_text?: string | null }>();
   const pluginId = body.plugin_id?.trim();
   if (!pluginId || pluginId.length > 128) throw badRequest("invalid plugin_id");
@@ -26,7 +33,6 @@ ratingRoutes.post("/ratings", requireAuth, async (c) => {
     throw badRequest((e as Error).message);
   }
 
-  const userId = c.get("userId");
   const installed = await hasInstall(c.env.DB, userId, pluginId);
   if (!installed) throw forbidden("must install plugin before rating");
 

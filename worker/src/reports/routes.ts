@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import type { HonoEnv } from "../types";
 import { requireAuth } from "../auth/middleware";
-import { badRequest, forbidden, notFound } from "../lib/errors";
+import { badRequest, forbidden, notFound, tooMany } from "../lib/errors";
 import { randomToken } from "../lib/crypto";
+import { checkRateLimit } from "../lib/rate-limit";
 
 export const reportRoutes = new Hono<HonoEnv>();
 
@@ -15,10 +16,15 @@ function isAdmin(env: { ADMIN_USER_IDS: string }, userId: string): boolean {
 
 // POST /reports — any authed user flags a rating for moderation review
 reportRoutes.post("/reports", requireAuth, async (c) => {
+  // Rate limit: reports are cheap to submit but spammy reports waste mod time.
+  // 20/hour is enough for a legit moderation sweep, prevents report-bombing.
+  const reporter = c.get("userId");
+  if (!(await checkRateLimit(`reports:${reporter}`, 20, 3600))) {
+    throw tooMany("too many reports per hour");
+  }
   const body = await c.req.json<{ rating_user_id?: string; rating_plugin_id?: string; reason?: string }>();
   if (!body.rating_user_id || !body.rating_plugin_id) throw badRequest("missing fields");
   if (body.reason && body.reason.length > 500) throw badRequest("reason too long");
-  const reporter = c.get("userId");
   const id = randomToken(16);
   await c.env.DB
     .prepare(
