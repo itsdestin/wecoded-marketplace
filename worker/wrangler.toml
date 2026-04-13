@@ -1,0 +1,21 @@
+name = "destincode-marketplace-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "marketplace"
+database_id = "REPLACE_AFTER_DB_CREATE"
+migrations_dir = "migrations"
+
+[ai]
+binding = "AI"
+
+[vars]
+GH_CLIENT_ID = "set-via-secret-in-prod"
+# GH_CLIENT_SECRET set via `wrangler secret put GH_CLIENT_SECRET`
+# ADMIN_USER_IDS comma-separated list set via secret
+
+[observability]
+enabled = true
