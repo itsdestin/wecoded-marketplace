@@ -135,6 +135,11 @@ function parseSource(upstream) {
   if (typeof src === "string") {
     return { sourceType: "local", sourceRef: src };
   }
+  if (src && src.source === "local") {
+    // In-repo plugin — source lives at <repo>/<path>. Used by plugins bundled
+    // into the marketplace repo itself (see decomposition-v3 pattern).
+    return { sourceType: "local", sourceRef: src.path };
+  }
   if (src && src.source === "url") {
     // Preserve upstream SHA for future update detection
     const result = { sourceType: "url", sourceRef: src.url };

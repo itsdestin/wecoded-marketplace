@@ -1,5 +1,21 @@
 [
   {
+    "id": "civic-report",
+    "type": "plugin",
+    "displayName": "Civic Report",
+    "description": "Generate a source-linked report on your federal representatives from your address, personalized by angle/tone/depth.",
+    "category": "personal",
+    "author": "@destin",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "destinclaude",
+    "sourceType": "local",
+    "sourceRef": "civic-report",
+    "repoUrl": null,
+    "sourceSha": "ed6f81a8c08e"
+  },
+  {
     "id": "claude-md-management:claude-md-improver",
     "type": "plugin",
     "displayName": "Audit CLAUDE.md",
@@ -517,6 +533,22 @@
     "repoUrl": "https://github.com/awslabs/agent-plugins"
   },
   {
+    "id": "amplitude",
+    "type": "plugin",
+    "displayName": "Amplitude",
+    "description": "Use Amplitude as an expert analyst — instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
+    "category": "monitoring",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/amplitude/mcp-marketplace.git",
+    "sourceSha": "be54ccb66b10593721dd3a31e47b2db20ea02d2f",
+    "repoUrl": "https://github.com/amplitude/mcp-marketplace"
+  },
+  {
     "id": "asana",
     "type": "plugin",
     "displayName": "Asana",
@@ -626,6 +658,22 @@
     "sourceSubdir": "plugins/aws-serverless",
     "sourceGitRef": "main",
     "repoUrl": "https://github.com/awslabs/agent-plugins"
+  },
+  {
+    "id": "azure-cosmos-db-assistant",
+    "type": "plugin",
+    "displayName": "Azure Cosmos DB Assistant",
+    "description": "Expert assistant for Azure Cosmos DB — data modeling, query optimization, performance tuning, and best practices.",
+    "category": "database",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin.git",
+    "sourceSha": "56e6da0cae93cdee8bcfa5e624ecdd9a0a483181",
+    "repoUrl": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin"
   },
   {
     "id": "box",
@@ -750,6 +798,22 @@
     "sourceType": "local",
     "sourceRef": "./plugins/claude-md-management",
     "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management"
+  },
+  {
+    "id": "cloudflare",
+    "type": "plugin",
+    "displayName": "Cloudflare",
+    "description": "Skills for the Cloudflare developer platform: Workers, Durable Objects, Agents SDK, MCP servers, Wrangler CLI, and web performance.",
+    "category": "deployment",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/cloudflare/skills.git",
+    "sourceSha": "5ec03da67e230df52b698255c8e5979dc9b124b6",
+    "repoUrl": "https://github.com/cloudflare/skills"
   },
   {
     "id": "cloudinary",
@@ -1828,6 +1892,23 @@
     "repoUrl": "https://www.accoil.com/product-tracking"
   },
   {
+    "id": "pydantic-ai",
+    "type": "plugin",
+    "displayName": "Pydantic AI",
+    "description": "Write accurate Pydantic AI code from the start. Up-to-date patterns, decision trees, and common gotchas for agents, tools, structured output, streaming, and multi-agent apps.",
+    "category": "development",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/pydantic/skills.git",
+    "sourceSubdir": "plugins/ai",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/pydantic/skills/tree/main/plugins/ai"
+  },
+  {
     "id": "pyright-lsp",
     "type": "plugin",
     "displayName": "Pyright LSP",
@@ -1969,15 +2050,15 @@
     "repoUrl": null
   },
   {
-    "id": "sanity-plugin",
+    "id": "sanity",
     "type": "plugin",
-    "displayName": "Sanity Plugin",
+    "displayName": "Sanity",
     "description": "Sanity content platform integration with MCP server, agent skills, and slash commands. Query and author content, build and optimize GROQ queries, design schemas, and set up Visual Editing.",
     "category": "development",
     "author": "Sanity",
     "tags": [],
     "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "publishedAt": "2026-04-13T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/sanity-io/agent-toolkit.git",
@@ -2101,12 +2182,11 @@
     "category": "security",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-13T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
-    "sourceSha": "0cae644cee9318e6245b62ca779abdc60e6daa49",
     "repoUrl": "https://github.com/SonarSource/sonarqube-agent-plugins"
   },
   {
@@ -2139,6 +2219,22 @@
     "sourceRef": "https://github.com/sourcegraph-community/sourcegraph-claudecode-plugin.git",
     "sourceSha": "cfe3d44476957b16d1575261bef6b2dc7cb1e0b7",
     "repoUrl": "https://sourcegraph.com"
+  },
+  {
+    "id": "spotify-ads-api",
+    "type": "plugin",
+    "displayName": "Spotify Ads API",
+    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth — all through conversation.",
+    "category": "productivity",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-13T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/spotify/ads-claude-plugin.git",
+    "sourceSha": "a4bce9912db071d47dfb410086a48004e0539efa",
+    "repoUrl": "https://github.com/spotify/ads-claude-plugin"
   },
   {
     "id": "stagehand",
@@ -2409,5 +2505,23 @@
     "sourceType": "url",
     "sourceRef": "https://github.com/zoom/zoom-plugin.git",
     "repoUrl": "https://developers.zoom.us/"
+  },
+  {
+    "id": "sanity-plugin",
+    "type": "plugin",
+    "displayName": "Sanity Plugin",
+    "description": "Sanity content platform integration with MCP server, agent skills, and slash commands. Query and author content, build and optimize GROQ queries, design schemas, and set up Visual Editing.",
+    "category": "development",
+    "author": "Sanity",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-08T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/sanity-io/agent-toolkit.git",
+    "sourceSha": "4b1fb10bd707a22cf0cdfad5374ffc885f2ffa8d",
+    "repoUrl": "https://www.sanity.io",
+    "deprecated": true,
+    "deprecatedAt": "2026-04-13"
   }
 ]
