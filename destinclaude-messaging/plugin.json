@@ -1,0 +1,14 @@
+{
+  "name": "destinclaude-messaging",
+  "description": "Send and read SMS/iMessage via MCP servers (gmessages + imessages)",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["destinclaude"],
+  "provides": {
+    "text-messaging": {
+      "description": "Sends and reads SMS (gmessages) and iMessage (imessages) via MCP",
+      "mcp": ["gmessages", "imessages"]
+    }
+  }
+}

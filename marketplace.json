@@ -216,196 +216,118 @@
       "displayName": "Web Search"
     },
     {
-      "name": "journaling-assistant",
-      "description": "Write about your day in a guided conversation",
+      "name": "destinclaude",
+      "displayName": "DestinClaude Core",
+      "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "productivity",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/itsdestin/destinclaude.git"
+      },
+      "homepage": "https://github.com/itsdestin/destinclaude",
+      "removable": false
+    },
+    {
+      "name": "destinclaude-encyclopedia",
+      "displayName": "Encyclopedia",
+      "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
       },
       "category": "personal",
-      "type": "prompt",
-      "prompt": "let's journal",
-      "displayName": "Journal"
+      "source": {
+        "source": "local",
+        "path": "destinclaude-encyclopedia"
+      }
     },
     {
-      "name": "claudes-inbox",
+      "name": "destinclaude-food",
+      "displayName": "Food",
+      "description": "Fork-file: track recipes, meals, and food preferences",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "personal",
+      "source": {
+        "source": "local",
+        "path": "destinclaude-food"
+      }
+    },
+    {
+      "name": "destinclaude-inbox",
+      "displayName": "Inbox",
       "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
       },
       "category": "personal",
-      "type": "prompt",
-      "prompt": "check my inbox",
-      "displayName": "Inbox"
+      "source": {
+        "source": "local",
+        "path": "destinclaude-inbox"
+      }
     },
     {
-      "name": "encyclopedia-librarian",
-      "description": "Get a briefing or deep-search your journal and encyclopedia",
+      "name": "destinclaude-themes-plugin",
+      "displayName": "Theme Builder",
+      "description": "Build and share custom themes — AI-generated or from scratch",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "design",
+      "source": {
+        "source": "local",
+        "path": "destinclaude-themes-plugin"
+      }
+    },
+    {
+      "name": "destinclaude-drive",
+      "displayName": "Google Drive",
+      "description": "Google Drive access via rclone — browse, search, read files",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
       },
       "category": "personal",
-      "type": "prompt",
-      "prompt": "brief me on",
-      "displayName": "Briefing"
+      "source": {
+        "source": "local",
+        "path": "destinclaude-drive"
+      }
     },
     {
-      "name": "encyclopedia-update",
-      "description": "Sync journal entries into your encyclopedia source files",
+      "name": "destinclaude-messaging",
+      "displayName": "Messaging",
+      "description": "Send and read SMS/iMessage via MCP servers",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
       },
       "category": "personal",
-      "type": "prompt",
-      "prompt": "update my encyclopedia",
-      "displayName": "Encyclopedia Update"
+      "source": {
+        "source": "local",
+        "path": "destinclaude-messaging"
+      }
     },
     {
-      "name": "encyclopedia-compile",
-      "description": "Build the full Encyclopedia from source files",
+      "name": "destinclaude-output-styles",
+      "displayName": "Output Styles",
+      "description": "Tone presets — casual, conversational, academic, professional",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
       },
-      "category": "personal",
-      "type": "prompt",
-      "prompt": "compile my encyclopedia",
-      "displayName": "Encyclopedia Compile"
-    },
-    {
-      "name": "encyclopedia-interviewer",
-      "description": "Fill gaps in your encyclopedia through guided questions",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "personal",
-      "type": "prompt",
-      "prompt": "interview me",
-      "displayName": "Encyclopedia Interview"
-    },
-    {
-      "name": "fork-file",
-      "description": "Track groceries, pantry inventory, and fast food spending",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "personal",
-      "type": "prompt",
-      "prompt": "check my food inventory",
-      "displayName": "Food Tracker"
-    },
-    {
-      "name": "google-drive",
-      "description": "Upload, download, and manage files on Google Drive",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "work",
-      "type": "prompt",
-      "prompt": "/google-drive",
-      "displayName": "Google Drive"
-    },
-    {
-      "name": "google-workspace",
-      "description": "Slides, Sheets, Gmail, Calendar, and Docs via API",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "work",
-      "type": "prompt",
-      "prompt": "/google-workspace",
-      "displayName": "Google Workspace"
-    },
-    {
-      "name": "skill-creator",
-      "description": "Create a new skill from a workflow you describe",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "I want to teach you a new workflow — use the skill creator to ask me questions and build a skill for it",
-      "displayName": "Teach Workflow"
-    },
-    {
-      "name": "sync",
-      "description": "Check project sync status and onboard new projects",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/sync",
-      "displayName": "Sync"
-    },
-    {
-      "name": "update",
-      "description": "Check for toolkit updates and install the latest version",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/update",
-      "displayName": "Update"
-    },
-    {
-      "name": "health",
-      "description": "Verify all toolkit components are working",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/health",
-      "displayName": "Health Check"
-    },
-    {
-      "name": "setup-wizard",
-      "description": "Install dependencies and configure the toolkit",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/setup-wizard",
-      "displayName": "Setup Wizard"
-    },
-    {
-      "name": "toolkit",
-      "description": "See all features, commands, and useful phrases",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/toolkit",
-      "displayName": "Toolkit Overview"
-    },
-    {
-      "name": "remote-setup",
-      "description": "Set up remote access -- installs Tailscale, configures your password, and gets your phone connected",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "admin",
-      "type": "prompt",
-      "prompt": "/remote-setup",
-      "displayName": "Remote Setup"
+      "category": "productivity",
+      "source": {
+        "source": "local",
+        "path": "destinclaude-output-styles"
+      }
     }
   ]
 }
