@@ -19,8 +19,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install Playwright
+      # Fix: generate-previews.js requires 'playwright' from node_modules.
+      # Without `npm ci`, the workflow crashed with MODULE_NOT_FOUND and every
+      # merge since 2026-04-12 failed to rebuild the registry, leaving new
+      # themes (strawberry-kitty, kuromi-dreamer, devils-garden) invisible.
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
       - name: Generate theme previews
