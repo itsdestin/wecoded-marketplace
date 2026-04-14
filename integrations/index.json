@@ -1,0 +1,60 @@
+{
+  "version": "2026-04-14T18:48:05.668Z",
+  "generatedBy": "build-integrations.js",
+  "integrations": [
+    {
+      "slug": "google-workspace",
+      "displayName": "Google Workspace",
+      "tagline": "Gmail, Calendar, Drive in-chat.",
+      "longDescription": "Connect your Google account to ask about inbox threads, schedule events, and pull files into the chat without leaving it.",
+      "kind": "mcp",
+      "setup": {
+        "type": "script",
+        "path": "scripts/install-google-workspace.sh",
+        "requiresOAuth": true,
+        "oauthProvider": "google"
+      },
+      "status": "available",
+      "accentColor": "#4285F4",
+      "lifeArea": [
+        "work",
+        "personal"
+      ]
+    },
+    {
+      "slug": "todoist",
+      "displayName": "Todoist",
+      "tagline": "Read and update your Todoist tasks.",
+      "longDescription": "Capture tasks from chat and review your Todoist inbox without context-switching.",
+      "kind": "mcp",
+      "setup": {
+        "type": "api-key",
+        "keyName": "TODOIST_API_KEY",
+        "requiresOAuth": false
+      },
+      "status": "available",
+      "accentColor": "#E44332",
+      "lifeArea": [
+        "personal",
+        "work"
+      ]
+    },
+    {
+      "slug": "applescript",
+      "displayName": "AppleScript",
+      "tagline": "Drive any macOS app from chat.",
+      "longDescription": "Generate and run AppleScript against the apps you already use. macOS only.",
+      "kind": "shell",
+      "setup": {
+        "type": "macos-only",
+        "requiresOAuth": false
+      },
+      "status": "planned",
+      "accentColor": "#555555",
+      "lifeArea": [
+        "creative",
+        "personal"
+      ]
+    }
+  ]
+}
