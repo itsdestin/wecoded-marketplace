@@ -31,11 +31,13 @@ export async function fetchGitHubUser(accessToken: string): Promise<GitHubUserRe
   return (await res.json()) as GitHubUserResponse;
 }
 
-export function buildAuthorizeUrl(clientId: string, userCode: string, callback: string): string {
+// csrfState is an opaque random token generated server-side and bound to the
+// requesting browser via an HttpOnly cookie; verified on callback.
+export function buildAuthorizeUrl(clientId: string, csrfState: string, callback: string): string {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: callback,
-    state: userCode,
+    state: csrfState,
     scope: "read:user",
   });
   return `https://github.com/login/oauth/authorize?${params.toString()}`;

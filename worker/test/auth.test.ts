@@ -9,18 +9,19 @@ describe("POST /auth/github/start", () => {
     expect(body.device_code).toMatch(/^[0-9a-f]{64}$/);
     expect(body.user_code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
     // Plan's /auth/github/start returns a URL pointing at our own /start-redirect
-    // page (which 302s to GitHub's authorize URL, which has the callback as
-    // redirect_uri). So we assert against the actual returned string.
+    // page (which sets the CSRF cookie and 302s to GitHub). So we assert against
+    // the actual returned string.
     expect(body.auth_url).toContain("/auth/github/start-redirect");
     expect(body.expires_in).toBe(900);
   });
 
-  it("persists the device_code in the database", async () => {
+  it("persists the device_code with a csrf_state in the database", async () => {
     const res = await SELF.fetch("https://test.local/auth/github/start", { method: "POST" });
     const { device_code } = await res.json() as { device_code: string };
-    const row = await env.DB.prepare("SELECT * FROM device_codes WHERE device_code = ?")
-      .bind(device_code).first();
+    const row = await env.DB.prepare("SELECT device_code, csrf_state FROM device_codes WHERE device_code = ?")
+      .bind(device_code).first<{ device_code: string; csrf_state: string }>();
     expect(row).not.toBeNull();
+    expect(row!.csrf_state).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
@@ -38,14 +39,20 @@ describe("POST /auth/github/poll", () => {
     expect(await poll.json()).toEqual({ status: "pending" });
   });
 
-  it("returns complete + token after callback sets session_token_hash", async () => {
+  it("returns complete + a freshly issued session token once authorized_user_id is set", async () => {
     const start = await SELF.fetch("https://test.local/auth/github/start", { method: "POST" });
     const { device_code, user_code } = await start.json() as { device_code: string; user_code: string };
 
-    // Simulate the callback storing a raw token into session_token_hash (bypasses GitHub exchange)
+    // Simulate the callback having completed: a user row exists and the
+    // device_codes row has authorized_user_id set. This bypasses GitHub.
+    const now = Math.floor(Date.now() / 1000);
     await env.DB
-      .prepare("UPDATE device_codes SET session_token_hash = ? WHERE user_code = ?")
-      .bind("fake-raw-token", user_code)
+      .prepare("INSERT INTO users (id, github_login, created_at) VALUES (?, ?, ?)")
+      .bind("github:123", "octocat", now)
+      .run();
+    await env.DB
+      .prepare("UPDATE device_codes SET authorized_user_id = ? WHERE user_code = ?")
+      .bind("github:123", user_code)
       .run();
 
     const poll = await SELF.fetch("https://test.local/auth/github/poll", {
@@ -55,11 +62,54 @@ describe("POST /auth/github/poll", () => {
     });
     expect(poll.status).toBe(200);
     const body = await poll.json() as { status: string; token: string };
-    expect(body).toEqual({ status: "complete", token: "fake-raw-token" });
+    expect(body.status).toBe("complete");
+    // Token is freshly issued at poll time (64 hex chars from randomToken(32))
+    expect(body.token).toMatch(/^[0-9a-f]{64}$/);
 
-    // device_codes row should be deleted
+    // device_codes row should be deleted so the token can't be re-claimed
     const row = await env.DB.prepare("SELECT 1 FROM device_codes WHERE device_code = ?")
       .bind(device_code).first();
     expect(row).toBeNull();
+
+    // A replay of the same poll now returns pending (row gone), not a second token
+    const replay = await SELF.fetch("https://test.local/auth/github/poll", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device_code }),
+    });
+    expect(replay.status).toBe(404);
+  });
+});
+
+describe("GET /auth/github/callback CSRF protection", () => {
+  it("rejects the callback when the state cookie is missing", async () => {
+    const start = await SELF.fetch("https://test.local/auth/github/start", { method: "POST" });
+    const { user_code } = await start.json() as { user_code: string };
+    const { csrf_state } = (await env.DB
+      .prepare("SELECT csrf_state FROM device_codes WHERE user_code = ?")
+      .bind(user_code)
+      .first<{ csrf_state: string }>())!;
+
+    // No Cookie header — simulates a callback arriving at a browser that never
+    // visited /start-redirect (i.e., a cross-site login-CSRF attempt).
+    const res = await SELF.fetch(
+      `https://test.local/auth/github/callback?code=anything&state=${encodeURIComponent(csrf_state)}`
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects the callback when the state query doesn't match the cookie", async () => {
+    const start = await SELF.fetch("https://test.local/auth/github/start", { method: "POST" });
+    const { user_code } = await start.json() as { user_code: string };
+    const { csrf_state } = (await env.DB
+      .prepare("SELECT csrf_state FROM device_codes WHERE user_code = ?")
+      .bind(user_code)
+      .first<{ csrf_state: string }>())!;
+
+    const res = await SELF.fetch(
+      `https://test.local/auth/github/callback?code=anything&state=${encodeURIComponent(csrf_state)}`,
+      { headers: { Cookie: "oauth_csrf=some-other-value" } }
+    );
+    expect(res.status).toBe(400);
   });
 });
