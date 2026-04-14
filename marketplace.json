@@ -1,115 +1,10 @@
 {
   "name": "destincode-marketplace",
-  "description": "DestinCode skills and plugins � productivity tools, personal knowledge management, and developer utilities",
+  "description": "DestinCode skills and plugins \ufffd productivity tools, personal knowledge management, and developer utilities",
   "owner": {
     "name": "DestinCode"
   },
   "plugins": [
-    {
-      "name": "code-review:code-review",
-      "description": "Review a pull request with specialized agents",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/code-review.git"
-      },
-      "homepage": "https://github.com/destinationunknown/code-review",
-      "prompt": "/code-review",
-      "displayName": "Code Review"
-    },
-    {
-      "name": "feature-dev:feature-dev",
-      "description": "Guided feature development with architecture focus",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/feature-dev.git"
-      },
-      "homepage": "https://github.com/destinationunknown/feature-dev",
-      "prompt": "/feature-dev",
-      "displayName": "Feature Dev"
-    },
-    {
-      "name": "commit-commands:commit",
-      "description": "Create a git commit with a well-crafted message",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/commit-commands.git"
-      },
-      "homepage": "https://github.com/destinationunknown/commit-commands",
-      "prompt": "/commit",
-      "displayName": "Commit"
-    },
-    {
-      "name": "commit-commands:commit-push-pr",
-      "description": "Commit, push, and open a pull request",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/commit-commands.git"
-      },
-      "homepage": "https://github.com/destinationunknown/commit-commands",
-      "prompt": "/commit-push-pr",
-      "displayName": "Commit & PR"
-    },
-    {
-      "name": "commit-commands:clean_gone",
-      "description": "Remove local branches deleted on remote",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/commit-commands.git"
-      },
-      "homepage": "https://github.com/destinationunknown/commit-commands",
-      "prompt": "/clean_gone",
-      "displayName": "Clean Branches"
-    },
-    {
-      "name": "frontend-design:frontend-design",
-      "description": "Build polished, distinctive frontend interfaces",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/frontend-design.git"
-      },
-      "homepage": "https://github.com/destinationunknown/frontend-design",
-      "prompt": "/frontend-design",
-      "displayName": "Frontend Design"
-    },
-    {
-      "name": "plugin-dev:create-plugin",
-      "description": "Guided end-to-end plugin creation workflow",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/plugin-dev.git"
-      },
-      "homepage": "https://github.com/destinationunknown/plugin-dev",
-      "prompt": "/create-plugin",
-      "displayName": "Create Plugin"
-    },
     {
       "name": "civic-report",
       "displayName": "Civic Report",
@@ -126,99 +21,9 @@
       "prompt": "/civic-report"
     },
     {
-      "name": "claude-md-management:revise-claude-md",
-      "description": "Update CLAUDE.md with learnings from this session",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/claude-md-management.git"
-      },
-      "homepage": "https://github.com/destinationunknown/claude-md-management",
-      "prompt": "/revise-claude-md",
-      "displayName": "Revise CLAUDE.md"
-    },
-    {
-      "name": "claude-md-management:claude-md-improver",
-      "description": "Scan and improve CLAUDE.md files across repos",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/claude-md-management.git"
-      },
-      "homepage": "https://github.com/destinationunknown/claude-md-management",
-      "prompt": "/claude-md-improver",
-      "displayName": "Audit CLAUDE.md"
-    },
-    {
-      "name": "skill-creator:skill-creator",
-      "description": "Create, modify, eval, and benchmark skills",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "admin",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/skill-creator.git"
-      },
-      "homepage": "https://github.com/destinationunknown/skill-creator",
-      "prompt": "/skill-creator",
-      "displayName": "Skill Creator"
-    },
-    {
-      "name": "simplify",
-      "description": "Review changed code for reuse, quality, and efficiency",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/simplify.git"
-      },
-      "homepage": "https://github.com/destinationunknown/simplify",
-      "prompt": "/simplify",
-      "displayName": "Simplify Code"
-    },
-    {
-      "name": "hookify:hookify",
-      "description": "Create hooks to prevent unwanted behaviors",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/hookify.git"
-      },
-      "homepage": "https://github.com/destinationunknown/hookify",
-      "prompt": "/hookify",
-      "displayName": "Create Hook Rule"
-    },
-    {
-      "name": "firecrawl:firecrawl-cli",
-      "description": "Search the web, scrape pages, and research topics",
-      "author": {
-        "name": "@destin"
-      },
-      "category": "work",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/destinationunknown/firecrawl.git"
-      },
-      "homepage": "https://github.com/destinationunknown/firecrawl",
-      "prompt": "search the web for",
-      "displayName": "Web Search"
-    },
-    {
       "name": "destinclaude",
       "displayName": "DestinClaude Core",
-      "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
+      "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -234,7 +39,7 @@
     {
       "name": "destinclaude-encyclopedia",
       "displayName": "Encyclopedia",
-      "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
+      "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -276,7 +81,7 @@
     {
       "name": "destinclaude-themes-plugin",
       "displayName": "Theme Builder",
-      "description": "Build and share custom themes — AI-generated or from scratch",
+      "description": "Build and share custom themes \u2014 AI-generated or from scratch",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -290,7 +95,7 @@
     {
       "name": "destinclaude-drive",
       "displayName": "Google Drive",
-      "description": "Google Drive access via rclone — browse, search, read files",
+      "description": "Google Drive access via rclone \u2014 browse, search, read files",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -318,7 +123,7 @@
     {
       "name": "destinclaude-output-styles",
       "displayName": "Output Styles",
-      "description": "Tone presets — casual, conversational, academic, professional",
+      "description": "Tone presets \u2014 casual, conversational, academic, professional",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
