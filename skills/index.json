@@ -1,5 +1,5 @@
 {
-  "version": "2026-04-14T06:26:45.280Z",
+  "version": "2026-04-14T18:17:39.980Z",
   "generatedBy": "sync.js",
   "entries": [
     {
@@ -15,13 +15,26 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "civic-report",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "civic-report"
+        ],
+        "hooks": [],
+        "commands": [
+          "civic-report"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude",
       "type": "plugin",
       "displayName": "DestinClaude Core",
-      "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
+      "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
       "category": "productivity",
       "author": "@destin",
       "tags": [],
@@ -30,13 +43,36 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "url",
       "sourceRef": "https://github.com/itsdestin/destinclaude.git",
-      "repoUrl": "https://github.com/itsdestin/destinclaude"
+      "repoUrl": "https://github.com/itsdestin/destinclaude",
+      "components": {
+        "skills": [
+          "remote-setup",
+          "setup-wizard"
+        ],
+        "hooks": [
+          "session-start",
+          "statusline",
+          "tool-router",
+          "worktree-guard",
+          "write-guard"
+        ],
+        "commands": [
+          "diagnose",
+          "health",
+          "restore",
+          "update"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": true,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-drive",
       "type": "plugin",
       "displayName": "Google Drive",
-      "description": "Google Drive access via rclone \u2014 browse, search, read files",
+      "description": "Google Drive access via rclone — browse, search, read files",
       "category": "personal",
       "author": "@destin",
       "tags": [],
@@ -45,13 +81,24 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-drive",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "google-drive"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-encyclopedia",
       "type": "plugin",
       "displayName": "Encyclopedia",
-      "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
+      "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
       "category": "personal",
       "author": "@destin",
       "tags": [],
@@ -60,7 +107,22 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-encyclopedia",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "encyclopedia-compile",
+          "encyclopedia-interviewer",
+          "encyclopedia-librarian",
+          "encyclopedia-update",
+          "journaling-assistant"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-food",
@@ -75,7 +137,18 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-food",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "fork-file"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-inbox",
@@ -90,7 +163,18 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-inbox",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "claudes-inbox"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-messaging",
@@ -105,13 +189,22 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-messaging",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-output-styles",
       "type": "plugin",
       "displayName": "Output Styles",
-      "description": "Tone presets \u2014 casual, conversational, academic, professional",
+      "description": "Tone presets — casual, conversational, academic, professional",
       "category": "productivity",
       "author": "@destin",
       "tags": [],
@@ -120,13 +213,22 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-output-styles",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "destinclaude-themes-plugin",
       "type": "plugin",
       "displayName": "Theme Builder",
-      "description": "Build and share custom themes \u2014 AI-generated or from scratch",
+      "description": "Build and share custom themes — AI-generated or from scratch",
       "category": "design",
       "author": "@destin",
       "tags": [],
@@ -135,13 +237,24 @@
       "sourceMarketplace": "destinclaude",
       "sourceType": "local",
       "sourceRef": "destinclaude-themes-plugin",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "theme-builder"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "adlc",
       "type": "plugin",
       "displayName": "Adlc",
-      "description": "Agentforce Agent Development Life Cycle \u2014 author, discover, scaffold, deploy, test, and optimize .agent files",
+      "description": "Agentforce Agent Development Life Cycle — author, discover, scaffold, deploy, test, and optimize .agent files",
       "category": "development",
       "author": "Anthropic",
       "tags": [],
@@ -150,7 +263,25 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/SalesforceAIResearch/agentforce-adlc.git",
-      "repoUrl": "https://github.com/SalesforceAIResearch/agentforce-adlc"
+      "repoUrl": "https://github.com/SalesforceAIResearch/agentforce-adlc",
+      "components": {
+        "skills": [
+          "developing-agentforce",
+          "observing-agentforce",
+          "testing-agentforce"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "adlc-author",
+          "adlc-engineer",
+          "adlc-orchestrator",
+          "adlc-qa"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "adspirer-ads-agent",
@@ -166,7 +297,21 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/amekala/adspirer-mcp-plugin.git",
       "sourceSha": "aa70dbdbbbb843e94a794c10c2b13f5dd66b5e40",
-      "repoUrl": "https://www.adspirer.com"
+      "repoUrl": "https://www.adspirer.com",
+      "components": {
+        "skills": [
+          "ad-campaign-best-practices"
+        ],
+        "hooks": [],
+        "commands": [
+          "campaign-performance",
+          "keyword-research"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "agent-sdk-dev",
@@ -181,7 +326,21 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/agent-sdk-dev",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/agent-sdk-dev"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/agent-sdk-dev",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "new-sdk-app"
+        ],
+        "agents": [
+          "agent-sdk-verifier-py",
+          "agent-sdk-verifier-ts"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "ai-firstify",
@@ -199,7 +358,18 @@
       "sourceSubdir": "plugins/ai-firstify",
       "sourceSha": "7f18e11d694b9ae62ea3009fbbc175f08ae913df",
       "sourceGitRef": "main",
-      "repoUrl": "https://ai-first.techwolf.ai"
+      "repoUrl": "https://ai-first.techwolf.ai",
+      "components": {
+        "skills": [
+          "ai-firstify"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "ai-plugins",
@@ -215,13 +385,24 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/endorlabs/ai-plugins.git",
       "sourceSha": "a0f1d5632b6f9e6c26eaa9806f5d8d454ca5b06f",
-      "repoUrl": "https://www.endorlabs.com"
+      "repoUrl": "https://www.endorlabs.com",
+      "components": {
+        "skills": [
+          "endor-setup"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "aikido",
       "type": "plugin",
       "displayName": "Aikido",
-      "description": "Aikido Security scanning for Claude Code \u2014 SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
+      "description": "Aikido Security scanning for Claude Code — SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -231,7 +412,19 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/AikidoSec/aikido-claude-plugin.git",
       "sourceSha": "d7fa8b8e192680d9a26c1a5dcaead7cf5cdb7139",
-      "repoUrl": "https://github.com/AikidoSec/aikido-claude-plugin"
+      "repoUrl": "https://github.com/AikidoSec/aikido-claude-plugin",
+      "components": {
+        "skills": [
+          "scan",
+          "setup"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "amazon-location-service",
@@ -248,13 +441,24 @@
       "sourceRef": "https://github.com/awslabs/agent-plugins.git",
       "sourceSubdir": "plugins/amazon-location-service",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/awslabs/agent-plugins"
+      "repoUrl": "https://github.com/awslabs/agent-plugins",
+      "components": {
+        "skills": [
+          "amazon-location-service"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "amplitude",
       "type": "plugin",
       "displayName": "Amplitude",
-      "description": "Use Amplitude as an expert analyst \u2014 instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
+      "description": "Use Amplitude as an expert analyst — instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
       "category": "monitoring",
       "author": "Anthropic",
       "tags": [],
@@ -264,7 +468,16 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/amplitude/mcp-marketplace.git",
       "sourceSha": "be54ccb66b10593721dd3a31e47b2db20ea02d2f",
-      "repoUrl": "https://github.com/amplitude/mcp-marketplace"
+      "repoUrl": "https://github.com/amplitude/mcp-marketplace",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "asana",
@@ -279,7 +492,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/asana",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/asana"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/asana",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "astronomer-data-agents",
@@ -295,7 +517,38 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/astronomer/agents.git",
       "sourceSha": "7ef022b02f5296b5ecc52ba0db3ba9345ec03c9e",
-      "repoUrl": "https://github.com/astronomer/agents"
+      "repoUrl": "https://github.com/astronomer/agents",
+      "components": {
+        "skills": [
+          "airflow",
+          "airflow-hitl",
+          "analyzing-data",
+          "annotating-task-lineage",
+          "authoring-dags",
+          "checking-freshness",
+          "cosmos-dbt-core",
+          "cosmos-dbt-fusion",
+          "creating-openlineage-extractors",
+          "debugging-dags",
+          "deploying-airflow",
+          "managing-astro-deployments",
+          "managing-astro-local-env",
+          "migrating-airflow-2-to-3",
+          "profiling-tables",
+          "setting-up-astro-project",
+          "testing-dags",
+          "tracing-downstream-lineage",
+          "tracing-upstream-lineage",
+          "troubleshooting-astro-deployments",
+          "warehouse-init"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "atlan",
@@ -311,7 +564,16 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/atlanhq/agent-toolkit.git",
       "sourceSha": "acdf284da6aa98b14f8dad90a9827006d8df425c",
-      "repoUrl": "https://docs.atlan.com/"
+      "repoUrl": "https://docs.atlan.com/",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "atlassian",
@@ -326,7 +588,22 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/atlassian/atlassian-mcp-server.git",
-      "repoUrl": "https://github.com/atlassian/atlassian-mcp-server"
+      "repoUrl": "https://github.com/atlassian/atlassian-mcp-server",
+      "components": {
+        "skills": [
+          "capture-tasks-from-meeting-notes",
+          "generate-status-report",
+          "search-company-knowledge",
+          "spec-to-backlog",
+          "triage-issue"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "atomic-agents",
@@ -335,15 +612,22 @@
       "description": "Comprehensive development workflow for building AI agents with the Atomic Agents framework. Includes specialized agents for schema design, architecture planning, code review, and tool development. Features guided workflows, progressive-disclosure skills, and best practice validation.",
       "category": "development",
       "author": "Anthropic",
-      "tags": [
-        "community-managed"
-      ],
-      "version": "1.0.0",
-      "publishedAt": "2026-04-08T00:00:00Z",
+      "tags": [],
+      "version": "1.0.1",
+      "publishedAt": "2026-04-14T00:00:00Z",
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/BrainBlend-AI/atomic-agents.git",
-      "repoUrl": "https://github.com/BrainBlend-AI/atomic-agents"
+      "repoUrl": "https://github.com/BrainBlend-AI/atomic-agents",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "autofix-bot",
@@ -358,7 +642,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/autofix-bot",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/autofix-bot"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/autofix-bot",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "aws-serverless",
@@ -375,13 +668,27 @@
       "sourceRef": "https://github.com/awslabs/agent-plugins.git",
       "sourceSubdir": "plugins/aws-serverless",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/awslabs/agent-plugins"
+      "repoUrl": "https://github.com/awslabs/agent-plugins",
+      "components": {
+        "skills": [
+          "api-gateway",
+          "aws-lambda",
+          "aws-lambda-durable-functions",
+          "aws-serverless-deployment"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "azure-cosmos-db-assistant",
       "type": "plugin",
       "displayName": "Azure Cosmos DB Assistant",
-      "description": "Expert assistant for Azure Cosmos DB \u2014 data modeling, query optimization, performance tuning, and best practices.",
+      "description": "Expert assistant for Azure Cosmos DB — data modeling, query optimization, performance tuning, and best practices.",
       "category": "database",
       "author": "Anthropic",
       "tags": [],
@@ -391,7 +698,73 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin.git",
       "sourceSha": "56e6da0cae93cdee8bcfa5e624ecdd9a0a483181",
-      "repoUrl": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin"
+      "repoUrl": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin",
+      "components": {
+        "skills": [
+          "cosmosdb-best-practices"
+        ],
+        "hooks": [],
+        "commands": [
+          "cosmos-review",
+          "cosmos-setup",
+          "generate-skills"
+        ],
+        "agents": [
+          "cosmosdb-expert"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
+    },
+    {
+      "id": "azure-skills",
+      "type": "plugin",
+      "displayName": "Azure Skills",
+      "description": "Microsoft Azure MCP integration for cloud resource management, deployments, and Azure services. Manage your Azure infrastructure, monitor applications, and deploy resources directly from Claude Code.",
+      "category": "deployment",
+      "author": "Anthropic",
+      "tags": [],
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "url",
+      "sourceRef": "https://github.com/microsoft/azure-skills.git",
+      "repoUrl": "https://github.com/microsoft/azure-skills",
+      "components": {
+        "skills": [
+          "appinsights-instrumentation",
+          "azure-ai",
+          "azure-aigateway",
+          "azure-cloud-migrate",
+          "azure-compliance",
+          "azure-compute",
+          "azure-cost",
+          "azure-deploy",
+          "azure-diagnostics",
+          "azure-enterprise-infra-planner",
+          "azure-hosted-copilot-sdk",
+          "azure-kubernetes",
+          "azure-kusto",
+          "azure-messaging",
+          "azure-prepare",
+          "azure-quotas",
+          "azure-rbac",
+          "azure-resource-lookup",
+          "azure-resource-visualizer",
+          "azure-storage",
+          "azure-upgrade",
+          "azure-validate",
+          "entra-app-registration",
+          "microsoft-foundry"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "base44",
@@ -407,13 +780,65 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/base44/skills.git",
       "sourceSha": "c7039b37eca0e2916a565a7395040c00055bcf8b",
-      "repoUrl": "https://docs.base44.com"
+      "repoUrl": "https://docs.base44.com",
+      "components": {
+        "skills": [
+          "base44-cli",
+          "base44-sdk",
+          "base44-troubleshooter"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
+    },
+    {
+      "id": "bigdata-com",
+      "type": "plugin",
+      "displayName": "Bigdata Com",
+      "description": "Official Bigdata.com plugin providing financial research, analytics, and intelligence tools powered by Bigdata MCP.",
+      "category": "database",
+      "author": "RavenPack",
+      "tags": [],
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "git-subdir",
+      "sourceRef": "https://github.com/Bigdata-com/bigdata-plugins-marketplace.git",
+      "sourceSubdir": "plugins/bigdata-com",
+      "sourceGitRef": "main",
+      "repoUrl": "https://docs.bigdata.com",
+      "components": {
+        "skills": [
+          "financial-research-analyst"
+        ],
+        "hooks": [],
+        "commands": [
+          "company-brief",
+          "country-analysis",
+          "country-sector-analysis",
+          "cross-sector",
+          "earnings-digest",
+          "earnings-preview",
+          "regional-comparison",
+          "risk-assessment",
+          "sector-analysis",
+          "thematic-research"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "box",
       "type": "plugin",
       "displayName": "Box",
-      "description": "Work with your Box content directly from Claude Code \u2014 search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
+      "description": "Work with your Box content directly from Claude Code — search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
       "category": "productivity",
       "author": "Anthropic",
       "tags": [],
@@ -423,7 +848,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/box/box-for-ai.git",
       "sourceSha": "6f4ec3549f3e869b115628403555b1c9220b2b34",
-      "repoUrl": "https://github.com/box/box-for-ai"
+      "repoUrl": "https://github.com/box/box-for-ai",
+      "components": {
+        "skills": [
+          "box"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "brightdata-plugin",
@@ -439,7 +875,25 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/brightdata/skills.git",
       "sourceSha": "e671da495f7ec0ed6be5e9fa71e260f886a1dc36",
-      "repoUrl": "https://docs.brightdata.com"
+      "repoUrl": "https://docs.brightdata.com",
+      "components": {
+        "skills": [
+          "bright-data-best-practices",
+          "bright-data-mcp",
+          "data-feeds",
+          "design-mirror",
+          "python-sdk-best-practices",
+          "scrape",
+          "scraper-builder",
+          "search"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "cds-mcp",
@@ -455,7 +909,16 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/cap-js/mcp-server.git",
       "sourceSha": "4d59d7070a52761a9b8028cbe710c8d7477cbc92",
-      "repoUrl": "https://cap.cloud.sap/"
+      "repoUrl": "https://cap.cloud.sap/",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "chrome-devtools-mcp",
@@ -471,7 +934,21 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
       "sourceSha": "c2d8009ff75f76bce1ec4cf79c2467b50d81725e",
-      "repoUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp"
+      "repoUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+      "components": {
+        "skills": [
+          "a11y-debugging",
+          "chrome-devtools",
+          "debug-optimize-lcp",
+          "troubleshooting"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "circleback",
@@ -486,7 +963,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/circlebackai/claude-code-plugin.git",
-      "repoUrl": "https://github.com/circlebackai/claude-code-plugin.git"
+      "repoUrl": "https://github.com/circlebackai/claude-code-plugin.git",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "clangd-lsp",
@@ -501,7 +987,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/clangd-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "claude-code-setup",
@@ -516,7 +1011,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/claude-code-setup",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup",
+      "components": {
+        "skills": [
+          "claude-automation-recommender"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "claude-md-management",
@@ -531,7 +1037,20 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/claude-md-management",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management",
+      "components": {
+        "skills": [
+          "claude-md-improver"
+        ],
+        "hooks": [],
+        "commands": [
+          "revise-claude-md"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "cloudflare",
@@ -547,7 +1066,29 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/cloudflare/skills.git",
       "sourceSha": "5ec03da67e230df52b698255c8e5979dc9b124b6",
-      "repoUrl": "https://github.com/cloudflare/skills"
+      "repoUrl": "https://github.com/cloudflare/skills",
+      "components": {
+        "skills": [
+          "agents-sdk",
+          "building-ai-agent-on-cloudflare",
+          "building-mcp-server-on-cloudflare",
+          "cloudflare",
+          "durable-objects",
+          "sandbox-sdk",
+          "web-perf",
+          "workers-best-practices",
+          "wrangler"
+        ],
+        "hooks": [],
+        "commands": [
+          "build-agent",
+          "build-mcp"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "cloudinary",
@@ -563,13 +1104,25 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/cloudinary-devs/cloudinary-plugin.git",
       "sourceSha": "137c5d7acd9c3f10e80cd2a400486971e1664f31",
-      "repoUrl": "https://cloudinary.com/documentation"
+      "repoUrl": "https://cloudinary.com/documentation",
+      "components": {
+        "skills": [
+          "cloudinary-docs",
+          "cloudinary-transformations"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "cockroachdb",
       "type": "plugin",
       "displayName": "Cockroachdb",
-      "description": "CockroachDB plugin for Claude Code \u2014 explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
+      "description": "CockroachDB plugin for Claude Code — explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -579,7 +1132,20 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/cockroachdb/claude-plugin.git",
       "sourceSha": "a54566e03c852567589ef85bb449d1e4de229667",
-      "repoUrl": "https://github.com/cockroachdb/claude-plugin"
+      "repoUrl": "https://github.com/cockroachdb/claude-plugin",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "cockroachdb-dba",
+          "cockroachdb-developer",
+          "cockroachdb-operator"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "code-review",
@@ -594,7 +1160,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/code-review",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/code-review"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/code-review",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "code-review"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "code-simplifier",
@@ -609,13 +1186,24 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/code-simplifier",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-simplifier"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-simplifier",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "code-simplifier"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "coderabbit",
       "type": "plugin",
       "displayName": "Coderabbit",
-      "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers\u2014offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
+      "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers—offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
       "category": "productivity",
       "author": "Anthropic",
       "tags": [],
@@ -624,7 +1212,23 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/coderabbitai/claude-plugin.git",
-      "repoUrl": "https://github.com/coderabbitai/claude-plugin.git"
+      "repoUrl": "https://github.com/coderabbitai/claude-plugin.git",
+      "components": {
+        "skills": [
+          "autofix",
+          "code-review"
+        ],
+        "hooks": [],
+        "commands": [
+          "review"
+        ],
+        "agents": [
+          "code-reviewer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "commit-commands",
@@ -639,7 +1243,20 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/commit-commands",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/commit-commands"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/commit-commands",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "clean_gone",
+          "commit",
+          "commit-push-pr"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "context7",
@@ -648,15 +1265,22 @@
       "description": "Upstash Context7 MCP server for up-to-date documentation lookup. Pull version-specific documentation and code examples directly from source repositories into your LLM context.",
       "category": "development",
       "author": "Anthropic",
-      "tags": [
-        "community-managed"
-      ],
-      "version": "1.0.0",
-      "publishedAt": "2026-04-08T00:00:00Z",
+      "tags": [],
+      "version": "1.0.1",
+      "publishedAt": "2026-04-14T00:00:00Z",
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/context7",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/context7"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/context7",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "csharp-lsp",
@@ -671,7 +1295,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/csharp-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "data",
@@ -687,7 +1320,38 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/astronomer/agents.git",
       "sourceSha": "7ef022b02f5296b5ecc52ba0db3ba9345ec03c9e",
-      "repoUrl": "https://github.com/astronomer/agents"
+      "repoUrl": "https://github.com/astronomer/agents",
+      "components": {
+        "skills": [
+          "airflow",
+          "airflow-hitl",
+          "analyzing-data",
+          "annotating-task-lineage",
+          "authoring-dags",
+          "checking-freshness",
+          "cosmos-dbt-core",
+          "cosmos-dbt-fusion",
+          "creating-openlineage-extractors",
+          "debugging-dags",
+          "deploying-airflow",
+          "managing-astro-deployments",
+          "managing-astro-local-env",
+          "migrating-airflow-2-to-3",
+          "profiling-tables",
+          "setting-up-astro-project",
+          "testing-dags",
+          "tracing-downstream-lineage",
+          "tracing-upstream-lineage",
+          "troubleshooting-astro-deployments",
+          "warehouse-init"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "data-engineering",
@@ -703,7 +1367,72 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/astronomer/agents.git",
       "sourceSha": "85d6053b1e21724f9cefb1e3f5219bd54fc77224",
-      "repoUrl": "https://github.com/astronomer/agents"
+      "repoUrl": "https://github.com/astronomer/agents",
+      "components": {
+        "skills": [
+          "airflow",
+          "airflow-hitl",
+          "airflow-plugins",
+          "analyzing-data",
+          "annotating-task-lineage",
+          "authoring-dags",
+          "checking-freshness",
+          "cosmos-dbt-core",
+          "cosmos-dbt-fusion",
+          "creating-openlineage-extractors",
+          "debugging-dags",
+          "deploying-airflow",
+          "managing-astro-deployments",
+          "managing-astro-local-env",
+          "migrating-airflow-2-to-3",
+          "profiling-tables",
+          "setting-up-astro-project",
+          "testing-dags",
+          "tracing-downstream-lineage",
+          "tracing-upstream-lineage",
+          "troubleshooting-astro-deployments",
+          "warehouse-init"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
+    },
+    {
+      "id": "dataverse",
+      "type": "plugin",
+      "displayName": "Dataverse",
+      "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse — with Dataverse MCP, PAC CLI, and Python SDK.",
+      "category": "database",
+      "author": "Anthropic",
+      "tags": [],
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "git-subdir",
+      "sourceRef": "https://github.com/microsoft/Dataverse-skills.git",
+      "sourceSubdir": ".github/plugins/dataverse",
+      "sourceGitRef": "main",
+      "repoUrl": "https://github.com/microsoft/Dataverse-skills",
+      "components": {
+        "skills": [
+          "dv-connect",
+          "dv-data",
+          "dv-metadata",
+          "dv-overview",
+          "dv-query",
+          "dv-solution"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "deploy-on-aws",
@@ -720,7 +1449,19 @@
       "sourceRef": "https://github.com/awslabs/agent-plugins.git",
       "sourceSubdir": "plugins/deploy-on-aws",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/awslabs/agent-plugins"
+      "repoUrl": "https://github.com/awslabs/agent-plugins",
+      "components": {
+        "skills": [
+          "aws-architecture-diagram",
+          "deploy"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "discord",
@@ -735,13 +1476,25 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/discord",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "access",
+          "configure"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "elixir-ls-lsp",
       "type": "plugin",
       "displayName": "Elixir Ls LSP",
-      "description": "Elixir language server (ElixirLS) for Claude Code \u2014 provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
+      "description": "Elixir language server (ElixirLS) for Claude Code — provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -751,7 +1504,16 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/MikaelFangel/claude-elixir-ls-lsp.git",
       "sourceSha": "806a6eeeb88b9a306a59b3212a1d5d88aa5c70af",
-      "repoUrl": "https://elixir-lsp.github.io/elixir-ls/"
+      "repoUrl": "https://elixir-lsp.github.io/elixir-ls/",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "explanatory-output-style",
@@ -766,7 +1528,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/explanatory-output-style",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/explanatory-output-style"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/explanatory-output-style",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "expo",
@@ -783,7 +1554,29 @@
       "sourceRef": "https://github.com/expo/skills.git",
       "sourceSubdir": "plugins/expo",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/expo/skills/blob/main/plugins/expo/README.md"
+      "repoUrl": "https://github.com/expo/skills/blob/main/plugins/expo/README.md",
+      "components": {
+        "skills": [
+          "building-native-ui",
+          "expo-api-routes",
+          "expo-cicd-workflows",
+          "expo-deployment",
+          "expo-dev-client",
+          "expo-module",
+          "expo-tailwind-setup",
+          "expo-ui-jetpack-compose",
+          "expo-ui-swift-ui",
+          "native-data-fetching",
+          "upgrading-expo",
+          "use-dom"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "fakechat",
@@ -798,7 +1591,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/fakechat",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "fastly-agent-toolkit",
@@ -814,7 +1616,23 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/fastly/fastly-agent-toolkit.git",
       "sourceSha": "d9ba949011e725be55cae11acc741aa1f1f393d3",
-      "repoUrl": "https://github.com/fastly/fastly-agent-toolkit/blob/main/README.md"
+      "repoUrl": "https://github.com/fastly/fastly-agent-toolkit/blob/main/README.md",
+      "components": {
+        "skills": [
+          "falco",
+          "fastlike",
+          "fastly",
+          "fastly-cli",
+          "viceroy",
+          "xvcl"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "feature-dev",
@@ -829,7 +1647,22 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/feature-dev",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/feature-dev"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/feature-dev",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "feature-dev"
+        ],
+        "agents": [
+          "code-architect",
+          "code-explorer",
+          "code-reviewer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "fiftyone",
@@ -845,7 +1678,33 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/voxel51/fiftyone-skills.git",
       "sourceSha": "593e0553fc9fd94db52386ada2c9e2074a6ecf89",
-      "repoUrl": "https://docs.voxel51.com/"
+      "repoUrl": "https://docs.voxel51.com/",
+      "components": {
+        "skills": [
+          "fiftyone-code-style",
+          "fiftyone-create-notebook",
+          "fiftyone-dataset-curation",
+          "fiftyone-dataset-export",
+          "fiftyone-dataset-import",
+          "fiftyone-dataset-inference",
+          "fiftyone-develop-plugin",
+          "fiftyone-embeddings-visualization",
+          "fiftyone-find-duplicates",
+          "fiftyone-issue-triage",
+          "fiftyone-model-evaluation",
+          "fiftyone-troubleshoot",
+          "fiftyone-voodo-design"
+        ],
+        "hooks": [],
+        "commands": [
+          "help",
+          "quickstart"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "figma",
@@ -860,7 +1719,24 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/figma/mcp-server-guide.git",
-      "repoUrl": "https://github.com/figma/mcp-server-guide"
+      "repoUrl": "https://github.com/figma/mcp-server-guide",
+      "components": {
+        "skills": [
+          "figma-code-connect",
+          "figma-create-design-system-rules",
+          "figma-create-new-file",
+          "figma-generate-design",
+          "figma-generate-library",
+          "figma-implement-design",
+          "figma-use"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "firebase",
@@ -875,7 +1751,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/firebase",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/firebase"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/firebase",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "firecrawl",
@@ -890,7 +1775,27 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/firecrawl/firecrawl-claude-plugin.git",
-      "repoUrl": "https://github.com/firecrawl/firecrawl-claude-plugin.git"
+      "repoUrl": "https://github.com/firecrawl/firecrawl-claude-plugin.git",
+      "components": {
+        "skills": [
+          "firecrawl-agent",
+          "firecrawl-cli",
+          "firecrawl-crawl",
+          "firecrawl-download",
+          "firecrawl-instruct",
+          "firecrawl-map",
+          "firecrawl-scrape",
+          "firecrawl-search"
+        ],
+        "hooks": [],
+        "commands": [
+          "skill-gen"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "firetiger",
@@ -906,7 +1811,25 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/firetiger-oss/claude-plugin.git",
       "sourceSha": "51421ce20adc7c30eb014e6847c7087ed34cb879",
-      "repoUrl": "https://www.firetiger.com/"
+      "repoUrl": "https://www.firetiger.com/",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "create-agent",
+          "instrument",
+          "investigate",
+          "monitor-deploy",
+          "query",
+          "setup"
+        ],
+        "agents": [
+          "firetiger"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "flint",
@@ -922,7 +1845,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/tryflint/claude-code-plugin.git",
       "sourceSha": "f3d56e33ed2fb3ed9b4f02e0fc65d0a79b24bf4d",
-      "repoUrl": "https://www.tryflint.com/docs/claude-code-plugin"
+      "repoUrl": "https://www.tryflint.com/docs/claude-code-plugin",
+      "components": {
+        "skills": [
+          "edit-site"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "followrabbit",
@@ -938,7 +1872,20 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/followrabbit-ai/awesome-rabbit.git",
       "sourceSha": "f59ec3d1f6337a6ed825ef06836a221ed3d2ffb0",
-      "repoUrl": "https://subscriptions.agentic.followrabbit.ai/"
+      "repoUrl": "https://subscriptions.agentic.followrabbit.ai/",
+      "components": {
+        "skills": [
+          "cost-review"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "cost-optimizer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "frontend-design",
@@ -953,7 +1900,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/frontend-design",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/frontend-design"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/frontend-design",
+      "components": {
+        "skills": [
+          "frontend-design"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "github",
@@ -968,7 +1926,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/github",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/github"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/github",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "gitlab",
@@ -983,7 +1950,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/gitlab",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/gitlab"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/gitlab",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "goodmem",
@@ -999,7 +1975,20 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/PAIR-Systems-Inc/goodmem-claude-code-plugin.git",
       "sourceSha": "215568baf203887b5d7f8245e0503dd4a81336c2",
-      "repoUrl": "https://github.com/PAIR-Systems-Inc/goodmem-claude-code-plugin"
+      "repoUrl": "https://github.com/PAIR-Systems-Inc/goodmem-claude-code-plugin",
+      "components": {
+        "skills": [
+          "help",
+          "mcp",
+          "python"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "gopls-lsp",
@@ -1014,7 +2003,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/gopls-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "greptile",
@@ -1029,13 +2027,22 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/greptile",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/greptile"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/greptile",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "helius",
       "type": "plugin",
       "displayName": "Helius",
-      "description": "Build on Solana with Helius \u2014 live blockchain tools, expert coding patterns, and autonomous account signup",
+      "description": "Build on Solana with Helius — live blockchain tools, expert coding patterns, and autonomous account signup",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -1047,7 +2054,21 @@
       "sourceSubdir": "helius-plugin",
       "sourceSha": "05ea4d1128d46618266bbcc23a5e7019c57be0d6",
       "sourceGitRef": "main",
-      "repoUrl": "https://www.helius.dev/docs"
+      "repoUrl": "https://www.helius.dev/docs",
+      "components": {
+        "skills": [
+          "build",
+          "dflow",
+          "phantom",
+          "svm"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "hookify",
@@ -1062,7 +2083,25 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/hookify",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/hookify"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/hookify",
+      "components": {
+        "skills": [
+          "writing-rules"
+        ],
+        "hooks": [],
+        "commands": [
+          "configure",
+          "help",
+          "hookify",
+          "list"
+        ],
+        "agents": [
+          "conversation-analyzer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "huggingface-skills",
@@ -1077,7 +2116,30 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/huggingface/skills.git",
-      "repoUrl": "https://github.com/huggingface/skills.git"
+      "repoUrl": "https://github.com/huggingface/skills.git",
+      "components": {
+        "skills": [
+          "hf-cli",
+          "huggingface-community-evals",
+          "huggingface-datasets",
+          "huggingface-gradio",
+          "huggingface-llm-trainer",
+          "huggingface-paper-publisher",
+          "huggingface-papers",
+          "huggingface-tool-builder",
+          "huggingface-trackio",
+          "huggingface-vision-trainer",
+          "transformers-js"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "AGENTS"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "imessage",
@@ -1092,7 +2154,19 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/imessage",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "access",
+          "configure"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "intercom",
@@ -1108,7 +2182,20 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/intercom/claude-plugin-external.git",
       "sourceSha": "eeef353eead2e3dc5f33f64dbaae54e1309e0d45",
-      "repoUrl": "https://github.com/intercom/claude-plugin-external"
+      "repoUrl": "https://github.com/intercom/claude-plugin-external",
+      "components": {
+        "skills": [
+          "customer-360",
+          "install-messenger",
+          "intercom-analysis"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "jdtls-lsp",
@@ -1123,7 +2210,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/jdtls-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "kotlin-lsp",
@@ -1138,7 +2234,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/kotlin-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "laravel-boost",
@@ -1153,7 +2258,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/laravel-boost",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/laravel-boost"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/laravel-boost",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "learning-output-style",
@@ -1168,7 +2282,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/learning-output-style",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/learning-output-style"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/learning-output-style",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "legalzoom",
@@ -1186,7 +2309,20 @@
       "sourceSubdir": "plugins/legalzoom",
       "sourceSha": "f9fd8a0ca6e1421bc1aacb113a109663a7a6f6d8",
       "sourceGitRef": "main",
-      "repoUrl": "https://www.legalzoom.com/"
+      "repoUrl": "https://www.legalzoom.com/",
+      "components": {
+        "skills": [
+          "attorney-assist"
+        ],
+        "hooks": [],
+        "commands": [
+          "review-contract"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "linear",
@@ -1201,7 +2337,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/linear",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/linear"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/linear",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "lua-lsp",
@@ -1216,7 +2361,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/lua-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "math-olympiad",
@@ -1231,7 +2385,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/math-olympiad",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/math-olympiad"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/math-olympiad",
+      "components": {
+        "skills": [
+          "math-olympiad"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "mcp-server-dev",
@@ -1246,7 +2411,20 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/mcp-server-dev",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/mcp-server-dev"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/mcp-server-dev",
+      "components": {
+        "skills": [
+          "build-mcp-app",
+          "build-mcp-server",
+          "build-mcpb"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "microsoft-docs",
@@ -1261,7 +2439,20 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/MicrosoftDocs/mcp.git",
-      "repoUrl": "https://github.com/microsoftdocs/mcp"
+      "repoUrl": "https://github.com/microsoftdocs/mcp",
+      "components": {
+        "skills": [
+          "microsoft-code-reference",
+          "microsoft-docs",
+          "microsoft-skill-creator"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "migration-to-aws",
@@ -1278,7 +2469,18 @@
       "sourceRef": "https://github.com/awslabs/agent-plugins.git",
       "sourceSubdir": "plugins/migration-to-aws",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/awslabs/agent-plugins"
+      "repoUrl": "https://github.com/awslabs/agent-plugins",
+      "components": {
+        "skills": [
+          "gcp-to-aws"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "mintlify",
@@ -1294,7 +2496,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/mintlify/mintlify-claude-plugin.git",
       "sourceSha": "ce435be18a700dc849d6a63a80da4816d1e2128c",
-      "repoUrl": "https://www.mintlify.com/"
+      "repoUrl": "https://www.mintlify.com/",
+      "components": {
+        "skills": [
+          "mintlify"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "mongodb",
@@ -1310,7 +2523,24 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/mongodb/agent-skills.git",
       "sourceSha": "c47079f65e88a113c52d1ce0618684cef300246c",
-      "repoUrl": "https://www.mongodb.com/docs/mcp-server/overview/"
+      "repoUrl": "https://www.mongodb.com/docs/mcp-server/overview/",
+      "components": {
+        "skills": [
+          "atlas-stream-processing",
+          "mongodb-connection",
+          "mongodb-mcp-setup",
+          "mongodb-natural-language-querying",
+          "mongodb-query-optimizer",
+          "mongodb-schema-design",
+          "mongodb-search-and-ai"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "neon",
@@ -1328,13 +2558,22 @@
       "sourceSubdir": "plugins/neon-postgres",
       "sourceSha": "54d7a9db2ddd476f84d5d1fd7bac323907858a8b",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/neondatabase/agent-skills/tree/main/plugins/neon-postgres"
+      "repoUrl": "https://github.com/neondatabase/agent-skills/tree/main/plugins/neon-postgres",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "netlify-skills",
       "type": "plugin",
       "displayName": "Netlify Skills",
-      "description": "Netlify platform skills for Claude Code \u2014 functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
+      "description": "Netlify platform skills for Claude Code — functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
       "category": "development",
       "author": "Anthropic",
       "tags": [],
@@ -1343,7 +2582,30 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/netlify/context-and-tools.git",
-      "repoUrl": "https://github.com/netlify/context-and-tools"
+      "repoUrl": "https://github.com/netlify/context-and-tools",
+      "components": {
+        "skills": [
+          "netlify-ai-gateway",
+          "netlify-blobs",
+          "netlify-caching",
+          "netlify-cli-and-deploy",
+          "netlify-config",
+          "netlify-db",
+          "netlify-deploy",
+          "netlify-edge-functions",
+          "netlify-forms",
+          "netlify-frameworks",
+          "netlify-functions",
+          "netlify-identity",
+          "netlify-image-cdn"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "nightvision",
@@ -1359,23 +2621,50 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/nvsecurity/nightvision-skills.git",
       "sourceSha": "7d7a3f342bbf4d02b6e012279800cf91ff0c1c97",
-      "repoUrl": "https://github.com/nvsecurity/nightvision-skills"
+      "repoUrl": "https://github.com/nvsecurity/nightvision-skills",
+      "components": {
+        "skills": [
+          "api-discovery",
+          "ci-cd-integration",
+          "scan-configuration",
+          "scan-triage"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "nimble",
       "type": "plugin",
       "displayName": "Nimble",
-      "description": "Nimble web data toolkit \u2014 search, extract, map, crawl the web and work with structured data agents",
+      "description": "Nimble web data toolkit — search, extract, map, crawl the web and work with structured data agents",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
-      "version": "1.0.0",
-      "publishedAt": "2026-04-08T00:00:00Z",
+      "version": "1.0.1",
+      "publishedAt": "2026-04-14T00:00:00Z",
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/Nimbleway/agent-skills.git",
-      "sourceSha": "cf391e95bd8ac009e3641f172434a1d130dde7fe",
-      "repoUrl": "https://docs.nimbleway.com/integrations/agent-skills/plugin-installation"
+      "repoUrl": "https://docs.nimbleway.com/integrations/agent-skills/plugin-installation",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "search"
+        ],
+        "agents": [
+          "nimble-analyst",
+          "nimble-researcher"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "notion",
@@ -1390,13 +2679,29 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/makenotion/claude-code-notion-plugin.git",
-      "repoUrl": "https://github.com/makenotion/claude-code-notion-plugin"
+      "repoUrl": "https://github.com/makenotion/claude-code-notion-plugin",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "create-database-row",
+          "create-page",
+          "create-task",
+          "database-query",
+          "find",
+          "search"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "opsera-devsecops",
       "type": "plugin",
       "displayName": "Opsera Devsecops",
-      "description": "Opsera DevSecOps Agent \u2014 AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
+      "description": "Opsera DevSecOps Agent — AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -1406,13 +2711,37 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/opsera-agents/opsera-devsecops.git",
       "sourceSha": "e797228134ee7d3199594eb0ee5a659df40c91da",
-      "repoUrl": "https://opsera.ai/agents"
+      "repoUrl": "https://opsera.ai/agents",
+      "components": {
+        "skills": [
+          "architecture-analyze",
+          "compliance-audit",
+          "pre-commit-scan",
+          "security-scan",
+          "sql-security"
+        ],
+        "hooks": [
+          "pre-commit-scan"
+        ],
+        "commands": [
+          "architecture-analyze",
+          "compliance-audit",
+          "security-scan",
+          "sql-security"
+        ],
+        "agents": [
+          "devsecops"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "optibot",
       "type": "plugin",
       "displayName": "Optibot",
-      "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities \u2014 directly in Claude Code.",
+      "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities — directly in Claude Code.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -1422,7 +2751,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/Optimal-AI/optibot-skill.git",
       "sourceSha": "981db1f630c3116d7df0a71e5967af55b08e813c",
-      "repoUrl": "https://getoptimal.ai"
+      "repoUrl": "https://getoptimal.ai",
+      "components": {
+        "skills": [
+          "optibot"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "pagerduty",
@@ -1438,7 +2778,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/PagerDuty/claude-code-plugins.git",
       "sourceSha": "b16c23e0d790deceaa7a6182616d0e36673f2eae",
-      "repoUrl": "https://github.com/PagerDuty/claude-code-plugins"
+      "repoUrl": "https://github.com/PagerDuty/claude-code-plugins",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "pre-commit-risk-scoring"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "php-lsp",
@@ -1453,7 +2804,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/php-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "pinecone",
@@ -1468,7 +2828,26 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/pinecone-io/pinecone-claude-code-plugin.git",
-      "repoUrl": "https://github.com/pinecone-io/pinecone-claude-code-plugin"
+      "repoUrl": "https://github.com/pinecone-io/pinecone-claude-code-plugin",
+      "components": {
+        "skills": [
+          "assistant",
+          "cli",
+          "docs",
+          "help",
+          "mcp",
+          "query",
+          "quickstart"
+        ],
+        "hooks": [],
+        "commands": [
+          "join-discord"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "planetscale",
@@ -1484,13 +2863,22 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/planetscale/claude-plugin.git",
       "sourceSha": "f1066cac5bb956bbbb05918f5b07fe0e873d44ea",
-      "repoUrl": "https://planetscale.com/"
+      "repoUrl": "https://planetscale.com/",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "playground",
       "type": "plugin",
       "displayName": "Playground",
-      "description": "Creates interactive HTML playgrounds \u2014 self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
+      "description": "Creates interactive HTML playgrounds — self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
       "category": "development",
       "author": "Anthropic",
       "tags": [],
@@ -1499,7 +2887,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/playground",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/playground"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/playground",
+      "components": {
+        "skills": [
+          "playground"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "playwright",
@@ -1514,7 +2913,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/playwright",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/playwright"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/playwright",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "plugin-dev",
@@ -1529,7 +2937,30 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/plugin-dev",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/plugin-dev"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/plugin-dev",
+      "components": {
+        "skills": [
+          "agent-development",
+          "command-development",
+          "hook-development",
+          "mcp-integration",
+          "plugin-settings",
+          "plugin-structure",
+          "skill-development"
+        ],
+        "hooks": [],
+        "commands": [
+          "create-plugin"
+        ],
+        "agents": [
+          "agent-creator",
+          "plugin-validator",
+          "skill-reviewer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "posthog",
@@ -1544,7 +2975,52 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/PostHog/ai-plugin.git",
-      "repoUrl": "https://posthog.com/docs/model-context-protocol"
+      "repoUrl": "https://posthog.com/docs/model-context-protocol",
+      "components": {
+        "skills": [
+          "analyzing-experiment-session-replays",
+          "auditing-experiments-flags",
+          "cleaning-up-stale-feature-flags",
+          "exploring-autocapture-events",
+          "exploring-llm-clusters",
+          "exploring-llm-evaluations",
+          "exploring-llm-traces",
+          "instrument-error-tracking",
+          "instrument-feature-flags",
+          "instrument-integration",
+          "instrument-llm-analytics",
+          "instrument-logs",
+          "instrument-product-analytics",
+          "query-examples",
+          "signals",
+          "skills-store"
+        ],
+        "hooks": [],
+        "commands": [
+          "actions",
+          "dashboards",
+          "docs",
+          "errors",
+          "experiments",
+          "flags",
+          "insights",
+          "llm-analytics",
+          "llma-cc-ingest",
+          "llma-cc-setup",
+          "llma-cc-status",
+          "logs",
+          "query",
+          "search",
+          "surveys",
+          "workspace"
+        ],
+        "agents": [
+          "error-analyzer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "postiz",
@@ -1560,7 +3036,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/gitroomhq/postiz-agent.git",
       "sourceSha": "c5d1bf5f7e95a71e230fc19ae2150ddd9c549854",
-      "repoUrl": "https://postiz.com/agent"
+      "repoUrl": "https://postiz.com/agent",
+      "components": {
+        "skills": [
+          "postiz"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "postman",
@@ -1576,7 +3063,31 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/Postman-Devrel/postman-claude-code-plugin.git",
       "sourceSha": "40b11ac3466c500cf4625ac016d5c01cd00046f4",
-      "repoUrl": "https://learning.postman.com/docs/developer/postman-mcp-server/"
+      "repoUrl": "https://learning.postman.com/docs/developer/postman-mcp-server/",
+      "components": {
+        "skills": [
+          "agent-ready-apis",
+          "postman-knowledge",
+          "postman-routing"
+        ],
+        "hooks": [],
+        "commands": [
+          "codegen",
+          "docs",
+          "mock",
+          "search",
+          "security",
+          "setup",
+          "sync",
+          "test"
+        ],
+        "agents": [
+          "readiness-analyzer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "pr-review-toolkit",
@@ -1591,7 +3102,25 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/pr-review-toolkit",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/pr-review-toolkit"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/pr-review-toolkit",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "review-pr"
+        ],
+        "agents": [
+          "code-reviewer",
+          "code-simplifier",
+          "comment-analyzer",
+          "pr-test-analyzer",
+          "silent-failure-hunter",
+          "type-design-analyzer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "prisma",
@@ -1607,13 +3136,22 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/prisma/claude-plugin.git",
       "sourceSha": "815dbc4a045a29e3b81510ba0e3ab806f1baaf0e",
-      "repoUrl": "https://prisma.io"
+      "repoUrl": "https://prisma.io",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "product-tracking-skills",
       "type": "plugin",
       "displayName": "Product Tracking Skills",
-      "description": "AI agent skills that make SaaS products data-ready for product analytics \u2014 from codebase scan to tracking plan to working instrumentation code.",
+      "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -1623,7 +3161,26 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/Accoil/product-tracking-skills.git",
       "sourceSha": "341f8cf47d8b5dda550222152377c50aee34c723",
-      "repoUrl": "https://www.accoil.com/product-tracking"
+      "repoUrl": "https://www.accoil.com/product-tracking",
+      "components": {
+        "skills": [
+          "product-tracking-audit-current-tracking",
+          "product-tracking-business-case",
+          "product-tracking-design-tracking-plan",
+          "product-tracking-generate-implementation-guide",
+          "product-tracking-implement-tracking",
+          "product-tracking-instrument-new-feature",
+          "product-tracking-model-product"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "tracking-watchdog"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "pydantic-ai",
@@ -1640,7 +3197,18 @@
       "sourceRef": "https://github.com/pydantic/skills.git",
       "sourceSubdir": "plugins/ai",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/pydantic/skills/tree/main/plugins/ai"
+      "repoUrl": "https://github.com/pydantic/skills/tree/main/plugins/ai",
+      "components": {
+        "skills": [
+          "building-pydantic-ai-agents"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "pyright-lsp",
@@ -1655,13 +3223,22 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/pyright-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "qodo-skills",
       "type": "plugin",
       "displayName": "Qodo Skills",
-      "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC\u2014from IDE to CI/CD\u2014ensuring consistent standards and catching issues early.",
+      "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC—from IDE to CI/CD—ensuring consistent standards and catching issues early.",
       "category": "development",
       "author": "Anthropic",
       "tags": [],
@@ -1670,7 +3247,19 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/qodo-ai/qodo-skills.git",
-      "repoUrl": "https://github.com/qodo-ai/qodo-skills.git"
+      "repoUrl": "https://github.com/qodo-ai/qodo-skills.git",
+      "components": {
+        "skills": [
+          "qodo-get-rules",
+          "qodo-pr-resolver"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "railway",
@@ -1688,7 +3277,20 @@
       "sourceSubdir": "plugins/railway",
       "sourceSha": "d52f3741a6a33a3191d6138eb3d6c3355cb970d1",
       "sourceGitRef": "main",
-      "repoUrl": "https://docs.railway.com/ai/claude-code-plugin"
+      "repoUrl": "https://docs.railway.com/ai/claude-code-plugin",
+      "components": {
+        "skills": [
+          "use-railway"
+        ],
+        "hooks": [
+          "auto-approve-api"
+        ],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "ralph-loop",
@@ -1703,7 +3305,22 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/ralph-loop",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/ralph-loop"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/ralph-loop",
+      "components": {
+        "skills": [],
+        "hooks": [
+          "stop-hook"
+        ],
+        "commands": [
+          "cancel-ralph",
+          "help",
+          "ralph-loop"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "rc",
@@ -1719,7 +3336,26 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/RevenueCat/rc-claude-code-plugin.git",
       "sourceSha": "af7cb77996aee4e7e3c109c5afec81f716139032",
-      "repoUrl": "https://www.revenuecat.com"
+      "repoUrl": "https://www.revenuecat.com",
+      "components": {
+        "skills": [
+          "apikey",
+          "create-app",
+          "create-product",
+          "status"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "design-system-extractor",
+          "paywall-builder",
+          "project-bootstrap",
+          "troubleshoot"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "remember",
@@ -1735,7 +3371,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/Digital-Process-Tools/claude-remember.git",
       "sourceSha": "779ab61d8d412230eeec1840b8ca104bebea4358",
-      "repoUrl": "https://github.com/Digital-Process-Tools/claude-remember"
+      "repoUrl": "https://github.com/Digital-Process-Tools/claude-remember",
+      "components": {
+        "skills": [
+          "remember"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "revenuecat",
@@ -1751,7 +3398,26 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/RevenueCat/rc-claude-code-plugin.git",
       "sourceSha": "af7cb77996aee4e7e3c109c5afec81f716139032",
-      "repoUrl": "https://www.revenuecat.com"
+      "repoUrl": "https://www.revenuecat.com",
+      "components": {
+        "skills": [
+          "apikey",
+          "create-app",
+          "create-product",
+          "status"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [
+          "design-system-extractor",
+          "paywall-builder",
+          "project-bootstrap",
+          "troubleshoot"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "ruby-lsp",
@@ -1766,7 +3432,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/ruby-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "rust-analyzer-lsp",
@@ -1781,7 +3456,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/rust-analyzer-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "sanity",
@@ -1797,13 +3481,32 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/sanity-io/agent-toolkit.git",
       "sourceSha": "4b1fb10bd707a22cf0cdfad5374ffc885f2ffa8d",
-      "repoUrl": "https://www.sanity.io"
+      "repoUrl": "https://www.sanity.io",
+      "components": {
+        "skills": [
+          "content-experimentation-best-practices",
+          "content-modeling-best-practices",
+          "sanity-best-practices",
+          "seo-aeo-best-practices"
+        ],
+        "hooks": [],
+        "commands": [
+          "deploy-schema",
+          "review",
+          "sanity",
+          "typegen"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "searchfit-seo",
       "type": "plugin",
       "displayName": "Searchfit Seo",
-      "description": "Free AI-powered SEO toolkit \u2014 audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
+      "description": "Free AI-powered SEO toolkit — audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
       "category": "other",
       "author": "Anthropic",
       "tags": [],
@@ -1813,7 +3516,35 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/searchfit/searchfit-seo.git",
       "sourceSha": "ced1a99a9fadfc10aa573a05829fc1bd357d4e4c",
-      "repoUrl": "https://searchfit.ai"
+      "repoUrl": "https://searchfit.ai",
+      "components": {
+        "skills": [
+          "ai-visibility",
+          "broken-links",
+          "content-brief",
+          "content-strategy",
+          "content-translation",
+          "internal-linking",
+          "keyword-clustering",
+          "on-page-seo",
+          "schema-markup",
+          "seo-audit",
+          "technical-seo"
+        ],
+        "hooks": [],
+        "commands": [
+          "create-content",
+          "create-topic",
+          "generate-schema",
+          "keyword-cluster",
+          "seo-check",
+          "translate-content"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "security-guidance",
@@ -1828,7 +3559,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/security-guidance",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/security-guidance"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/security-guidance",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "semgrep",
@@ -1844,7 +3584,18 @@
       "sourceType": "git-subdir",
       "sourceRef": "https://github.com/semgrep/mcp-marketplace.git",
       "sourceSubdir": "plugin",
-      "repoUrl": "https://github.com/semgrep/mcp-marketplace.git"
+      "repoUrl": "https://github.com/semgrep/mcp-marketplace.git",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [
+          "setup-semgrep-plugin"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "sentry",
@@ -1859,7 +3610,47 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/getsentry/sentry-for-claude.git",
-      "repoUrl": "https://github.com/getsentry/sentry-for-claude/tree/main"
+      "repoUrl": "https://github.com/getsentry/sentry-for-claude/tree/main",
+      "components": {
+        "skills": [
+          "sentry-android-sdk",
+          "sentry-browser-sdk",
+          "sentry-cloudflare-sdk",
+          "sentry-cocoa-sdk",
+          "sentry-code-review",
+          "sentry-create-alert",
+          "sentry-dotnet-sdk",
+          "sentry-elixir-sdk",
+          "sentry-feature-setup",
+          "sentry-fix-issues",
+          "sentry-flutter-sdk",
+          "sentry-go-sdk",
+          "sentry-nestjs-sdk",
+          "sentry-nextjs-sdk",
+          "sentry-node-sdk",
+          "sentry-otel-exporter-setup",
+          "sentry-php-sdk",
+          "sentry-pr-code-review",
+          "sentry-python-sdk",
+          "sentry-react-native-sdk",
+          "sentry-react-sdk",
+          "sentry-ruby-sdk",
+          "sentry-sdk-setup",
+          "sentry-sdk-skill-creator",
+          "sentry-sdk-upgrade",
+          "sentry-setup-ai-monitoring",
+          "sentry-svelte-sdk",
+          "sentry-workflow"
+        ],
+        "hooks": [],
+        "commands": [
+          "seer"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "serena",
@@ -1868,21 +3659,28 @@
       "description": "Semantic code analysis MCP server providing intelligent code understanding, refactoring suggestions, and codebase navigation through language server protocol integration.",
       "category": "development",
       "author": "Anthropic",
-      "tags": [
-        "community-managed"
-      ],
-      "version": "1.0.0",
-      "publishedAt": "2026-04-08T00:00:00Z",
+      "tags": [],
+      "version": "1.0.1",
+      "publishedAt": "2026-04-14T00:00:00Z",
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/serena",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/serena"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/serena",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "session-report",
       "type": "plugin",
       "displayName": "Session Report",
-      "description": "Generate an explorable HTML report of Claude Code session usage \u2014 tokens, cache efficiency, subagents, skills, and the most expensive prompts \u2014 from local ~/.claude/projects transcripts.",
+      "description": "Generate an explorable HTML report of Claude Code session usage — tokens, cache efficiency, subagents, skills, and the most expensive prompts — from local ~/.claude/projects transcripts.",
       "category": "productivity",
       "author": "Anthropic",
       "tags": [],
@@ -1891,7 +3689,85 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/session-report",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/session-report"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/session-report",
+      "components": {
+        "skills": [
+          "session-report"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
+    },
+    {
+      "id": "shopify",
+      "type": "plugin",
+      "displayName": "Shopify",
+      "description": "Shopify developer tools for Claude Code — search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
+      "category": "development",
+      "author": "Shopify",
+      "tags": [],
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "url",
+      "sourceRef": "https://github.com/Shopify/shopify-plugins.git",
+      "repoUrl": "https://shopify.dev/docs/apps/build/devmcp",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
+    },
+    {
+      "id": "shopify-ai-toolkit",
+      "type": "plugin",
+      "displayName": "Shopify AI Toolkit",
+      "description": "Shopify's AI Toolkit provides 18 development skills for building on the Shopify platform, covering documentation search, API schema access, GraphQL and Liquid code validation, Hydrogen storefronts, Polaris UI extensions, store management via CLI, and onboarding guidance for both developers and merchants.",
+      "category": "development",
+      "author": "Shopify",
+      "tags": [],
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "url",
+      "sourceRef": "https://github.com/Shopify/Shopify-AI-Toolkit.git",
+      "repoUrl": "https://shopify.dev",
+      "components": {
+        "skills": [
+          "shopify-admin",
+          "shopify-admin-execution",
+          "shopify-custom-data",
+          "shopify-customer",
+          "shopify-dev",
+          "shopify-functions",
+          "shopify-hydrogen",
+          "shopify-liquid",
+          "shopify-onboarding-dev",
+          "shopify-onboarding-merchant",
+          "shopify-partner",
+          "shopify-payments-apps",
+          "shopify-polaris-admin-extensions",
+          "shopify-polaris-app-home",
+          "shopify-polaris-checkout-extensions",
+          "shopify-polaris-customer-account-extensions",
+          "shopify-pos-ui",
+          "shopify-storefront-graphql"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "skill-creator",
@@ -1906,7 +3782,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/skill-creator",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator",
+      "components": {
+        "skills": [
+          "skill-creator"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "slack",
@@ -1921,22 +3808,60 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/slackapi/slack-mcp-plugin.git",
-      "repoUrl": "https://github.com/slackapi/slack-mcp-plugin/tree/main"
+      "repoUrl": "https://github.com/slackapi/slack-mcp-plugin/tree/main",
+      "components": {
+        "skills": [
+          "slack-messaging",
+          "slack-search"
+        ],
+        "hooks": [],
+        "commands": [
+          "channel-digest",
+          "draft-announcement",
+          "find-discussions",
+          "standup",
+          "summarize-channel"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
-      "id": "sonarqube-agent-plugins",
+      "id": "sonarqube",
       "type": "plugin",
-      "displayName": "Sonarqube Agent Plugins",
-      "description": "Integrate SonarQube code quality and security analysis into Claude Code: namespaced slash commands, a guided skill to setup the SonarQube CLI, and a startup check for CLI wiring. MCP server registration and secrets-scanning hooks are installed by the SonarQube CLI as part of setup.",
+      "displayName": "Sonarqube",
+      "description": "Automatically enforce SonarQube code quality and security in the agent coding loop — 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
       "category": "security",
-      "author": "Anthropic",
+      "author": "SonarSource",
       "tags": [],
-      "version": "1.0.1",
-      "publishedAt": "2026-04-13T00:00:00Z",
+      "version": "1.0.0",
+      "publishedAt": "2026-04-14T00:00:00Z",
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
-      "repoUrl": "https://github.com/SonarSource/sonarqube-agent-plugins"
+      "repoUrl": "https://www.sonarsource.com",
+      "components": {
+        "skills": [
+          "integrate"
+        ],
+        "hooks": [],
+        "commands": [
+          "analyze",
+          "coverage",
+          "dependency-risks",
+          "duplication",
+          "fix-issue",
+          "list-issues",
+          "list-projects",
+          "quality-gate"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "sonatype-guide",
@@ -1951,7 +3876,18 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/sonatype/sonatype-guide-claude-plugin.git",
-      "repoUrl": "https://github.com/sonatype/sonatype-guide-claude-plugin.git"
+      "repoUrl": "https://github.com/sonatype/sonatype-guide-claude-plugin.git",
+      "components": {
+        "skills": [
+          "sonatype-guide"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "sourcegraph",
@@ -1967,13 +3903,27 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/sourcegraph-community/sourcegraph-claudecode-plugin.git",
       "sourceSha": "cfe3d44476957b16d1575261bef6b2dc7cb1e0b7",
-      "repoUrl": "https://sourcegraph.com"
+      "repoUrl": "https://sourcegraph.com",
+      "components": {
+        "skills": [
+          "searching-sourcegraph"
+        ],
+        "hooks": [],
+        "commands": [
+          "sg-file",
+          "sg-search"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "spotify-ads-api",
       "type": "plugin",
       "displayName": "Spotify Ads API",
-      "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth \u2014 all through conversation.",
+      "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth — all through conversation.",
       "category": "productivity",
       "author": "Anthropic",
       "tags": [],
@@ -1983,7 +3933,29 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/spotify/ads-claude-plugin.git",
       "sourceSha": "a4bce9912db071d47dfb410086a48004e0539efa",
-      "repoUrl": "https://github.com/spotify/ads-claude-plugin"
+      "repoUrl": "https://github.com/spotify/ads-claude-plugin",
+      "components": {
+        "skills": [
+          "ads",
+          "api-reference",
+          "assets",
+          "build-campaign",
+          "campaigns",
+          "configure",
+          "dashboard",
+          "report"
+        ],
+        "hooks": [
+          "check-token"
+        ],
+        "commands": [],
+        "agents": [
+          "spotify-ads-request-builder"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "stagehand",
@@ -1998,7 +3970,24 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/browserbase/agent-browse.git",
-      "repoUrl": "https://github.com/browserbase/agent-browse"
+      "repoUrl": "https://github.com/browserbase/agent-browse",
+      "components": {
+        "skills": [
+          "browser",
+          "browserbase-cli",
+          "cookie-sync",
+          "fetch",
+          "functions",
+          "search",
+          "ui-test"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "stripe",
@@ -2015,7 +4004,23 @@
       "sourceRef": "https://github.com/stripe/ai.git",
       "sourceSubdir": "providers/claude/plugin",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/stripe/ai/tree/main/providers/claude/plugin"
+      "repoUrl": "https://github.com/stripe/ai/tree/main/providers/claude/plugin",
+      "components": {
+        "skills": [
+          "stripe-best-practices",
+          "stripe-projects",
+          "upgrade-stripe"
+        ],
+        "hooks": [],
+        "commands": [
+          "explain-error",
+          "test-cards"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "sumup",
@@ -2031,7 +4036,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/sumup/sumup-skills.git",
       "sourceSha": "802476c39a0422d3277e37288b03968ad731bc30",
-      "repoUrl": "https://www.sumup.com/"
+      "repoUrl": "https://www.sumup.com/",
+      "components": {
+        "skills": [
+          "sumup"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "supabase",
@@ -2046,7 +4062,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/supabase",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/supabase"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/supabase",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "superpowers",
@@ -2061,7 +4086,37 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/obra/superpowers.git",
-      "repoUrl": "https://github.com/obra/superpowers.git"
+      "repoUrl": "https://github.com/obra/superpowers.git",
+      "components": {
+        "skills": [
+          "brainstorming",
+          "dispatching-parallel-agents",
+          "executing-plans",
+          "finishing-a-development-branch",
+          "receiving-code-review",
+          "requesting-code-review",
+          "subagent-driven-development",
+          "systematic-debugging",
+          "test-driven-development",
+          "using-git-worktrees",
+          "using-superpowers",
+          "verification-before-completion",
+          "writing-plans",
+          "writing-skills"
+        ],
+        "hooks": [],
+        "commands": [
+          "brainstorm",
+          "execute-plan",
+          "write-plan"
+        ],
+        "agents": [
+          "code-reviewer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "swift-lsp",
@@ -2076,7 +4131,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/swift-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "telegram",
@@ -2091,7 +4155,19 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/telegram",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [
+          "access",
+          "configure"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "terraform",
@@ -2106,7 +4182,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./external_plugins/terraform",
-      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/terraform"
+      "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/terraform",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "typescript-lsp",
@@ -2121,7 +4206,16 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "local",
       "sourceRef": "./plugins/typescript-lsp",
-      "repoUrl": null
+      "repoUrl": null,
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "ui5",
@@ -2139,7 +4233,16 @@
       "sourceSubdir": "plugins/ui5",
       "sourceSha": "5070dfc1cef711d6efad40beb43750027039d71f",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/UI5/plugins-claude"
+      "repoUrl": "https://github.com/UI5/plugins-claude",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "ui5-typescript-conversion",
@@ -2157,7 +4260,16 @@
       "sourceSubdir": "plugins/ui5-typescript-conversion",
       "sourceSha": "5070dfc1cef711d6efad40beb43750027039d71f",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/UI5/plugins-claude"
+      "repoUrl": "https://github.com/UI5/plugins-claude",
+      "components": {
+        "skills": [],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "vercel",
@@ -2172,7 +4284,53 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/vercel/vercel-plugin.git",
-      "repoUrl": "https://github.com/vercel/vercel-plugin"
+      "repoUrl": "https://github.com/vercel/vercel-plugin",
+      "components": {
+        "skills": [
+          "ai-gateway",
+          "ai-sdk",
+          "auth",
+          "bootstrap",
+          "chat-sdk",
+          "deployments-cicd",
+          "env-vars",
+          "knowledge-update",
+          "marketplace",
+          "next-cache-components",
+          "next-forge",
+          "next-upgrade",
+          "nextjs",
+          "react-best-practices",
+          "routing-middleware",
+          "runtime-cache",
+          "shadcn",
+          "turbopack",
+          "vercel-agent",
+          "vercel-cli",
+          "vercel-functions",
+          "vercel-sandbox",
+          "vercel-storage",
+          "verification",
+          "workflow"
+        ],
+        "hooks": [],
+        "commands": [
+          "_conventions",
+          "bootstrap",
+          "deploy",
+          "env",
+          "marketplace",
+          "status"
+        ],
+        "agents": [
+          "ai-architect",
+          "deployment-expert",
+          "performance-optimizer"
+        ],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "voila-api",
@@ -2188,7 +4346,18 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/TSedmanDC/Voila-API-Skill.git",
       "sourceSha": "b9cfcb860cb5ae4ece57d67422a6cdd92ef96739",
-      "repoUrl": "https://github.com/TSedmanDC/Voila-API-Skill"
+      "repoUrl": "https://github.com/TSedmanDC/Voila-API-Skill",
+      "components": {
+        "skills": [
+          "voila-api"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "wix",
@@ -2204,7 +4373,33 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/wix/skills.git",
       "sourceSha": "15dda227e34959b1340e33bb9aede7e23a273f42",
-      "repoUrl": "https://dev.wix.com/docs/wix-cli/guides/development/about-wix-skills"
+      "repoUrl": "https://dev.wix.com/docs/wix-cli/guides/development/about-wix-skills",
+      "components": {
+        "skills": [
+          "wds-docs",
+          "wix-cli-app-validation",
+          "wix-cli-backend-api",
+          "wix-cli-backend-event",
+          "wix-cli-dashboard-modal",
+          "wix-cli-dashboard-page",
+          "wix-cli-dashboard-plugin",
+          "wix-cli-data-collection",
+          "wix-cli-embedded-script",
+          "wix-cli-extension-registration",
+          "wix-cli-orchestrator",
+          "wix-cli-service-plugin",
+          "wix-cli-site-component",
+          "wix-cli-site-plugin",
+          "wix-cli-site-widget",
+          "wix-stores-versioning"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "wordpress.com",
@@ -2220,7 +4415,22 @@
       "sourceType": "url",
       "sourceRef": "https://github.com/Automattic/claude-code-wordpress.com.git",
       "sourceSha": "e4d23c3bffdcdb7f70134ab6a1a110258ff75cfd",
-      "repoUrl": "https://developer.wordpress.com/wordpress-com-claude-code-plugin/"
+      "repoUrl": "https://developer.wordpress.com/wordpress-com-claude-code-plugin/",
+      "components": {
+        "skills": [
+          "site-specification"
+        ],
+        "hooks": [],
+        "commands": [
+          "design-site",
+          "preview-designs",
+          "quick-build"
+        ],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": false
+      }
     },
     {
       "id": "zapier",
@@ -2238,7 +4448,20 @@
       "sourceSubdir": "plugins/zapier",
       "sourceSha": "b93007e9a726c6ee93c57a949e732744ef5acbfd",
       "sourceGitRef": "main",
-      "repoUrl": "https://github.com/zapier/zapier-mcp/tree/main/plugins/zapier"
+      "repoUrl": "https://github.com/zapier/zapier-mcp/tree/main/plugins/zapier",
+      "components": {
+        "skills": [
+          "create-my-tools-profile",
+          "zapier-setup",
+          "zapier-status"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "zoom-plugin",
@@ -2253,7 +4476,47 @@
       "sourceMarketplace": "anthropic",
       "sourceType": "url",
       "sourceRef": "https://github.com/zoom/zoom-plugin.git",
-      "repoUrl": "https://developers.zoom.us/"
+      "repoUrl": "https://developers.zoom.us/",
+      "components": {
+        "skills": [
+          "build-zoom-bot",
+          "build-zoom-meeting-app",
+          "choose-zoom-approach",
+          "cobrowse-sdk",
+          "contact-center",
+          "debug-zoom",
+          "debug-zoom-integration",
+          "design-mcp-workflow",
+          "general",
+          "meeting-sdk",
+          "oauth",
+          "phone",
+          "plan-zoom-integration",
+          "plan-zoom-product",
+          "probe-sdk",
+          "rest-api",
+          "rivet-sdk",
+          "rtms",
+          "scribe",
+          "setup-zoom-mcp",
+          "setup-zoom-oauth",
+          "start",
+          "team-chat",
+          "ui-toolkit",
+          "video-sdk",
+          "virtual-agent",
+          "webhooks",
+          "websockets",
+          "zoom-apps-sdk",
+          "zoom-mcp"
+        ],
+        "hooks": [],
+        "commands": [],
+        "agents": [],
+        "mcpServers": [],
+        "hasHooksManifest": false,
+        "hasMcpConfig": true
+      }
     },
     {
       "id": "claudes-inbox",
@@ -2512,6 +4775,23 @@
       "repoUrl": "https://www.sanity.io",
       "deprecated": true,
       "deprecatedAt": "2026-04-13"
+    },
+    {
+      "id": "sonarqube-agent-plugins",
+      "type": "plugin",
+      "displayName": "Sonarqube Agent Plugins",
+      "description": "Integrate SonarQube code quality and security analysis into Claude Code: namespaced slash commands, a guided skill to setup the SonarQube CLI, and a startup check for CLI wiring. MCP server registration and secrets-scanning hooks are installed by the SonarQube CLI as part of setup.",
+      "category": "security",
+      "author": "Anthropic",
+      "tags": [],
+      "version": "1.0.1",
+      "publishedAt": "2026-04-13T00:00:00Z",
+      "sourceMarketplace": "anthropic",
+      "sourceType": "url",
+      "sourceRef": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
+      "repoUrl": "https://github.com/SonarSource/sonarqube-agent-plugins",
+      "deprecated": true,
+      "deprecatedAt": "2026-04-14"
     }
   ]
 }

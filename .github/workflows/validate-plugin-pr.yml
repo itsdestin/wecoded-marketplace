@@ -130,6 +130,45 @@ jobs:
             echo "OK: $id — ${SIZE} bytes (limit: ${MAX})"
           done
 
+      - name: Validate enum fields (tags, lifeArea, audience)
+        run: |
+          # Validates any marketplace.json or overrides/*.json touched by this PR.
+          # Fails fast on unknown enum values so authors get a clear signal.
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const { validateEnums } = require('./scripts/schema.js');
+
+          function check(file, entries) {
+            let fail = false;
+            for (const e of entries) {
+              const errors = validateEnums(e);
+              if (errors.length) {
+                fail = true;
+                console.log('::error file=' + file + '::' + (e.id || e.name || '?') + ': ' + errors.join('; '));
+              }
+            }
+            return fail;
+          }
+
+          let fail = false;
+          if (fs.existsSync('marketplace.json')) {
+            const mp = JSON.parse(fs.readFileSync('marketplace.json', 'utf8'));
+            fail = check('marketplace.json', mp.plugins || []) || fail;
+          }
+          const overridesDir = 'overrides';
+          if (fs.existsSync(overridesDir)) {
+            for (const f of fs.readdirSync(overridesDir)) {
+              if (!f.endsWith('.json')) continue;
+              const p = path.join(overridesDir, f);
+              const obj = JSON.parse(fs.readFileSync(p, 'utf8'));
+              fail = check(p, [obj]) || fail;
+            }
+          }
+          if (fail) process.exit(1);
+          console.log('OK: all tags/lifeArea/audience values are in schema');
+          "
+
       - name: Check plugin ID uniqueness
         env:
           PLUGINS: ${{ steps.changed.outputs.plugins }}
@@ -263,13 +302,32 @@ jobs:
           "
 
       - name: Rebuild skills/index.json
+        env:
+          # Use the built-in Actions token so the Tree API gets 5000/hr.
+          # Public-repo scope is sufficient — we only read public trees.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/sync.js
+
+      - name: Check extraction failure rate
+        run: |
+          # Sentinel for "something systemic broke". If >10% of non-deprecated
+          # entries failed extraction, fail the build so it lands on Destin's
+          # radar instead of silently shipping null components.
+          node -e "
+          const r = JSON.parse(require('fs').readFileSync('sync-report.json', 'utf8'));
+          const failed = (r.components.failed || []).length + (r.components.truncated || []).length;
+          const total = (r.components.extracted || 0) + failed;
+          if (total === 0) { console.log('No extraction attempted — skipping threshold check'); process.exit(0); }
+          const rate = failed / total;
+          console.log('Extraction failure rate: ' + (rate * 100).toFixed(1) + '% (' + failed + '/' + total + ')');
+          if (rate > 0.10) { console.log('::error::Extraction failure rate > 10%'); process.exit(1); }
+          "
 
       - name: Commit updated marketplace files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add marketplace.json skills/index.json
+          git add marketplace.json skills/index.json index.json sync-report.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

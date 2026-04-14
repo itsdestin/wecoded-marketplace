@@ -22,12 +22,25 @@ const path = require("path");
 const crypto = require("crypto");
 const https = require("https");
 
+const { normalizeTags } = require("./schema");
+const {
+  extractLocalComponents,
+  extractRemoteComponents,
+  RateLimitError,
+} = require("./extract-components");
+
 const SKILLS_INDEX_PATH = path.join(__dirname, "..", "skills", "index.json");
 const LOCAL_MARKETPLACE_PATH = path.join(__dirname, "..", "marketplace.json");
 const OVERRIDES_DIR = path.join(__dirname, "..", "overrides");
+const SYNC_REPORT_PATH = path.join(__dirname, "..", "sync-report.json");
 
 const UPSTREAM_RAW_URL =
   "https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json";
+
+// Anthropic's `source: "<path>"` strings resolve inside this repo at HEAD.
+// Used only by extractForEntry when converting anthropic-local → git-subdir.
+const ANTHROPIC_UPSTREAM_REPO = "https://github.com/anthropics/claude-plugins-official.git";
+const ANTHROPIC_UPSTREAM_REF = "main";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -177,7 +190,9 @@ function mapEntry(upstream, sourceMarketplace, ownerName, isPrompt) {
     description: upstream.description || "",
     category: upstream.category || "other",
     author: upstream.author?.name || ownerName,
-    tags: upstream.tags || [],
+    // Tags flow through TAG_ALIASES + enum filter. Unknown values drop silently
+    // here; CI is where out-of-enum values hard-fail on PRs.
+    tags: normalizeTags(upstream.tags || []),
     version: "1.0.0",
     publishedAt: new Date().toISOString().split("T")[0] + "T00:00:00Z",
     sourceMarketplace,
@@ -195,15 +210,57 @@ function mapEntry(upstream, sourceMarketplace, ownerName, isPrompt) {
     entry.repoUrl = upstream.homepage || null;
   }
 
-  // Apply overrides (never override structural fields)
+  // Apply overrides (never override structural fields). Overrides are the
+  // canonical place to set tagline/longDescription/lifeArea/audience — these
+  // are human-curated fields; sync.js never invents them.
   const override = loadOverride(id);
   if (override) {
     Object.assign(entry, override);
     entry.id = id;
     entry.sourceMarketplace = sourceMarketplace;
+    // Re-normalize tags if the override supplied any.
+    if (override.tags) entry.tags = normalizeTags(override.tags);
   }
 
   return entry;
+}
+
+// Extract components for one entry. Mutates the entry to add `components` or
+// `componentsError`. Reuses `cache` keyed by sourceSha for remote entries so
+// that re-syncs with unchanged SHAs never re-fetch.
+//
+// Returns { ok: bool, error?: string } for sync-report aggregation.
+async function extractForEntry(entry, cache) {
+  if (entry.type === "prompt") {
+    // Prompts have no components — skip without marking as an error.
+    return { ok: true };
+  }
+  let result;
+  if (entry.sourceType === "local" && entry.sourceMarketplace === "anthropic") {
+    // Anthropic "local" entries are paths inside the upstream plugin repo,
+    // not our repo. Route through the remote Tree API with a synthesized
+    // git-subdir entry. Cache key folds in the upstream ref so a re-sync
+    // against a different upstream commit invalidates correctly.
+    const subdir = (entry.sourceRef || "").replace(/^\.\//, "").replace(/\/$/, "");
+    const synthetic = {
+      sourceType: "git-subdir",
+      sourceRef: ANTHROPIC_UPSTREAM_REPO,
+      sourceSubdir: subdir,
+      sourceGitRef: ANTHROPIC_UPSTREAM_REF,
+      // No sourceSha — extractRemoteComponents will resolveRef() once and cache.
+    };
+    result = await extractRemoteComponents(synthetic, cache);
+  } else if (entry.sourceType === "local") {
+    const dir = path.join(__dirname, "..", entry.sourceRef || "");
+    result = extractLocalComponents(dir);
+  } else if (entry.sourceType === "url" || entry.sourceType === "git-subdir") {
+    result = await extractRemoteComponents(entry, cache);
+  } else {
+    result = { components: null, componentsError: "unknown-source-type" };
+  }
+  if (result.components !== undefined) entry.components = result.components;
+  if (result.componentsError) entry.componentsError = result.componentsError;
+  return { ok: result.components !== null, error: result.componentsError };
 }
 
 // Check if two entries have meaningful differences (ignoring version/publishedAt)
@@ -395,6 +452,41 @@ async function main() {
     }
   }
 
+  // --- Component extraction (one pass over non-deprecated entries) ---
+  // Deprecated entries aren't re-extracted; they carry forward their last-known
+  // `components` value from the previous index (the deprecation branch above
+  // spreads prev, which preserves components if present).
+  const extractCache = {};
+  const extractReport = { extracted: 0, failed: [], truncated: [], startedAt: new Date().toISOString() };
+  try {
+    for (const entry of finalEntries) {
+      if (entry.deprecated) continue;
+      // Reuse cached components when sourceSha is unchanged.
+      const prev = previousById.get(entry.id);
+      if (prev && prev.components !== undefined &&
+          prev.sourceSha && prev.sourceSha === entry.sourceSha) {
+        entry.components = prev.components;
+        if (prev.componentsError) entry.componentsError = prev.componentsError;
+        continue;
+      }
+      const { ok, error } = await extractForEntry(entry, extractCache);
+      if (ok) {
+        extractReport.extracted++;
+      } else {
+        if (error === "truncated") extractReport.truncated.push(entry.id);
+        else extractReport.failed.push({ id: entry.id, error: error || "unknown" });
+      }
+    }
+  } catch (err) {
+    if (err instanceof RateLimitError) {
+      console.error(`  ABORT: ${err.message}. Last-good index preserved; re-run when limit resets.`);
+      process.exit(2);
+    }
+    throw err;
+  }
+  extractReport.finishedAt = new Date().toISOString();
+  console.log(`  Extracted components: ${extractReport.extracted} ok, ${extractReport.failed.length} failed, ${extractReport.truncated.length} truncated`);
+
   // Sort: DestinCode first (alphabetical), then anthropic (alphabetical), then deprecated
   finalEntries.sort((a, b) => {
     // Deprecated always last
@@ -462,6 +554,32 @@ async function main() {
   if (prevRoot !== rootContent) {
     fs.writeFileSync(rootIndexPath, rootContent);
     console.log(`Written ${finalEntries.length} entries to root index.json`);
+  }
+
+  // Write sync-report.json — committed alongside index so drift is visible in diffs.
+  // CI can read this to surface a failure count in the workflow summary.
+  const report = {
+    timestamp: new Date().toISOString(),
+    totalEntries: finalEntries.length,
+    counts: { added, updated, unchanged, deprecated },
+    components: extractReport,
+  };
+  const reportContent = JSON.stringify(report, null, 2) + "\n";
+  // Skip writing if only the timestamp changed (keeps diffs meaningful).
+  let prevReport = null;
+  if (fs.existsSync(SYNC_REPORT_PATH)) {
+    try {
+      prevReport = JSON.parse(fs.readFileSync(SYNC_REPORT_PATH, "utf8"));
+    } catch {}
+  }
+  const reportChanged = !prevReport ||
+    JSON.stringify(prevReport.counts) !== JSON.stringify(report.counts) ||
+    JSON.stringify(prevReport.components?.failed) !== JSON.stringify(report.components.failed) ||
+    JSON.stringify(prevReport.components?.truncated) !== JSON.stringify(report.components.truncated) ||
+    (prevReport.components?.extracted || 0) !== report.components.extracted;
+  if (reportChanged) {
+    fs.writeFileSync(SYNC_REPORT_PATH, reportContent);
+    console.log(`Written sync-report.json`);
   }
 
   // Summary
