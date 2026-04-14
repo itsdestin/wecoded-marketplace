@@ -1,14 +1,6 @@
 {
   "skills": [
-    "destinclaude",
-    "destinclaude-encyclopedia",
-    "destinclaude-inbox",
-    "destinclaude-themes-plugin",
-    "destinclaude-output-styles",
-    "code-review:code-review",
-    "commit-commands:commit",
-    "frontend-design:frontend-design",
-    "destinclaude-drive"
+    "theme-builder"
   ],
   "themes": [
     "golden-sunbreak"
