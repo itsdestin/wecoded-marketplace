@@ -1,0 +1,12 @@
+{
+  "tagline": "Groceries, pantry, and spending \u2014 logged.",
+  "longDescription": "Track what's in your pantry, what you bought, and what fast food is costing you. Uses fork-file for the underlying data store.",
+  "tags": [
+    "personal"
+  ],
+  "lifeArea": [
+    "personal",
+    "health"
+  ],
+  "audience": "general"
+}

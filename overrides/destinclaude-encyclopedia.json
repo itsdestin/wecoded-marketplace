@@ -1,0 +1,14 @@
+{
+  "tagline": "Your life, written down and searchable.",
+  "longDescription": "A personal knowledge system: journal daily, fill gaps through guided interviews, ask the librarian to find anything, and compile it all into a living encyclopedia. Claude learns who you are over time.",
+  "tags": [
+    "personal",
+    "journal",
+    "reference",
+    "research"
+  ],
+  "lifeArea": [
+    "personal"
+  ],
+  "audience": "general"
+}

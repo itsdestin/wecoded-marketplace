@@ -1,0 +1,13 @@
+{
+  "tagline": "The toolkit that powers everything else.",
+  "longDescription": "The foundation toolkit for DestinClaude \u2014 safety hooks, diagnostic commands, cross-device sync infrastructure, and the setup wizard. Install this first; most other plugins assume it's present.",
+  "tags": [
+    "productivity",
+    "automation",
+    "plugin"
+  ],
+  "lifeArea": [
+    "work"
+  ],
+  "audience": "developer"
+}

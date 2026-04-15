@@ -6,7 +6,11 @@
     "description": "Generate a source-linked report on your federal representatives from your address, personalized by angle/tone/depth.",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "research",
+      "personal",
+      "ai"
+    ],
     "version": "1.0.1",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -25,16 +29,26 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Know your federal reps, tailored to what you care about.",
+    "longDescription": "Enter your address and get a personalized, source-linked briefing on your federal representatives. Pick an angle (voting record, committee work, stances on an issue), a tone (neutral, critical, positive), and a depth. Every claim links back to a citation you can verify.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude",
     "type": "plugin",
     "displayName": "DestinClaude Core",
-    "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
+    "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
     "category": "productivity",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "productivity",
+      "automation",
+      "plugin"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -63,16 +77,26 @@
       "mcpServers": [],
       "hasHooksManifest": true,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "The toolkit that powers everything else.",
+    "longDescription": "The foundation toolkit for DestinClaude \u2014 safety hooks, diagnostic commands, cross-device sync infrastructure, and the setup wizard. Install this first; most other plugins assume it's present.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "developer"
   },
   {
     "id": "destinclaude-drive",
     "type": "plugin",
     "displayName": "Google Drive",
-    "description": "Google Drive access via rclone — browse, search, read files",
+    "description": "Google Drive access via rclone \u2014 browse, search, read files",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal",
+      "data",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -89,16 +113,28 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Browse Google Drive without leaving chat.",
+    "longDescription": "Read, search, and browse your Google Drive files through rclone. No copy-paste, no tab-switching \u2014 just ask Claude about a doc and it pulls the content.",
+    "lifeArea": [
+      "personal",
+      "work"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-encyclopedia",
     "type": "plugin",
     "displayName": "Encyclopedia",
-    "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
+    "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal",
+      "journal",
+      "reference",
+      "research"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -119,7 +155,13 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Your life, written down and searchable.",
+    "longDescription": "A personal knowledge system: journal daily, fill gaps through guided interviews, ask the librarian to find anything, and compile it all into a living encyclopedia. Claude learns who you are over time.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-food",
@@ -128,7 +170,9 @@
     "description": "Fork-file: track recipes, meals, and food preferences",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -145,7 +189,14 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Groceries, pantry, and spending \u2014 logged.",
+    "longDescription": "Track what's in your pantry, what you bought, and what fast food is costing you. Uses fork-file for the underlying data store.",
+    "lifeArea": [
+      "personal",
+      "health"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-inbox",
@@ -154,7 +205,11 @@
     "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal",
+      "productivity",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -171,7 +226,14 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Triage captured notes into something useful.",
+    "longDescription": "Pulls notes, screenshots, and clips from Todoist, Drive, Gmail, and more. Claude sorts them into your journal, encyclopedia, or skill inbox \u2014 so your quick captures actually become something.",
+    "lifeArea": [
+      "personal",
+      "work"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-messaging",
@@ -180,7 +242,9 @@
     "description": "Send and read SMS/iMessage via MCP servers",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "communication"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -195,16 +259,25 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Text from Claude. Yes, really.",
+    "longDescription": "Send and read SMS and iMessage through MCP servers. Lets Claude draft, send, and review messages on your behalf.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-output-styles",
     "type": "plugin",
     "displayName": "Output Styles",
-    "description": "Tone presets — casual, conversational, academic, professional",
+    "description": "Tone presets \u2014 casual, conversational, academic, professional",
     "category": "productivity",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "writing",
+      "productivity"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -219,16 +292,24 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Match Claude's tone to the task.",
+    "longDescription": "Tone presets \u2014 casual, conversational, academic, professional. Switch between them with a single command depending on whether you're drafting an email, writing a paper, or just chatting.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "general"
   },
   {
     "id": "destinclaude-themes-plugin",
     "type": "plugin",
     "displayName": "Theme Builder",
-    "description": "Build and share custom themes — AI-generated or from scratch",
+    "description": "Build and share custom themes \u2014 AI-generated or from scratch",
     "category": "design",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "design"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
     "sourceMarketplace": "destinclaude",
@@ -245,13 +326,19 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    }
+    },
+    "tagline": "Make the app look like you.",
+    "longDescription": "Design, AI-generate, and share custom themes for DestinCode. Pick a vibe, tweak tokens, preview live, publish to the community registry.",
+    "lifeArea": [
+      "creative"
+    ],
+    "audience": "general"
   },
   {
     "id": "adlc",
     "type": "plugin",
     "displayName": "Adlc",
-    "description": "Agentforce Agent Development Life Cycle — author, discover, scaffold, deploy, test, and optimize .agent files",
+    "description": "Agentforce Agent Development Life Cycle \u2014 author, discover, scaffold, deploy, test, and optimize .agent files",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -399,7 +486,7 @@
     "id": "aikido",
     "type": "plugin",
     "displayName": "Aikido",
-    "description": "Aikido Security scanning for Claude Code — SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
+    "description": "Aikido Security scanning for Claude Code \u2014 SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -455,7 +542,7 @@
     "id": "amplitude",
     "type": "plugin",
     "displayName": "Amplitude",
-    "description": "Use Amplitude as an expert analyst — instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
+    "description": "Use Amplitude as an expert analyst \u2014 instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
     "category": "monitoring",
     "author": "Anthropic",
     "tags": [],
@@ -685,7 +772,7 @@
     "id": "azure-cosmos-db-assistant",
     "type": "plugin",
     "displayName": "Azure Cosmos DB Assistant",
-    "description": "Expert assistant for Azure Cosmos DB — data modeling, query optimization, performance tuning, and best practices.",
+    "description": "Expert assistant for Azure Cosmos DB \u2014 data modeling, query optimization, performance tuning, and best practices.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
@@ -835,7 +922,7 @@
     "id": "box",
     "type": "plugin",
     "displayName": "Box",
-    "description": "Work with your Box content directly from Claude Code — search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
+    "description": "Work with your Box content directly from Claude Code \u2014 search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -1119,7 +1206,7 @@
     "id": "cockroachdb",
     "type": "plugin",
     "displayName": "Cockroachdb",
-    "description": "CockroachDB plugin for Claude Code — explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
+    "description": "CockroachDB plugin for Claude Code \u2014 explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -1200,7 +1287,7 @@
     "id": "coderabbit",
     "type": "plugin",
     "displayName": "Coderabbit",
-    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers—offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
+    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers\u2014offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -1402,7 +1489,7 @@
     "id": "dataverse",
     "type": "plugin",
     "displayName": "Dataverse",
-    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse — with Dataverse MCP, PAC CLI, and Python SDK.",
+    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse \u2014 with Dataverse MCP, PAC CLI, and Python SDK.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
@@ -1491,7 +1578,7 @@
     "id": "elixir-ls-lsp",
     "type": "plugin",
     "displayName": "Elixir Ls LSP",
-    "description": "Elixir language server (ElixirLS) for Claude Code — provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
+    "description": "Elixir language server (ElixirLS) for Claude Code \u2014 provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2039,7 +2126,7 @@
     "id": "helius",
     "type": "plugin",
     "displayName": "Helius",
-    "description": "Build on Solana with Helius — live blockchain tools, expert coding patterns, and autonomous account signup",
+    "description": "Build on Solana with Helius \u2014 live blockchain tools, expert coding patterns, and autonomous account signup",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2570,7 +2657,7 @@
     "id": "netlify-skills",
     "type": "plugin",
     "displayName": "Netlify Skills",
-    "description": "Netlify platform skills for Claude Code — functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
+    "description": "Netlify platform skills for Claude Code \u2014 functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -2638,7 +2725,7 @@
     "id": "nimble",
     "type": "plugin",
     "displayName": "Nimble",
-    "description": "Nimble web data toolkit — search, extract, map, crawl the web and work with structured data agents",
+    "description": "Nimble web data toolkit \u2014 search, extract, map, crawl the web and work with structured data agents",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2698,7 +2785,7 @@
     "id": "opsera-devsecops",
     "type": "plugin",
     "displayName": "Opsera Devsecops",
-    "description": "Opsera DevSecOps Agent — AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
+    "description": "Opsera DevSecOps Agent \u2014 AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2738,7 +2825,7 @@
     "id": "optibot",
     "type": "plugin",
     "displayName": "Optibot",
-    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities — directly in Claude Code.",
+    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities \u2014 directly in Claude Code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2875,7 +2962,7 @@
     "id": "playground",
     "type": "plugin",
     "displayName": "Playground",
-    "description": "Creates interactive HTML playgrounds — self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
+    "description": "Creates interactive HTML playgrounds \u2014 self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -3148,7 +3235,7 @@
     "id": "product-tracking-skills",
     "type": "plugin",
     "displayName": "Product Tracking Skills",
-    "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
+    "description": "AI agent skills that make SaaS products data-ready for product analytics \u2014 from codebase scan to tracking plan to working instrumentation code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -3235,7 +3322,7 @@
     "id": "qodo-skills",
     "type": "plugin",
     "displayName": "Qodo Skills",
-    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC—from IDE to CI/CD—ensuring consistent standards and catching issues early.",
+    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC\u2014from IDE to CI/CD\u2014ensuring consistent standards and catching issues early.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -3503,7 +3590,7 @@
     "id": "searchfit-seo",
     "type": "plugin",
     "displayName": "Searchfit Seo",
-    "description": "Free AI-powered SEO toolkit — audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
+    "description": "Free AI-powered SEO toolkit \u2014 audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -3677,7 +3764,7 @@
     "id": "session-report",
     "type": "plugin",
     "displayName": "Session Report",
-    "description": "Generate an explorable HTML report of Claude Code session usage — tokens, cache efficiency, subagents, skills, and the most expensive prompts — from local ~/.claude/projects transcripts.",
+    "description": "Generate an explorable HTML report of Claude Code session usage \u2014 tokens, cache efficiency, subagents, skills, and the most expensive prompts \u2014 from local ~/.claude/projects transcripts.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -3703,7 +3790,7 @@
     "id": "shopify",
     "type": "plugin",
     "displayName": "Shopify",
-    "description": "Shopify developer tools for Claude Code — search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
+    "description": "Shopify developer tools for Claude Code \u2014 search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
     "category": "development",
     "author": "Shopify",
     "tags": [],
@@ -3829,7 +3916,7 @@
     "id": "sonarqube",
     "type": "plugin",
     "displayName": "Sonarqube",
-    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop — 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
+    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop \u2014 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
     "category": "security",
     "author": "SonarSource",
     "tags": [],
@@ -3920,7 +4007,7 @@
     "id": "spotify-ads-api",
     "type": "plugin",
     "displayName": "Spotify Ads API",
-    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth — all through conversation.",
+    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth \u2014 all through conversation.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -4522,14 +4609,23 @@
     "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal",
+      "productivity",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "check my inbox",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Process captured notes and screenshots.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "encyclopedia-compile",
@@ -4538,14 +4634,23 @@
     "description": "Build the full Encyclopedia from source files",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "reference",
+      "personal",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "compile my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Rebuild your encyclopedia from source files.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "encyclopedia-interviewer",
@@ -4554,14 +4659,22 @@
     "description": "Fill gaps in your encyclopedia through guided questions",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "reference",
+      "personal"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "interview me",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Fill knowledge gaps through conversation.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "encyclopedia-librarian",
@@ -4570,14 +4683,23 @@
     "description": "Get a briefing or deep-search your journal and encyclopedia",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "reference",
+      "research",
+      "personal"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "brief me on",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Search what Claude knows about you.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "encyclopedia-update",
@@ -4586,14 +4708,23 @@
     "description": "Sync journal entries into your encyclopedia source files",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "reference",
+      "personal",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "update my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Sync journal entries into the encyclopedia.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "fork-file",
@@ -4602,14 +4733,22 @@
     "description": "Track groceries, pantry inventory, and fast food spending",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "personal"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "check my food inventory",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Food, pantry, and spending \u2014 logged.",
+    "lifeArea": [
+      "personal",
+      "health"
+    ],
+    "audience": "general"
   },
   {
     "id": "google-drive",
@@ -4618,14 +4757,22 @@
     "description": "Upload, download, and manage files on Google Drive",
     "category": "work",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "data",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/google-drive",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Files on Drive, one prompt away.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "general"
   },
   {
     "id": "google-workspace",
@@ -4634,14 +4781,23 @@
     "description": "Slides, Sheets, Gmail, Calendar, and Docs via API",
     "category": "work",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "communication",
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/google-workspace",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Slides, Sheets, Gmail \u2014 all connected.",
+    "longDescription": "Drafts emails, updates spreadsheets, edits slides, creates calendar events, and reads docs through Google's APIs. Auth once; Claude handles the rest.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "general"
   },
   {
     "id": "health",
@@ -4650,14 +4806,18 @@
     "description": "Verify all toolkit components are working",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "automation"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/health",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Verify the toolkit is healthy.",
+    "audience": "developer"
   },
   {
     "id": "journaling-assistant",
@@ -4666,14 +4826,24 @@
     "description": "Write about your day in a guided conversation",
     "category": "personal",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "journal",
+      "writing",
+      "personal"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "let's journal",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "A daily check-in, at your pace.",
+    "longDescription": "Write about your day in a guided conversation \u2014 Claude prompts you through the parts worth remembering. Entries feed into the encyclopedia.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "remote-setup",
@@ -4682,14 +4852,19 @@
     "description": "Set up remote access -- installs Tailscale, configures your password, and gets your phone connected",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "automation",
+      "plugin"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/remote-setup",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Set up remote access from your phone.",
+    "audience": "general"
   },
   {
     "id": "setup-wizard",
@@ -4698,14 +4873,19 @@
     "description": "Install dependencies and configure the toolkit",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "automation",
+      "plugin"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/setup-wizard",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "First-time setup, guided.",
+    "audience": "general"
   },
   {
     "id": "sync",
@@ -4714,14 +4894,19 @@
     "description": "Check project sync status and onboard new projects",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "automation",
+      "git"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/sync",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Keep your projects in sync across devices.",
+    "audience": "developer"
   },
   {
     "id": "toolkit",
@@ -4730,14 +4915,19 @@
     "description": "See all features, commands, and useful phrases",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "docs",
+      "reference"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/toolkit",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "What Claude can do, at a glance.",
+    "audience": "general"
   },
   {
     "id": "update",
@@ -4746,14 +4936,19 @@
     "description": "Check for toolkit updates and install the latest version",
     "category": "admin",
     "author": "@destin",
-    "tags": [],
+    "tags": [
+      "automation",
+      "plugin"
+    ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "destinclaude",
     "prompt": "/update",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14"
+    "deprecatedAt": "2026-04-14",
+    "tagline": "Keep the toolkit up to date.",
+    "audience": "general"
   },
   {
     "id": "sanity-plugin",

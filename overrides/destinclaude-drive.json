@@ -1,0 +1,14 @@
+{
+  "tagline": "Browse Google Drive without leaving chat.",
+  "longDescription": "Read, search, and browse your Google Drive files through rclone. No copy-paste, no tab-switching \u2014 just ask Claude about a doc and it pulls the content.",
+  "tags": [
+    "personal",
+    "data",
+    "automation"
+  ],
+  "lifeArea": [
+    "personal",
+    "work"
+  ],
+  "audience": "general"
+}

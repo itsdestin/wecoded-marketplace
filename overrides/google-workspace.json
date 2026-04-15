@@ -1,0 +1,12 @@
+{
+  "tagline": "Slides, Sheets, Gmail \u2014 all connected.",
+  "longDescription": "Drafts emails, updates spreadsheets, edits slides, creates calendar events, and reads docs through Google's APIs. Auth once; Claude handles the rest.",
+  "tags": [
+    "communication",
+    "automation"
+  ],
+  "lifeArea": [
+    "work"
+  ],
+  "audience": "general"
+}

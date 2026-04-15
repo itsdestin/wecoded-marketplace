@@ -1,0 +1,11 @@
+{
+  "tagline": "Text from Claude. Yes, really.",
+  "longDescription": "Send and read SMS and iMessage through MCP servers. Lets Claude draft, send, and review messages on your behalf.",
+  "tags": [
+    "communication"
+  ],
+  "lifeArea": [
+    "personal"
+  ],
+  "audience": "general"
+}

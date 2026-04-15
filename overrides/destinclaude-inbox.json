@@ -1,0 +1,14 @@
+{
+  "tagline": "Triage captured notes into something useful.",
+  "longDescription": "Pulls notes, screenshots, and clips from Todoist, Drive, Gmail, and more. Claude sorts them into your journal, encyclopedia, or skill inbox \u2014 so your quick captures actually become something.",
+  "tags": [
+    "personal",
+    "productivity",
+    "automation"
+  ],
+  "lifeArea": [
+    "personal",
+    "work"
+  ],
+  "audience": "general"
+}
