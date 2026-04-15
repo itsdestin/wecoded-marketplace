@@ -4,5 +4,6 @@
     "docs",
     "reference"
   ],
-  "audience": "general"
+  "audience": "general",
+  "longDescription": "The discovery surface for everything DestinClaude can do — a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation — read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
 }

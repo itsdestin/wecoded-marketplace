@@ -1,6 +1,6 @@
 {
   "tagline": "Match Claude's tone to the task.",
-  "longDescription": "Tone presets \u2014 casual, conversational, academic, professional. Switch between them with a single command depending on whether you're drafting an email, writing a paper, or just chatting.",
+  "longDescription": "A small library of tone presets for Claude — `casual`, `conversational`, `academic`, and `professional` — that you can flip between with a single command depending on what you're doing. Use `casual` for chat with friends, `academic` for paper drafts and lit-review summaries, `professional` for emails and proposals, `conversational` for blog posts and personal essays.\n\nEach style is a plain markdown file under `styles/` describing the voice rules (formality, structure, vocabulary, hedging) so the presets are inspectable and forkable — copy one, tweak it, and now you have your own. No model switching, no settings menu — just type the name and Claude takes on the voice for the rest of the conversation.",
   "tags": [
     "writing",
     "productivity"

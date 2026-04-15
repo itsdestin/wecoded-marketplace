@@ -31,7 +31,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Know your federal reps, tailored to what you care about.",
-    "longDescription": "Enter your address and get a personalized, source-linked briefing on your federal representatives. Pick an angle (voting record, committee work, stances on an issue), a tone (neutral, critical, positive), and a depth. Every claim links back to a citation you can verify.",
+    "longDescription": "Drop in your address and Claude generates a personalized briefing on every federal official who represents you — President, VP, both U.S. Senators, and your House Rep — with state-level officials included as named stubs. Pick the angle you care about (housing, climate, immigration, foreign policy, or anything you type), choose a tone (neutral, critical, positive, civic, friendly, deep-research), and decide whether you want the full eight-section report per rep or a custom subset.\n\nEvery factual claim in the output is footnoted with a source URL you can click through to verify, and reports are saved to your Encyclopedia by default so you can reread them before voting, calling an office, or writing a letter. The first-time setup runs a one-line interactive prompt to capture an API key for the data source; everything after that is just conversation.",
     "lifeArea": [
       "personal"
     ],
@@ -41,7 +41,7 @@
     "id": "destinclaude",
     "type": "plugin",
     "displayName": "DestinClaude Core",
-    "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
+    "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
     "category": "productivity",
     "author": "@destin",
     "tags": [
@@ -79,7 +79,7 @@
       "hasMcpConfig": false
     },
     "tagline": "The toolkit that powers everything else.",
-    "longDescription": "The foundation toolkit for DestinClaude \u2014 safety hooks, diagnostic commands, cross-device sync infrastructure, and the setup wizard. Install this first; most other plugins assume it's present.",
+    "longDescription": "DestinClaude is the foundational toolkit that powers the personal-AI side of DestinCode — the safety hooks that prevent destructive writes, the diagnostic commands (`/health`, `/update`, `/diagnose`, `/restore`) that keep your install honest, and the cross-device sync infrastructure that moves your settings between Mac, Windows, Linux, and Android. It's the glue layer most other DestinClaude plugins quietly assume is already there.\n\nInstall this first. Once it's in, you get write-guards that block stomping on memory and CLAUDE.md from concurrent sessions, a `setup-wizard` for pure-CLI users who aren't running the app, and a `theme-builder` that lets you generate full custom theme packs from a one-line vibe prompt. The toolkit is plain markdown skills + bash hooks — no opaque binaries, all readable in your editor.",
     "lifeArea": [
       "work"
     ],
@@ -89,7 +89,7 @@
     "id": "destinclaude-drive",
     "type": "plugin",
     "displayName": "Google Drive",
-    "description": "Google Drive access via rclone \u2014 browse, search, read files",
+    "description": "Google Drive access via rclone — browse, search, read files",
     "category": "personal",
     "author": "@destin",
     "tags": [
@@ -115,7 +115,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Browse Google Drive without leaving chat.",
-    "longDescription": "Read, search, and browse your Google Drive files through rclone. No copy-paste, no tab-switching \u2014 just ask Claude about a doc and it pulls the content.",
+    "longDescription": "Browse, search, read, upload, and organize Google Drive without leaving the chat. Talk to Claude in natural language (\"find the slide deck I started in March\", \"download the latest sales spreadsheet to my Desktop\", \"create a folder called 2026-Taxes and move these into it\") and it executes against the real Drive via `rclone` — no copy-paste, no tab-switching, no flaky browser automation.\n\nFirst run walks you through `rclone config` once to authorize a `gdrive:` remote; after that every Drive operation is an instant CLI call under the hood. Works with personal Drive and Workspace accounts, supports nested paths, and respects your existing folder structure. Pairs naturally with `destinclaude-encyclopedia` if you want Claude to pull source material from your Drive into your personal knowledge base.",
     "lifeArea": [
       "personal",
       "work"
@@ -126,7 +126,7 @@
     "id": "destinclaude-encyclopedia",
     "type": "plugin",
     "displayName": "Encyclopedia",
-    "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
+    "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
     "category": "personal",
     "author": "@destin",
     "tags": [
@@ -157,7 +157,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Your life, written down and searchable.",
-    "longDescription": "A personal knowledge system: journal daily, fill gaps through guided interviews, ask the librarian to find anything, and compile it all into a living encyclopedia. Claude learns who you are over time.",
+    "longDescription": "Your life, written down once and reachable forever. The Encyclopedia bundle is four skills working together: `journaling-assistant` runs a daily check-in that prompts you through the parts of your day worth remembering; `encyclopedia-update` routes new journal content into eight modular source files (people, places, beliefs, goals, work, etc.); `encyclopedia-interviewer` proactively notices gaps and runs targeted interviews to fill them; and `encyclopedia-librarian` produces purpose-built briefings — \"prep me for tomorrow's meeting with X\", \"review my last six months\", \"pull together everything I've said about Y\".\n\nThe whole system is plain markdown stored locally in `~/.claude/encyclopedia/` — you own every word, you can read and edit it in any text editor, and you can sync it across devices via the toolkit's sync skill. Four detail levels (Full, Personal, Professional, Public) let you control how much intimate context appears in any given output, so the same encyclopedia can power both deeply personal reflection and cleanly shareable professional summaries.",
     "lifeArea": [
       "personal"
     ],
@@ -190,8 +190,8 @@
       "hasHooksManifest": false,
       "hasMcpConfig": false
     },
-    "tagline": "Groceries, pantry, and spending \u2014 logged.",
-    "longDescription": "Track what's in your pantry, what you bought, and what fast food is costing you. Uses fork-file for the underlying data store.",
+    "tagline": "Groceries, pantry, and spending — logged.",
+    "longDescription": "A two-part food tracker with personality. The first part keeps a live inventory of what's actually in your pantry, fridge, and freezer — log a grocery run by texting Claude a receipt or a fridge photo, ask \"what do I have for dinner?\", and get age/freshness warnings on items getting old. The second part tracks fast food spending and ordering patterns by restaurant and item, so you can see how much that DoorDash habit is actually costing you.\n\nClaude addresses you with rotating affectionate-roast nicknames (Fatty, Chonk, Sir Eats-a-Lot…) and the teasing escalates with the size of the order — light ribbing for a $30 grocery run, full grief for a $14 fast food trip for one. Data lives in two CSVs under `~/.claude/fork-file/` so you can always export, edit, or back it up yourself. Built on `fork-file` underneath; install this bundle for the full UX.",
     "lifeArea": [
       "personal",
       "health"
@@ -228,7 +228,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Triage captured notes into something useful.",
-    "longDescription": "Pulls notes, screenshots, and clips from Todoist, Drive, Gmail, and more. Claude sorts them into your journal, encyclopedia, or skill inbox \u2014 so your quick captures actually become something.",
+    "longDescription": "Pulls items from every inbox you actually use — Todoist tasks, Google Drive notes, Gmail, Apple Notes, Apple Reminders, iCloud Drive, even local screenshots dropped in a staging folder — and triages them in one conversation. Claude isn't just routing items; it actively *resolves* them: answering questions, applying feedback, creating tasks, deleting noise, filing screenshots into your journal or encyclopedia.\n\nProvider-agnostic by design — pick the sources you actually use during setup, leave the rest off. The session-start hook quietly counts unprocessed items and surfaces a reminder when there's something to look at, so you never have to remember to open your inbox; it comes to you. Works hand-in-glove with `destinclaude-encyclopedia` (journal entries get filed) and the toolkit's sync skill (multi-device captures all flow into one queue).",
     "lifeArea": [
       "personal",
       "work"
@@ -261,7 +261,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Text from Claude. Yes, really.",
-    "longDescription": "Send and read SMS and iMessage through MCP servers. Lets Claude draft, send, and review messages on your behalf.",
+    "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers — `gmessages` for Android/Google Messages, `imessage` for macOS — both of which the plugin will configure during install. Pairs naturally with `destinclaude-inbox` for inbound triage, and with `destinclaude-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
     "lifeArea": [
       "personal"
     ],
@@ -271,7 +271,7 @@
     "id": "destinclaude-output-styles",
     "type": "plugin",
     "displayName": "Output Styles",
-    "description": "Tone presets \u2014 casual, conversational, academic, professional",
+    "description": "Tone presets — casual, conversational, academic, professional",
     "category": "productivity",
     "author": "@destin",
     "tags": [
@@ -294,7 +294,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Match Claude's tone to the task.",
-    "longDescription": "Tone presets \u2014 casual, conversational, academic, professional. Switch between them with a single command depending on whether you're drafting an email, writing a paper, or just chatting.",
+    "longDescription": "A small library of tone presets for Claude — `casual`, `conversational`, `academic`, and `professional` — that you can flip between with a single command depending on what you're doing. Use `casual` for chat with friends, `academic` for paper drafts and lit-review summaries, `professional` for emails and proposals, `conversational` for blog posts and personal essays.\n\nEach style is a plain markdown file under `styles/` describing the voice rules (formality, structure, vocabulary, hedging) so the presets are inspectable and forkable — copy one, tweak it, and now you have your own. No model switching, no settings menu — just type the name and Claude takes on the voice for the rest of the conversation.",
     "lifeArea": [
       "work"
     ],
@@ -304,7 +304,7 @@
     "id": "destinclaude-themes-plugin",
     "type": "plugin",
     "displayName": "Theme Builder",
-    "description": "Build and share custom themes \u2014 AI-generated or from scratch",
+    "description": "Build and share custom themes — AI-generated or from scratch",
     "category": "design",
     "author": "@destin",
     "tags": [
@@ -328,7 +328,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Make the app look like you.",
-    "longDescription": "Design, AI-generate, and share custom themes for DestinCode. Pick a vibe, tweak tokens, preview live, publish to the community registry.",
+    "longDescription": "The `/theme-builder` skill — describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full DestinCode theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real DestinCode theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
     "lifeArea": [
       "creative"
     ],
@@ -338,7 +338,7 @@
     "id": "adlc",
     "type": "plugin",
     "displayName": "Adlc",
-    "description": "Agentforce Agent Development Life Cycle \u2014 author, discover, scaffold, deploy, test, and optimize .agent files",
+    "description": "Agentforce Agent Development Life Cycle — author, discover, scaffold, deploy, test, and optimize .agent files",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -486,7 +486,7 @@
     "id": "aikido",
     "type": "plugin",
     "displayName": "Aikido",
-    "description": "Aikido Security scanning for Claude Code \u2014 SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
+    "description": "Aikido Security scanning for Claude Code — SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -542,7 +542,7 @@
     "id": "amplitude",
     "type": "plugin",
     "displayName": "Amplitude",
-    "description": "Use Amplitude as an expert analyst \u2014 instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
+    "description": "Use Amplitude as an expert analyst — instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
     "category": "monitoring",
     "author": "Anthropic",
     "tags": [],
@@ -772,7 +772,7 @@
     "id": "azure-cosmos-db-assistant",
     "type": "plugin",
     "displayName": "Azure Cosmos DB Assistant",
-    "description": "Expert assistant for Azure Cosmos DB \u2014 data modeling, query optimization, performance tuning, and best practices.",
+    "description": "Expert assistant for Azure Cosmos DB — data modeling, query optimization, performance tuning, and best practices.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
@@ -922,7 +922,7 @@
     "id": "box",
     "type": "plugin",
     "displayName": "Box",
-    "description": "Work with your Box content directly from Claude Code \u2014 search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
+    "description": "Work with your Box content directly from Claude Code — search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -1206,7 +1206,7 @@
     "id": "cockroachdb",
     "type": "plugin",
     "displayName": "Cockroachdb",
-    "description": "CockroachDB plugin for Claude Code \u2014 explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
+    "description": "CockroachDB plugin for Claude Code — explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -1287,7 +1287,7 @@
     "id": "coderabbit",
     "type": "plugin",
     "displayName": "Coderabbit",
-    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers\u2014offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
+    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers—offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -1489,7 +1489,7 @@
     "id": "dataverse",
     "type": "plugin",
     "displayName": "Dataverse",
-    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse \u2014 with Dataverse MCP, PAC CLI, and Python SDK.",
+    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse — with Dataverse MCP, PAC CLI, and Python SDK.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
@@ -1578,7 +1578,7 @@
     "id": "elixir-ls-lsp",
     "type": "plugin",
     "displayName": "Elixir Ls LSP",
-    "description": "Elixir language server (ElixirLS) for Claude Code \u2014 provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
+    "description": "Elixir language server (ElixirLS) for Claude Code — provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2126,7 +2126,7 @@
     "id": "helius",
     "type": "plugin",
     "displayName": "Helius",
-    "description": "Build on Solana with Helius \u2014 live blockchain tools, expert coding patterns, and autonomous account signup",
+    "description": "Build on Solana with Helius — live blockchain tools, expert coding patterns, and autonomous account signup",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2657,7 +2657,7 @@
     "id": "netlify-skills",
     "type": "plugin",
     "displayName": "Netlify Skills",
-    "description": "Netlify platform skills for Claude Code \u2014 functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
+    "description": "Netlify platform skills for Claude Code — functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -2725,7 +2725,7 @@
     "id": "nimble",
     "type": "plugin",
     "displayName": "Nimble",
-    "description": "Nimble web data toolkit \u2014 search, extract, map, crawl the web and work with structured data agents",
+    "description": "Nimble web data toolkit — search, extract, map, crawl the web and work with structured data agents",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2785,7 +2785,7 @@
     "id": "opsera-devsecops",
     "type": "plugin",
     "displayName": "Opsera Devsecops",
-    "description": "Opsera DevSecOps Agent \u2014 AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
+    "description": "Opsera DevSecOps Agent — AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2825,7 +2825,7 @@
     "id": "optibot",
     "type": "plugin",
     "displayName": "Optibot",
-    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities \u2014 directly in Claude Code.",
+    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities — directly in Claude Code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -2962,7 +2962,7 @@
     "id": "playground",
     "type": "plugin",
     "displayName": "Playground",
-    "description": "Creates interactive HTML playgrounds \u2014 self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
+    "description": "Creates interactive HTML playgrounds — self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -3235,7 +3235,7 @@
     "id": "product-tracking-skills",
     "type": "plugin",
     "displayName": "Product Tracking Skills",
-    "description": "AI agent skills that make SaaS products data-ready for product analytics \u2014 from codebase scan to tracking plan to working instrumentation code.",
+    "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -3322,7 +3322,7 @@
     "id": "qodo-skills",
     "type": "plugin",
     "displayName": "Qodo Skills",
-    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC\u2014from IDE to CI/CD\u2014ensuring consistent standards and catching issues early.",
+    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC—from IDE to CI/CD—ensuring consistent standards and catching issues early.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
@@ -3590,7 +3590,7 @@
     "id": "searchfit-seo",
     "type": "plugin",
     "displayName": "Searchfit Seo",
-    "description": "Free AI-powered SEO toolkit \u2014 audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
+    "description": "Free AI-powered SEO toolkit — audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
@@ -3764,7 +3764,7 @@
     "id": "session-report",
     "type": "plugin",
     "displayName": "Session Report",
-    "description": "Generate an explorable HTML report of Claude Code session usage \u2014 tokens, cache efficiency, subagents, skills, and the most expensive prompts \u2014 from local ~/.claude/projects transcripts.",
+    "description": "Generate an explorable HTML report of Claude Code session usage — tokens, cache efficiency, subagents, skills, and the most expensive prompts — from local ~/.claude/projects transcripts.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -3790,7 +3790,7 @@
     "id": "shopify",
     "type": "plugin",
     "displayName": "Shopify",
-    "description": "Shopify developer tools for Claude Code \u2014 search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
+    "description": "Shopify developer tools for Claude Code — search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
     "category": "development",
     "author": "Shopify",
     "tags": [],
@@ -3916,7 +3916,7 @@
     "id": "sonarqube",
     "type": "plugin",
     "displayName": "Sonarqube",
-    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop \u2014 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
+    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop — 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
     "category": "security",
     "author": "SonarSource",
     "tags": [],
@@ -4007,7 +4007,7 @@
     "id": "spotify-ads-api",
     "type": "plugin",
     "displayName": "Spotify Ads API",
-    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth \u2014 all through conversation.",
+    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth — all through conversation.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
@@ -4625,7 +4625,8 @@
     "lifeArea": [
       "personal"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "The single skill at the heart of `destinclaude-inbox` — checks your configured capture sources (Todoist, Drive, Gmail, Apple Notes/Reminders, iCloud, local staging) for unprocessed items and works through them with you in conversation. Items are normalized into a common shape, classified by intent, then resolved one at a time with your approval (answer the question, file the note, create the task, delete the noise).\n\nUse this skill standalone if you only want the triage logic without the rest of the inbox bundle, or invoke it directly with \"check my inbox\" / \"process my notes\" whenever you've been collecting captures throughout the day. The session-start hook in `destinclaude-inbox` calls it automatically when items are waiting."
   },
   {
     "id": "encyclopedia-compile",
@@ -4650,7 +4651,8 @@
     "lifeArea": [
       "personal"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "Compiles the eight modular source files of your Encyclopedia into one unified, narratively coherent life-history document — designed to be read as a comprehensive biography, both now and decades from now. Run it monthly (or whenever you say \"compile my encyclopedia\") and the skill reads every source file, internalizes the content, then writes a single document with one consistent voice and structure rather than a section-per-file dump.\n\nFour detail levels (Full, Personal, Professional, Public) control how much intimate detail surfaces in the output, so the same encyclopedia can produce a private full-fat version for yourself and a sharable Professional version for a job application. The compiled output saves to `~/.claude/encyclopedia/Encyclopedia.md` and gets versioned so you can compare year-over-year."
   },
   {
     "id": "encyclopedia-interviewer",
@@ -4674,7 +4676,8 @@
     "lifeArea": [
       "personal"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "Turns the Encyclopedia from passive storage into an active conversation. Reads all eight source files, identifies what's missing or stale (gaps in backstory, cross-file contradictions, underdeveloped positions, unconfirmed leads), then runs a structured interview with you to fill them. Unlike the journaling assistant which follows your lead, the interviewer *pushes* — it has a prepared agenda and probes for specifics.\n\nProduces both a journal record of the conversation and targeted updates to the modular files (delegated through `encyclopedia-update`). Trigger it with \"interview me\", \"interview me about X\", \"what's missing in my encyclopedia\", or let the monthly gap-audit prompt suggest it for you. The depth and pace are conversational — expect 15–45 minutes per session depending on how much you have to say."
   },
   {
     "id": "encyclopedia-librarian",
@@ -4699,7 +4702,8 @@
     "lifeArea": [
       "personal"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "Produces purpose-built briefings on demand from your Encyclopedia — career summaries for job applications, person briefs before meetings, relationship context before family visits, period reviews, political profiles, topic syntheses. Six predefined templates plus a freeform mode, plus an optional Deep Search mode that mines text-message histories, journal entries, and misc documents for material the modular files might have missed.\n\nFour detail levels (Full, Personal, Professional, Public) control privacy in the output — same encyclopedia, different surface depending on whether the briefing is for you, a coworker, or a public document. Trigger with \"brief me on [person]\", \"deep search [topic]\", \"prep me for [situation]\", \"pull together everything about X\". Outputs save to `~/.claude/encyclopedia/reports/` and are included in future Deep Search runs."
   },
   {
     "id": "encyclopedia-update",
@@ -4724,7 +4728,8 @@
     "lifeArea": [
       "personal"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "The processing layer underneath the Encyclopedia. Reads new journal entries (incremental by default, full-rebuild on request) and routes their contents into the eight modular source files: people, places, beliefs, work, goals, references, etc. Applies file-specific update rules, deduplicates, surfaces conflicts for your approval, and never writes without confirming.\n\nInvoked automatically at the end of every daily journaling session by `journaling-assistant` so the encyclopedia stays current without you thinking about it, but you can also run it directly — \"update my encyclopedia\", \"sync the encyclopedia\", \"add a goal\" — when you've made changes outside the daily-journaling flow. Safe to re-run; idempotent by design."
   },
   {
     "id": "fork-file",
@@ -4743,12 +4748,13 @@
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
-    "tagline": "Food, pantry, and spending \u2014 logged.",
+    "tagline": "Food, pantry, and spending — logged.",
     "lifeArea": [
       "personal",
       "health"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "The single skill at the core of `destinclaude-food` — the actual food tracker. Manages a grocery/pantry inventory across the storage locations you configure (pantry, fridge, freezer, garage shelves, dorm mini-fridge — whatever you've got) and tracks fast food spending broken out by restaurant, item, and size. Handles receipt processing from photos or text, food identification from pictures, manual entry, age/freshness warnings, and spending summaries.\n\nData lives in two CSVs under `~/.claude/fork-file/` — `pantry.csv` for inventory, `fastfood.csv` for spending — both human-readable and exportable. Install this if you want the food-tracking logic without the full `destinclaude-food` bundle's UX wrapping; install `destinclaude-food` if you want the snarky-friend nicknames and the rest of the experience on top."
   },
   {
     "id": "google-drive",
@@ -4772,7 +4778,8 @@
     "lifeArea": [
       "work"
     ],
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "The single skill that powers `destinclaude-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote — never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `destinclaude-drive`'s polish, or install `destinclaude-drive` for the full bundle including helper commands and integration with the broader DestinClaude toolkit."
   },
   {
     "id": "google-workspace",
@@ -4792,8 +4799,8 @@
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
-    "tagline": "Slides, Sheets, Gmail \u2014 all connected.",
-    "longDescription": "Drafts emails, updates spreadsheets, edits slides, creates calendar events, and reads docs through Google's APIs. Auth once; Claude handles the rest.",
+    "tagline": "Slides, Sheets, Gmail — all connected.",
+    "longDescription": "Drafts emails, edits spreadsheets, modifies slides, creates calendar events, and reads docs through Google's official APIs — auth once and Claude has hands-on access to your Workspace from chat. Useful for the boring 80% of Workspace tasks: \"reply to that email from Sarah and CC the team\", \"add a row to the budget tracker for this week's Stripe payout\", \"move Tuesday's 3pm meeting to Wednesday at 10\", \"summarize the doc I just pasted a link to\".\n\nUses official Google APIs rather than browser automation, so it's stable, fast, and survives Drive UI changes. Pairs with `destinclaude-encyclopedia` for \"read this doc and update my notes\" workflows, and with `destinclaude-inbox` so Gmail-sourced captures flow into your normal triage. Workspace and personal Google accounts both supported.",
     "lifeArea": [
       "work"
     ],
@@ -4817,7 +4824,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Verify the toolkit is healthy.",
-    "audience": "developer"
+    "audience": "developer",
+    "longDescription": "A lightweight diagnostic command — verifies the DestinClaude toolkit is installed, its hooks are reconciled into your Claude Code settings, and the core dependencies are present. Run it after troubleshooting an issue, after upgrading the app, or any time something feels off and you want to confirm the foundation is healthy before going deeper.\n\nUnlike `/diagnose` (which is the full deep-scan), `/health` is a quick yes/no check meant to fit on one screen — you'll know in seconds whether everything is in order. Reports specific failures with the exact command to fix each one. Read-only; never modifies your settings."
   },
   {
     "id": "journaling-assistant",
@@ -4839,7 +4847,7 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "A daily check-in, at your pace.",
-    "longDescription": "Write about your day in a guided conversation \u2014 Claude prompts you through the parts worth remembering. Entries feed into the encyclopedia.",
+    "longDescription": "A guided daily journaling session — Claude prompts you through the parts of your day worth remembering rather than asking you to start from a blank page. Two modes: structured daily entries that capture a full breadth of the day, and freeform misc entries for rants, topic deep-dives, beliefs, or anything else worth writing down. The assistant is proactive — it surfaces relevant unresolved threads from past entries and asks about them, rather than waiting for you to bring them up.\n\nNot therapy: the assistant draws out detail with questions, but it never interprets, advises, or editorializes. At the end of each daily session it automatically calls `encyclopedia-update` to route what you said into your modular source files, so the encyclopedia stays current as a side effect of journaling. Triggers on \"let's journal\", \"debrief my day\", \"I want to rant about X\", and similar phrases.",
     "lifeArea": [
       "personal"
     ],
@@ -4864,7 +4872,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Set up remote access from your phone.",
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "Walks you through enabling remote access to DestinCode from your phone (or any other device) in one conversation. Installs Tailscale if you don't have it, runs the auth flow, sets a remote-access password, and confirms everything works — explained in plain language for non-technical users, with no \"open a terminal and run this\" handoffs. Claude does the work; you just sign in to Tailscale when the browser pops up.\n\nBy the end you'll have DestinCode reachable at a stable Tailscale URL on any device on your tailnet, which means full chat + terminal access from your phone over an encrypted WireGuard tunnel. Idempotent — safe to re-run if you want to change the password or move to a new device."
   },
   {
     "id": "setup-wizard",
@@ -4885,7 +4894,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "First-time setup, guided.",
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "A pure-CLI fallback first-run wizard for people using the DestinClaude toolkit directly in Claude Code without the DestinCode app. Walks you through three short questions — name, comfort level, sync backend — and writes the result to `~/.claude/toolkit-state/config.json`. That config then drives the rest of the toolkit's behavior.\n\nMost people don't need this because the DestinCode app runs its own onboarding (with curated package selection, plugin registration, and hooks reconciliation built in). This skill exists for the users who installed the toolkit standalone via `git clone` and need a graceful first-run experience. Additive and non-destructive — never overwrites existing config without permission."
   },
   {
     "id": "sync",
@@ -4906,7 +4916,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Keep your projects in sync across devices.",
-    "audience": "developer"
+    "audience": "developer",
+    "longDescription": "Keeps your DestinClaude toolkit state — config, journal entries, encyclopedia, inbox, themes, captured notes — in sync across every device you use Claude on. Three pluggable backends (Google Drive via rclone, GitHub via a private repo, iCloud via the native folder) — pick the one you already trust and the skill handles upload/download/conflict resolution on every session start and end.\n\nDistinguishes portable state (`config.json`, encyclopedia, journal — synced) from machine-local state (`config.local.json`, caches, OS-specific paths — never synced) so devices don't fight each other over who-runs-where settings. Works invisibly via the SessionStart and SessionEnd hooks once configured; you can also trigger a manual sync any time with \"sync now\"."
   },
   {
     "id": "toolkit",
@@ -4927,7 +4938,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "What Claude can do, at a glance.",
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "The discovery surface for everything DestinClaude can do — a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation — read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
   },
   {
     "id": "update",
@@ -4948,7 +4960,8 @@
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Keep the toolkit up to date.",
-    "audience": "general"
+    "audience": "general",
+    "longDescription": "Fetches the latest DestinClaude toolkit release from GitHub and installs it in place — bumps the `VERSION` file, pulls new skills/hooks/commands, runs migrations, reconciles your settings.json hooks against the new manifest, and reports exactly what changed. Run it whenever you remember (no auto-update; you're in control), or when `/health` warns that you're behind.\n\nSafe to re-run; idempotent by design. Verifies the working tree is clean before touching anything, never overwrites local edits, and tells you exactly which commands to run if it can't auto-resolve a conflict. Offline-safe: gracefully tells you it can't check when there's no network rather than failing partway through."
   },
   {
     "id": "sanity-plugin",

@@ -1,6 +1,6 @@
 {
   "tagline": "Know your federal reps, tailored to what you care about.",
-  "longDescription": "Enter your address and get a personalized, source-linked briefing on your federal representatives. Pick an angle (voting record, committee work, stances on an issue), a tone (neutral, critical, positive), and a depth. Every claim links back to a citation you can verify.",
+  "longDescription": "Drop in your address and Claude generates a personalized briefing on every federal official who represents you — President, VP, both U.S. Senators, and your House Rep — with state-level officials included as named stubs. Pick the angle you care about (housing, climate, immigration, foreign policy, or anything you type), choose a tone (neutral, critical, positive, civic, friendly, deep-research), and decide whether you want the full eight-section report per rep or a custom subset.\n\nEvery factual claim in the output is footnoted with a source URL you can click through to verify, and reports are saved to your Encyclopedia by default so you can reread them before voting, calling an office, or writing a letter. The first-time setup runs a one-line interactive prompt to capture an API key for the data source; everything after that is just conversation.",
   "tags": [
     "research",
     "personal",

@@ -1,6 +1,6 @@
 {
   "tagline": "Your life, written down and searchable.",
-  "longDescription": "A personal knowledge system: journal daily, fill gaps through guided interviews, ask the librarian to find anything, and compile it all into a living encyclopedia. Claude learns who you are over time.",
+  "longDescription": "Your life, written down once and reachable forever. The Encyclopedia bundle is four skills working together: `journaling-assistant` runs a daily check-in that prompts you through the parts of your day worth remembering; `encyclopedia-update` routes new journal content into eight modular source files (people, places, beliefs, goals, work, etc.); `encyclopedia-interviewer` proactively notices gaps and runs targeted interviews to fill them; and `encyclopedia-librarian` produces purpose-built briefings — \"prep me for tomorrow's meeting with X\", \"review my last six months\", \"pull together everything I've said about Y\".\n\nThe whole system is plain markdown stored locally in `~/.claude/encyclopedia/` — you own every word, you can read and edit it in any text editor, and you can sync it across devices via the toolkit's sync skill. Four detail levels (Full, Personal, Professional, Public) let you control how much intimate context appears in any given output, so the same encyclopedia can power both deeply personal reflection and cleanly shareable professional summaries.",
   "tags": [
     "personal",
     "journal",

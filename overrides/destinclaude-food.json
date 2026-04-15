@@ -1,6 +1,6 @@
 {
-  "tagline": "Groceries, pantry, and spending \u2014 logged.",
-  "longDescription": "Track what's in your pantry, what you bought, and what fast food is costing you. Uses fork-file for the underlying data store.",
+  "tagline": "Groceries, pantry, and spending — logged.",
+  "longDescription": "A two-part food tracker with personality. The first part keeps a live inventory of what's actually in your pantry, fridge, and freezer — log a grocery run by texting Claude a receipt or a fridge photo, ask \"what do I have for dinner?\", and get age/freshness warnings on items getting old. The second part tracks fast food spending and ordering patterns by restaurant and item, so you can see how much that DoorDash habit is actually costing you.\n\nClaude addresses you with rotating affectionate-roast nicknames (Fatty, Chonk, Sir Eats-a-Lot…) and the teasing escalates with the size of the order — light ribbing for a $30 grocery run, full grief for a $14 fast food trip for one. Data lives in two CSVs under `~/.claude/fork-file/` so you can always export, edit, or back it up yourself. Built on `fork-file` underneath; install this bundle for the full UX.",
   "tags": [
     "personal"
   ],

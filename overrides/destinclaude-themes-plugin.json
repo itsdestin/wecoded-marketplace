@@ -1,6 +1,6 @@
 {
   "tagline": "Make the app look like you.",
-  "longDescription": "Design, AI-generate, and share custom themes for DestinCode. Pick a vibe, tweak tokens, preview live, publish to the community registry.",
+  "longDescription": "The `/theme-builder` skill — describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full DestinCode theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real DestinCode theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
   "tags": [
     "design"
   ],

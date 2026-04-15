@@ -7,5 +7,6 @@
   "lifeArea": [
     "work"
   ],
-  "audience": "general"
+  "audience": "general",
+  "longDescription": "The single skill that powers `destinclaude-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote — never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `destinclaude-drive`'s polish, or install `destinclaude-drive` for the full bundle including helper commands and integration with the broader DestinClaude toolkit."
 }
