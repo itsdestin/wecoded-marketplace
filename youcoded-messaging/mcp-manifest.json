@@ -7,14 +7,6 @@
       "command": "${PACKAGE_DIR}/mcp-servers/gmessages/gmessages",
       "args": [],
       "env": {}
-    },
-    {
-      "name": "imessages",
-      "auto": true,
-      "platforms": ["darwin"],
-      "command": "node",
-      "args": ["${PACKAGE_DIR}/mcp-servers/imessages/index.js"],
-      "env": {}
     }
   ]
 }
