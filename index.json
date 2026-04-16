@@ -4782,31 +4782,6 @@
     "longDescription": "The single skill that powers `youcoded-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote — never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `youcoded-drive`'s polish, or install `youcoded-drive` for the full bundle including helper commands and integration with the broader YouCoded toolkit."
   },
   {
-    "id": "google-workspace",
-    "type": "prompt",
-    "displayName": "Google Workspace",
-    "description": "Slides, Sheets, Gmail, Calendar, and Docs via API",
-    "category": "work",
-    "author": "@destin",
-    "tags": [
-      "communication",
-      "automation"
-    ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "youcoded",
-    "prompt": "/google-workspace",
-    "authorGithub": "destinationunknown",
-    "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Slides, Sheets, Gmail — all connected.",
-    "longDescription": "Drafts emails, edits spreadsheets, modifies slides, creates calendar events, and reads docs through Google's official APIs — auth once and Claude has hands-on access to your Workspace from chat. Useful for the boring 80% of Workspace tasks: \"reply to that email from Sarah and CC the team\", \"add a row to the budget tracker for this week's Stripe payout\", \"move Tuesday's 3pm meeting to Wednesday at 10\", \"summarize the doc I just pasted a link to\".\n\nUses official Google APIs rather than browser automation, so it's stable, fast, and survives Drive UI changes. Pairs with `youcoded-encyclopedia` for \"read this doc and update my notes\" workflows, and with `youcoded-inbox` so Gmail-sourced captures flow into your normal triage. Workspace and personal Google accounts both supported.",
-    "lifeArea": [
-      "work"
-    ],
-    "audience": "general"
-  },
-  {
     "id": "health",
     "type": "prompt",
     "displayName": "Health Check",
