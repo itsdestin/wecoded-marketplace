@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 
 // Config lives under ~/.claude/plugins/civic-report/config.local.json so it
-// stays machine-local (matches the destinclaude toolkit's config.local.json
+// stays machine-local (matches the youcoded-core toolkit's config.local.json
 // convention — not synced).
 export function defaultConfigDir() {
   return join(homedir(), ".claude", "plugins", "civic-report");

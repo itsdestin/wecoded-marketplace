@@ -8,7 +8,7 @@
       "author": "itsdestin",
       "dark": true,
       "description": "Weathering With You — Tokyo bathed in god-ray light. Deep violet-black panels, warm amber gold, soft dust-mote particles.",
-      "preview": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/preview.png",
+      "preview": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/preview.png",
       "previewTokens": {
         "canvas": "#08080e",
         "panel": "#140e1a",
@@ -21,7 +21,7 @@
       "version": "1.0.0",
       "created": "2026-03-28",
       "updated": "2026-04-07",
-      "source": "destinclaude",
+      "source": "youcoded-core",
       "features": [
         "wallpaper",
         "glassmorphism",
@@ -30,15 +30,15 @@
         "mascot",
         "custom-css"
       ],
-      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/manifest.json",
+      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/manifest.json",
       "assetUrls": {
-        "assets/dust.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/dust.svg",
-        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/icon-send.svg",
-        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-idle.svg",
-        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-inquisitive.svg",
-        "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/mascot-welcome.svg",
-        "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/pattern.svg",
-        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/golden-sunbreak/assets/wallpaper.jpg"
+        "assets/dust.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/dust.svg",
+        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/icon-send.svg",
+        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/mascot-idle.svg",
+        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/mascot-inquisitive.svg",
+        "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/mascot-welcome.svg",
+        "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/pattern.svg",
+        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/golden-sunbreak/assets/wallpaper.jpg"
       }
     },
     {
@@ -47,7 +47,7 @@
       "author": "claude",
       "dark": true,
       "description": "Cyberpunk manga print shop — deep purple-black with hot pink accent, cyan secondary, misregistered CMY halftone dots, scanlines, and floating chrome.",
-      "preview": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/preview.png",
+      "preview": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/preview.png",
       "previewTokens": {
         "canvas": "#08060e",
         "panel": "#100e1c",
@@ -71,16 +71,16 @@
         "custom-css",
         "custom-scrollbar"
       ],
-      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/manifest.json",
+      "manifestUrl": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/manifest.json",
       "assetUrls": {
-        "assets/particle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/particle.svg",
-        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/icon-send.svg",
-        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/mascot-idle.svg",
-        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/mascot-inquisitive.svg",
-        "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/mascot-welcome.svg",
-        "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/pattern.svg",
-        "assets/scrollbar-thumb.svg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/scrollbar-thumb.svg",
-        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/destinclaude-themes/main/themes/halftone-dimension/assets/wallpaper.jpg"
+        "assets/particle.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/particle.svg",
+        "assets/icon-send.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/icon-send.svg",
+        "assets/mascot-idle.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/mascot-idle.svg",
+        "assets/mascot-inquisitive.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/mascot-inquisitive.svg",
+        "assets/mascot-welcome.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/mascot-welcome.svg",
+        "assets/pattern.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/pattern.svg",
+        "assets/scrollbar-thumb.svg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/scrollbar-thumb.svg",
+        "assets/wallpaper.jpg": "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/themes/halftone-dimension/assets/wallpaper.jpg"
       }
     }
   ]

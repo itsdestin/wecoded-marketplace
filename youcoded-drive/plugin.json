@@ -1,0 +1,14 @@
+{
+  "name": "youcoded-drive",
+  "description": "Google Drive access via rclone — browse, search, read files",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "google-drive-access": {
+      "description": "Reads, searches, and syncs Google Drive via rclone",
+      "skill": "google-drive"
+    }
+  }
+}

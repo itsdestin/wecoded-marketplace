@@ -1,7 +1,7 @@
 # Phase 4b: CI validation for community plugin PRs.
 # Validates structure, security, and uniqueness on PR; auto-rebuilds
 # marketplace.json and skills/index.json on merge to main.
-# Modeled after destinclaude-themes validate-theme.yml / update-registry.yml.
+# Modeled after wecoded-themes validate-theme.yml / update-registry.yml.
 
 name: Validate Plugin PR
 
@@ -174,7 +174,7 @@ jobs:
           PLUGINS: ${{ steps.changed.outputs.plugins }}
         run: |
           for id in $PLUGINS; do
-            # Check against marketplace.json (DestinCode entries)
+            # Check against marketplace.json (YouCoded entries)
             export PLUGIN_ID="$id"
             if python3 -c "
           import json, sys, os

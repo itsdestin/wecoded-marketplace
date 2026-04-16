@@ -127,7 +127,7 @@ authRoutes.get("/auth/github/callback", async (c) => {
     `${CSRF_COOKIE_NAME}=; Path=/auth/github/callback; Max-Age=0; HttpOnly; Secure; SameSite=Lax`
   );
   return c.html(
-    `<h1>Signed in as ${gh.login}</h1><p>You can close this window and return to DestinCode.</p>`
+    `<h1>Signed in as ${gh.login}</h1><p>You can close this window and return to YouCoded.</p>`
   );
 });
 

@@ -23,7 +23,7 @@ export async function fetchGitHubUser(accessToken: string): Promise<GitHubUserRe
   const res = await fetch("https://api.github.com/user", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "User-Agent": "destincode-marketplace",
+      "User-Agent": "wecoded-marketplace",
       Accept: "application/vnd.github+json",
     },
   });

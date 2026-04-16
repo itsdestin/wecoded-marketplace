@@ -13,10 +13,10 @@ const app = new Hono<HonoEnv>();
 // Allowlist of origins permitted to call the worker. Keep this tight — these
 // are the only surfaces that should legitimately talk to the marketplace API.
 const ALLOWED_ORIGINS = [
-  "https://destincode.com",
-  "app://destincode",          // Electron packaged app
+  "https://youcoded.com",
+  "app://youcoded",          // Electron packaged app
   "http://localhost:5173",     // desktop dev
-  "http://localhost:5223",     // desktop dev (offset via DESTINCODE_PORT_OFFSET=50)
+  "http://localhost:5223",     // desktop dev (offset via YOUCODED_PORT_OFFSET=50)
   "http://localhost:9901",     // Android LocalBridgeServer
 ];
 

@@ -1,24 +1,24 @@
 {
   "hero": [
     { "id": "civic-report", "blurb": "Source-linked report on your federal reps, tuned to your angle and depth.", "accentColor": "#d8a84b" },
-    { "id": "destinclaude-encyclopedia", "blurb": "Your personal knowledge graph — facts, notes, and memories that persist across sessions.", "accentColor": "#6b8ecf" },
+    { "id": "youcoded-encyclopedia", "blurb": "Your personal knowledge graph — facts, notes, and memories that persist across sessions.", "accentColor": "#6b8ecf" },
     { "id": "code-review", "blurb": "Multi-agent PR review with confidence-based filtering to cut false positives.", "accentColor": "#9b6cd4" }
   ],
   "rails": [
     {
       "title": "Destin's picks",
       "description": "What I'm using this week.",
-      "slugs": ["civic-report", "destinclaude-encyclopedia", "destinclaude-inbox", "code-review", "destinclaude-themes-plugin"]
+      "slugs": ["civic-report", "youcoded-encyclopedia", "youcoded-inbox", "code-review", "wecoded-themes-plugin"]
     },
     {
       "title": "If you journal",
       "description": "Capture, recall, connect.",
-      "slugs": ["destinclaude-encyclopedia", "destinclaude-inbox", "destinclaude-food"]
+      "slugs": ["youcoded-encyclopedia", "youcoded-inbox", "youcoded-food"]
     },
     {
       "title": "For everyday life",
       "description": "Not just for coders.",
-      "slugs": ["civic-report", "destinclaude-drive", "destinclaude-messaging", "destinclaude-food"]
+      "slugs": ["civic-report", "youcoded-drive", "youcoded-messaging", "youcoded-food"]
     }
   ],
   "skills": [

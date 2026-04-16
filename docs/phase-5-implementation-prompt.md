@@ -2,13 +2,13 @@
 
 ### Context
 
-We're unifying DestinCode's three separate content systems into a single marketplace. The full plan is at `destincode-marketplace/docs/unified-marketplace-plan.md`. Read it before starting.
+We're unifying YouCoded's three separate content systems into a single marketplace. The full plan is at `wecoded-marketplace/docs/unified-marketplace-plan.md`. Read it before starting.
 
 Phases 0-4 should already be completed. The unified marketplace works fully on desktop. This phase brings theme marketplace support to Android in four incremental steps. Each step is independently shippable — commit and report after each one.
 
 ### Background: How themes work today
 
-**Desktop:** Built-in themes (light, dark, midnight, creme) are JSON files compiled into the React bundle, applied via CSS custom properties and localStorage. Custom themes are downloaded to `~/.claude/destinclaude-themes/<slug>/` with a `manifest.json` and optional assets (images, SVGs, CSS). Assets are served via Electron's custom `theme-asset://` protocol registered in `theme-protocol.ts`. A file watcher (`theme-watcher.ts`) monitors the themes directory and pushes reload events to the renderer.
+**Desktop:** Built-in themes (light, dark, midnight, creme) are JSON files compiled into the React bundle, applied via CSS custom properties and localStorage. Custom themes are downloaded to `~/.claude/wecoded-themes/<slug>/` with a `manifest.json` and optional assets (images, SVGs, CSS). Assets are served via Electron's custom `theme-asset://` protocol registered in `theme-protocol.ts`. A file watcher (`theme-watcher.ts`) monitors the themes directory and pushes reload events to the renderer.
 
 **Android:** Built-in themes work perfectly — they're in the React bundle, applied via CSS + localStorage. Custom themes don't work at all: no protocol handler for `theme-asset://`, no directory scanning, no IPC handlers for theme marketplace operations. The React marketplace UI renders (it's shared) but every button is a no-op.
 
@@ -17,37 +17,37 @@ Phases 0-4 should already be completed. The unified marketplace works fully on d
 **Step 1: Familiarize with the codebase.** Read these files:
 
 Desktop theme system:
-- `destincode/desktop/src/main/theme-protocol.ts` — the `theme-asset://` protocol handler. URL format, path resolution, security checks, MIME types. This is what you're replicating on Android.
-- `destincode/desktop/src/main/theme-watcher.ts` — fs.watch on themes dir, debounce, IPC events
-- `destincode/desktop/src/main/theme-marketplace-provider.ts` — registry fetch, install (download manifest + assets, validate, write to disk), uninstall
-- `destincode/desktop/src/renderer/state/theme-context.tsx` — how themes are loaded, applied to DOM, hot-reloaded
-- `destincode/desktop/src/renderer/themes/theme-asset-resolver.ts` — converts relative paths to `theme-asset://` URIs for user/community themes
+- `youcoded/desktop/src/main/theme-protocol.ts` — the `theme-asset://` protocol handler. URL format, path resolution, security checks, MIME types. This is what you're replicating on Android.
+- `youcoded/desktop/src/main/theme-watcher.ts` — fs.watch on themes dir, debounce, IPC events
+- `youcoded/desktop/src/main/theme-marketplace-provider.ts` — registry fetch, install (download manifest + assets, validate, write to disk), uninstall
+- `youcoded/desktop/src/renderer/state/theme-context.tsx` — how themes are loaded, applied to DOM, hot-reloaded
+- `youcoded/desktop/src/renderer/themes/theme-asset-resolver.ts` — converts relative paths to `theme-asset://` URIs for user/community themes
 
 Android:
-- `destincode/app/src/main/kotlin/com/destin/code/ui/WebViewHost.kt` — WebView setup. No theme-asset handler. Has `shouldOverrideUrlLoading` but no `shouldInterceptRequest`.
-- `destincode/app/src/main/kotlin/com/destin/code/runtime/SessionService.kt` — the IPC dispatcher. No `theme:marketplace:*` handlers exist.
-- `destincode/app/src/main/kotlin/com/destin/code/bridge/LocalBridgeServer.kt` — WebSocket server on :9901. Understand the message format for adding new handlers.
+- `youcoded/app/src/main/kotlin/com/destin/code/ui/WebViewHost.kt` — WebView setup. No theme-asset handler. Has `shouldOverrideUrlLoading` but no `shouldInterceptRequest`.
+- `youcoded/app/src/main/kotlin/com/destin/code/runtime/SessionService.kt` — the IPC dispatcher. No `theme:marketplace:*` handlers exist.
+- `youcoded/app/src/main/kotlin/com/destin/code/bridge/LocalBridgeServer.kt` — WebSocket server on :9901. Understand the message format for adding new handlers.
 
 IPC definitions:
-- `destincode/desktop/src/main/preload.ts` — theme marketplace IPC channels (lines ~244-261): list, detail, install, uninstall, publish, generatePreview
-- `destincode/desktop/src/renderer/remote-shim.ts` — WebSocket equivalents. Check if theme marketplace methods are already defined here.
+- `youcoded/desktop/src/main/preload.ts` — theme marketplace IPC channels (lines ~244-261): list, detail, install, uninstall, publish, generatePreview
+- `youcoded/desktop/src/renderer/remote-shim.ts` — WebSocket equivalents. Check if theme marketplace methods are already defined here.
 
 **Step 2: Implement in four incremental steps.**
 
 #### 5a. Theme browsing
 
 Add bridge message handlers to `SessionService.kt`:
-- `theme:marketplace:list` — fetch theme registry from `destincode-marketplace/themes/index.json` (same URL desktop uses), apply filters, return entries with `installed` status
+- `theme:marketplace:list` — fetch theme registry from `wecoded-marketplace/themes/index.json` (same URL desktop uses), apply filters, return entries with `installed` status
 - `theme:marketplace:detail` — return full entry for a given slug
 
-To determine installed status, scan `~/.claude/destinclaude-themes/` for directories containing `manifest.json`.
+To determine installed status, scan `~/.claude/wecoded-themes/` for directories containing `manifest.json`.
 
 After this step: Android users can open the Themes tab, browse themes, see token-based previews, read descriptions. They can't install yet.
 
 #### 5b. Token-only theme install
 
 Add bridge message handlers:
-- `theme:marketplace:install` — download manifest.json from the registry entry's `manifestUrl`, validate, write to `~/.claude/destinclaude-themes/<slug>/manifest.json`. Do NOT download assets yet.
+- `theme:marketplace:install` — download manifest.json from the registry entry's `manifestUrl`, validate, write to `~/.claude/wecoded-themes/<slug>/manifest.json`. Do NOT download assets yet.
 - `theme:marketplace:uninstall` — delete the theme directory. Only allow for community-source themes (not user-created).
 
 The React theme system will pick up the manifest and apply token-based styling (colors, border-radius, layout settings) automatically — these are pure CSS custom properties that work in any WebView.
@@ -68,7 +68,7 @@ webViewClient = object : WebViewClient() {
         if (url.scheme == "theme-asset") {
             val slug = url.host ?: return null
             val path = url.path?.trimStart('/') ?: return null
-            val themesDir = File(homeDir, ".claude/destinclaude-themes")
+            val themesDir = File(homeDir, ".claude/wecoded-themes")
             val file = File(themesDir, "$slug/$path")
             // Security: verify resolved path is inside themes dir
             if (!file.canonicalPath.startsWith(themesDir.canonicalPath)) {
@@ -99,7 +99,7 @@ After this step: All themes work fully on Android — background images, particl
 
 #### 5d. Theme hot-reload
 
-Add a `FileObserver` (or `FileObserver` subclass) watching `~/.claude/destinclaude-themes/`:
+Add a `FileObserver` (or `FileObserver` subclass) watching `~/.claude/wecoded-themes/`:
 - On file changes (CREATE, MODIFY, DELETE), extract the theme slug from the path
 - Debounce per slug (100ms, matching desktop's pattern)
 - Send a `theme:reload` push event via the bridge WebSocket with the slug

@@ -2,7 +2,7 @@
 
 ### Context
 
-We're unifying DestinCode's three separate content systems into a single marketplace. The full plan is at `destincode-marketplace/docs/unified-marketplace-plan.md`. Read it before starting.
+We're unifying YouCoded's three separate content systems into a single marketplace. The full plan is at `wecoded-marketplace/docs/unified-marketplace-plan.md`. Read it before starting.
 
 Phases 0-3 should already be completed. The marketplace is now a unified three-tab modal with full install/update/uninstall lifecycle and config forms. This phase adds the ability for users to publish their own skills and plugins to the community.
 
@@ -11,16 +11,16 @@ Phases 0-3 should already be completed. The marketplace is now a unified three-t
 **Step 1: Familiarize with the codebase.** Read these files:
 
 Existing publish flow (themes — fully implemented):
-- `destincode/desktop/src/main/theme-marketplace-provider.ts` — lines 210-405. The complete fork → branch → upload → PR flow for themes. Uses `gh` CLI.
-- Check the CI workflows in `destinclaude-themes/.github/workflows/` — theme PR validation (token requirements, CSS safety, size limits, slug uniqueness) and auto-rebuild on merge
+- `youcoded/desktop/src/main/theme-marketplace-provider.ts` — lines 210-405. The complete fork → branch → upload → PR flow for themes. Uses `gh` CLI.
+- Check the CI workflows in `wecoded-themes/.github/workflows/` — theme PR validation (token requirements, CSS safety, size limits, slug uniqueness) and auto-rebuild on merge
 
 Skill provider:
-- `destincode/desktop/src/main/skill-provider.ts` — has a `publish()` method that throws "not yet implemented"
+- `youcoded/desktop/src/main/skill-provider.ts` — has a `publish()` method that throws "not yet implemented"
 
 Marketplace repo structure (updated in Phase 1):
-- `destincode-marketplace/marketplace.json` — the DestinCode/community catalog
-- `destincode-marketplace/plugins/` — where bundled plugin source lives
-- `destincode-marketplace/scripts/sync.js` — needs to auto-add entries from merged PRs
+- `wecoded-marketplace/marketplace.json` — the YouCoded/community catalog
+- `wecoded-marketplace/plugins/` — where bundled plugin source lives
+- `wecoded-marketplace/scripts/sync.js` — needs to auto-add entries from merged PRs
 
 **Step 2: Implement Phase 4.** Two sub-tasks:
 
@@ -28,7 +28,7 @@ Marketplace repo structure (updated in Phase 1):
 
 Mirror the theme publish pattern:
 - Verify `gh` CLI is authenticated
-- Fork `itsdestin/destincode-marketplace` (idempotent)
+- Fork `itsdestin/wecoded-marketplace` (idempotent)
 - Create branch `plugin/<id>` on the fork
 - Upload plugin directory contents to `plugins/<id>/` via GitHub Contents API
 - Strip sensitive fields before upload

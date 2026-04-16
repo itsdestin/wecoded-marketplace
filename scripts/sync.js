@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // sync.js — Build skills/index.json from two sources:
-//   1. Local marketplace.json (DestinCode/community entries)
+//   1. Local marketplace.json (YouCoded/community entries)
 //   2. Anthropic's marketplace.json (fetched from GitHub or --local path)
 //
 // Usage:
@@ -64,7 +64,7 @@ function fetchJson(url) {
   return new Promise((resolve, reject) => {
     const get = (u) => {
       https
-        .get(u, { headers: { "User-Agent": "destincode-marketplace-sync" } }, (res) => {
+        .get(u, { headers: { "User-Agent": "wecoded-marketplace-sync" } }, (res) => {
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             get(res.headers.location);
             return;
@@ -316,19 +316,19 @@ async function main() {
   const previousById = new Map(previousIndex.map(e => [e.id, e]));
   console.log(`Previous index: ${previousIndex.length} entries`);
 
-  // --- Source 1: Local marketplace.json (DestinCode/community) ---
+  // --- Source 1: Local marketplace.json (YouCoded/community) ---
   let localMarketplace = { plugins: [] };
   if (fs.existsSync(LOCAL_MARKETPLACE_PATH)) {
     localMarketplace = JSON.parse(fs.readFileSync(LOCAL_MARKETPLACE_PATH, "utf8"));
     console.log(`Local marketplace.json: ${(localMarketplace.plugins || []).length} entries`);
   } else {
-    console.warn("WARNING: no marketplace.json found — DestinCode entries will come from previous index");
+    console.warn("WARNING: no marketplace.json found — YouCoded entries will come from previous index");
   }
 
   const localEntries = [];
   for (const upstream of (localMarketplace.plugins || [])) {
     const isPrompt = upstream.type === "prompt";
-    const entry = mapEntry(upstream, "destinclaude", localMarketplace.owner?.name || "DestinCode", isPrompt);
+    const entry = mapEntry(upstream, "youcoded-core", localMarketplace.owner?.name || "YouCoded", isPrompt);
 
     // For local-source plugins, compute content hash if flag is set
     if (computeLocalHash && !isPrompt && entry.sourceType === "local") {
@@ -341,7 +341,7 @@ async function main() {
   }
 
   const localIds = new Set(localEntries.map(e => e.id));
-  console.log(`DestinCode entries mapped: ${localEntries.length}`);
+  console.log(`YouCoded entries mapped: ${localEntries.length}`);
 
   // --- Source 2: Upstream Anthropic marketplace.json ---
   let upstreamMarketplace;
@@ -487,17 +487,17 @@ async function main() {
   extractReport.finishedAt = new Date().toISOString();
   console.log(`  Extracted components: ${extractReport.extracted} ok, ${extractReport.failed.length} failed, ${extractReport.truncated.length} truncated`);
 
-  // Sort: DestinCode first (alphabetical), then anthropic (alphabetical), then deprecated
+  // Sort: YouCoded first (alphabetical), then anthropic (alphabetical), then deprecated
   finalEntries.sort((a, b) => {
     // Deprecated always last
     if (a.deprecated && !b.deprecated) return 1;
     if (!a.deprecated && b.deprecated) return -1;
-    // DestinCode before anthropic
-    const aSource = a.sourceMarketplace || "destinclaude";
-    const bSource = b.sourceMarketplace || "destinclaude";
+    // YouCoded before anthropic
+    const aSource = a.sourceMarketplace || "youcoded-core";
+    const bSource = b.sourceMarketplace || "youcoded-core";
     if (aSource !== bSource) {
-      if (aSource === "destinclaude") return -1;
-      if (bSource === "destinclaude") return 1;
+      if (aSource === "youcoded-core") return -1;
+      if (bSource === "youcoded-core") return 1;
       return aSource.localeCompare(bSource);
     }
     return a.id.localeCompare(b.id);
@@ -586,7 +586,7 @@ async function main() {
   console.log(`  Added: ${added}, Updated: ${updated}, Unchanged: ${unchanged}, Deprecated: ${deprecated}`);
   const bySource = {};
   for (const e of finalEntries) {
-    const src = e.sourceMarketplace || "destinclaude";
+    const src = e.sourceMarketplace || "youcoded-core";
     bySource[src] = (bySource[src] || 0) + 1;
   }
   console.log("  By source:", JSON.stringify(bySource));

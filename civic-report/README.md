@@ -21,7 +21,7 @@ Neutral · Analytical · Devil's advocate · Cynic · Sarcastic · Historian
 
 ## Install
 
-Install via the DestinCode marketplace — search "Civic Report".
+Install via the YouCoded marketplace — search "Civic Report".
 
 ## First run
 

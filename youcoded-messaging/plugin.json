@@ -1,0 +1,14 @@
+{
+  "name": "youcoded-messaging",
+  "description": "Send and read SMS/iMessage via MCP servers (gmessages + imessages)",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "text-messaging": {
+      "description": "Sends and reads SMS (gmessages) and iMessage (imessages) via MCP",
+      "mcp": ["gmessages", "imessages"]
+    }
+  }
+}

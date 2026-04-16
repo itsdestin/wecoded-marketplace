@@ -1,12 +1,12 @@
-# DestinCode Marketplace
+# YouCoded Marketplace
 
-The skill store for [DestinCode](https://github.com/itsdestin/destincode). Browse and install skills from within the app.
+The skill store for [YouCoded](https://github.com/itsdestin/youcoded). Browse and install skills from within the app.
 
-Contains 151 entries: 29 DestinClaude-specific skills and 122 imported from Anthropic's official Claude Code plugin registry.
+Contains 151 entries: 29 YouCoded-specific skills and 122 imported from Anthropic's official Claude Code plugin registry.
 
 ## How It Works
 
-- The DestinCode app fetches `index.json` to populate the skill marketplace
+- The YouCoded app fetches `index.json` to populate the skill marketplace
 - `curated-defaults.json` determines which skills appear pre-selected for new users
 - `featured.json` drives the featured section at the top of the marketplace
 - `stats.json` provides usage counts (rebuilt daily by CI)
@@ -31,14 +31,14 @@ node scripts/sync.js                                    # Sync from GitHub
 node scripts/sync.js --local <path-to-marketplace-clone> # Sync from local clone
 ```
 
-Preserves all DestinClaude entries, imports upstream alphabetically, applies `overrides/<id>.json` patches.
+Preserves all YouCoded entries, imports upstream alphabetically, applies `overrides/<id>.json` patches.
 
 ## Adding a Skill
 
 1. Create a JSON file in `registry/prompts/` or `registry/plugins/`
 2. Open a pull request — CI rebuilds `index.json`
 
-Or create a skill inside DestinCode and share it via the app's share feature.
+Or create a skill inside YouCoded and share it via the app's share feature.
 
 ## Registry Entry Format
 
@@ -50,7 +50,7 @@ Or create a skill inside DestinCode and share it via the app's share feature.
   "description": "One-line description",
   "category": "personal | work | development | ...",
   "author": "@handle",
-  "sourceMarketplace": "destinclaude | claude-plugins-official",
+  "sourceMarketplace": "youcoded-core | claude-plugins-official",
   "sourceType": "prompt | local | url | git-subdir",
   "tags": []
 }

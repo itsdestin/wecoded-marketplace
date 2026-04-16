@@ -2,7 +2,7 @@
 
 ### Context
 
-We're unifying DestinCode's three separate content systems into a single marketplace. The full plan is at `destincode-marketplace/docs/unified-marketplace-plan.md`. The raw research is at `destincode-marketplace/docs/unified-marketplace-research-report.md`. Read both before starting.
+We're unifying YouCoded's three separate content systems into a single marketplace. The full plan is at `wecoded-marketplace/docs/unified-marketplace-plan.md`. The raw research is at `wecoded-marketplace/docs/unified-marketplace-research-report.md`. Read both before starting.
 
 Phase 0 (quick wins) should already be completed on a prior branch. This phase builds the data-layer foundations that the UI work in Phase 2 depends on. No UI changes in this phase.
 
@@ -11,26 +11,26 @@ Phase 0 (quick wins) should already be completed on a prior branch. This phase b
 **Step 1: Familiarize with the codebase.** Read these files to understand the current state:
 
 Registry & sync:
-- `destincode-marketplace/scripts/sync.js` — current sync logic, how it imports from Anthropic, what it discards
-- `destincode-marketplace/index.json` — current schema, sample entries of each type (destinclaude prompt, destinclaude plugin, anthropic local, anthropic url, anthropic git-subdir)
-- `destinclaude-themes/registry/theme-registry.json` — theme registry schema and entries
-- `destinclaude-themes/themes/*/manifest.json` — sample theme manifests
+- `wecoded-marketplace/scripts/sync.js` — current sync logic, how it imports from Anthropic, what it discards
+- `wecoded-marketplace/index.json` — current schema, sample entries of each type (youcoded-core prompt, youcoded-core plugin, anthropic local, anthropic url, anthropic git-subdir)
+- `wecoded-themes/registry/theme-registry.json` — theme registry schema and entries
+- `wecoded-themes/themes/*/manifest.json` — sample theme manifests
 
 Config stores:
-- `destincode/desktop/src/main/skill-config-store.ts` — how destincode-skills.json is read/written, the atomic write pattern, cascade cleanup on uninstall
-- `destincode/app/src/main/kotlin/com/destin/code/skills/SkillConfigStore.kt` — Android equivalent
+- `youcoded/desktop/src/main/skill-config-store.ts` — how youcoded-skills.json is read/written, the atomic write pattern, cascade cleanup on uninstall
+- `youcoded/app/src/main/kotlin/com/destin/code/skills/SkillConfigStore.kt` — Android equivalent
 
 Android install routing:
-- `destincode/app/src/main/kotlin/com/destin/code/runtime/SessionService.kt` — lines 436-491, the current plugin install routing that splits on sourceMarketplace
-- `destincode/app/src/main/kotlin/com/destin/code/skills/LocalSkillProvider.kt` — the install() method that throws for plugins
-- `destincode/app/src/main/kotlin/com/destin/code/skills/PluginInstaller.kt` — fully implemented, just never called for DestinClaude-sourced plugins
+- `youcoded/app/src/main/kotlin/com/destin/code/runtime/SessionService.kt` — lines 436-491, the current plugin install routing that splits on sourceMarketplace
+- `youcoded/app/src/main/kotlin/com/destin/code/skills/LocalSkillProvider.kt` — the install() method that throws for plugins
+- `youcoded/app/src/main/kotlin/com/destin/code/skills/PluginInstaller.kt` — fully implemented, just never called for YouCoded-sourced plugins
 
 **Step 2: Implement Phase 1.** Five sub-tasks, each committed separately:
 
 #### 1a. Improve sync.js
 
 Rewrite the sync script to:
-- Read both a local `marketplace.json` (DestinCode/community entries) and Anthropic's `marketplace.json` (fetched from GitHub)
+- Read both a local `marketplace.json` (YouCoded/community entries) and Anthropic's `marketplace.json` (fetched from GitHub)
 - Diff against previous `skills/index.json` output to detect changes, additions, and removals
 - For existing entries: compare metadata/SHA. If changed, bump patch version (1.0.0 → 1.0.1), update publishedAt
 - For new entries: add at 1.0.0
@@ -43,18 +43,18 @@ Rewrite the sync script to:
 - Add top-level `version` timestamp field to generated index
 - Don't re-stamp `publishedAt` when nothing changed
 
-#### 1b. Create marketplace.json for DestinCode entries
+#### 1b. Create marketplace.json for YouCoded entries
 
-Move the 29 existing DestinClaude entries from hand-edited `index.json` into a proper `marketplace.json` at the repo root, using Anthropic's catalog format. The 13 plugins get `source` fields pointing to their install locations. The 16 prompts stay as prompt-type entries. All get `sourceMarketplace: "destincode"`.
+Move the 29 existing YouCoded entries from hand-edited `index.json` into a proper `marketplace.json` at the repo root, using Anthropic's catalog format. The 13 plugins get `source` fields pointing to their install locations. The 16 prompts stay as prompt-type entries. All get `sourceMarketplace: "youcoded"`.
 
 #### 1c. Restructure the registry repo
 
 - Create `skills/` directory, sync.js now outputs to `skills/index.json`
-- Create `themes/` directory, move theme registry from `destinclaude-themes/registry/theme-registry.json` to `themes/index.json`
+- Create `themes/` directory, move theme registry from `wecoded-themes/registry/theme-registry.json` to `themes/index.json`
 - Update `curated-defaults.json` and `featured.json` to reference both sections
 - Keep old `index.json` at root for now (can be removed later since no users depend on it)
 
-#### 1d. Extend destincode-skills.json with packages field
+#### 1d. Extend youcoded-skills.json with packages field
 
 Update both desktop (`skill-config-store.ts`) and Android (`SkillConfigStore.kt`) to:
 - Bump config version from 1 to 2
@@ -66,7 +66,7 @@ Update both desktop (`skill-config-store.ts`) and Android (`SkillConfigStore.kt`
 #### 1e. Consolidate Android plugin install into LocalSkillProvider
 
 - Move the plugin install logic from `SessionService.kt:436-471` into `LocalSkillProvider.install()`
-- Remove the `sourceMarketplace != "destinclaude"` check so all plugin types route through PluginInstaller
+- Remove the `sourceMarketplace != "youcoded-core"` check so all plugin types route through PluginInstaller
 - Include `/reload-plugins` write and cache invalidation inside LocalSkillProvider so they're always executed regardless of call site
 - SessionService becomes a thin dispatcher: just calls `skillProvider.install(id)` for all install requests
 - Same for uninstall: move logic from SessionService:473-491 into LocalSkillProvider

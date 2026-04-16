@@ -1,0 +1,14 @@
+{
+  "name": "youcoded-food",
+  "description": "Fork-file: track recipes, meals, and food preferences",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "food-tracking": {
+      "description": "Tracks recipes, meals, and food preferences",
+      "skill": "fork-file"
+    }
+  }
+}

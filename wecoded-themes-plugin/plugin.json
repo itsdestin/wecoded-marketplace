@@ -1,0 +1,14 @@
+{
+  "name": "wecoded-themes-plugin",
+  "description": "Build and share custom themes — AI-generated or from scratch",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "theme-creation": {
+      "description": "Creates and edits YouCoded themes",
+      "skill": "theme-builder"
+    }
+  }
+}

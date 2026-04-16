@@ -1,0 +1,24 @@
+{
+  "name": "youcoded-inbox",
+  "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "inbox-processing": {
+      "description": "Processes inbox items from multiple providers (Todoist, Drive, Gmail, screenshots)",
+      "skill": "claudes-inbox"
+    }
+  },
+  "optionalIntegrations": {
+    "encyclopedia-update": {
+      "whenAvailable": "Invoke the `encyclopedia-update` skill with the extracted facts",
+      "whenUnavailable": "Save facts to `~/.claude/inbox/pending-encyclopedia.md` with YAML frontmatter"
+    },
+    "journaling": {
+      "whenAvailable": "Queue rants to `~/.claude/inbox/journal-queue/` for the journaling skill",
+      "whenUnavailable": "Save rants to `~/.claude/inbox/rants/` as standalone markdown entries"
+    }
+  }
+}

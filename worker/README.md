@@ -1,6 +1,6 @@
 # Marketplace Worker
 
-Cloudflare Worker backing install tracking, ratings, and theme likes for the DestinCode marketplace.
+Cloudflare Worker backing install tracking, ratings, and theme likes for the YouCoded marketplace.
 
 ## Local dev
 

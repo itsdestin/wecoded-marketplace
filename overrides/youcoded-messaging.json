@@ -1,0 +1,11 @@
+{
+  "tagline": "Text from Claude. Yes, really.",
+  "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers — `gmessages` for Android/Google Messages, `imessage` for macOS — both of which the plugin will configure during install. Pairs naturally with `youcoded-inbox` for inbound triage, and with `youcoded-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
+  "tags": [
+    "communication"
+  ],
+  "lifeArea": [
+    "personal"
+  ],
+  "audience": "general"
+}

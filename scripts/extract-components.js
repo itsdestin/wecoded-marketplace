@@ -137,7 +137,7 @@ function parseRepo(gitUrl) {
 function githubGet(pathSegment, redirects = 0) {
   return new Promise((resolve, reject) => {
     const headers = {
-      "User-Agent": "destincode-marketplace-extract",
+      "User-Agent": "wecoded-marketplace-extract",
       Accept: "application/vnd.github+json",
     };
     if (process.env.GITHUB_TOKEN) {

@@ -2,38 +2,38 @@
 
 ### Context
 
-We're unifying DestinCode's three separate content systems into a single marketplace. The full plan is at `destincode-marketplace/docs/unified-marketplace-plan.md`. The raw research is at `destincode-marketplace/docs/unified-marketplace-research-report.md`. Read both before starting.
+We're unifying YouCoded's three separate content systems into a single marketplace. The full plan is at `wecoded-marketplace/docs/unified-marketplace-plan.md`. The raw research is at `wecoded-marketplace/docs/unified-marketplace-research-report.md`. Read both before starting.
 
-Phases 0 and 1 should already be completed. Phase 1 added: improved sync.js, restructured registry repo (skills/index.json + themes/index.json), extended destincode-skills.json with a `packages` field, and consolidated Android plugin install routing. This phase builds the unified UI on top of that data layer.
+Phases 0 and 1 should already be completed. Phase 1 added: improved sync.js, restructured registry repo (skills/index.json + themes/index.json), extended youcoded-skills.json with a `packages` field, and consolidated Android plugin install routing. This phase builds the unified UI on top of that data layer.
 
 ### What you need to do
 
 **Step 1: Familiarize with the codebase.** Read these files to understand the three UIs being merged:
 
 Current marketplace UIs:
-- `destincode/desktop/src/renderer/components/Marketplace.tsx` — skill marketplace (205 lines). Full-screen modal, search, type/category pills, sort, 2-column grid. Uses `useSkills()` context for data.
-- `destincode/desktop/src/renderer/components/ThemeMarketplace.tsx` — theme marketplace (227 lines). Nearly identical layout. Uses direct `window.claude.theme.marketplace.list()` IPC calls — no context wrapper.
-- `destincode/desktop/src/renderer/components/SkillManager.tsx` — installed content manager (562 lines). Two tabs: "My Skills" (list with favorite/edit/share/delete) and "Quick Chips" (input bar shortcuts). Has "Browse Marketplace" button that opens skill marketplace.
+- `youcoded/desktop/src/renderer/components/Marketplace.tsx` — skill marketplace (205 lines). Full-screen modal, search, type/category pills, sort, 2-column grid. Uses `useSkills()` context for data.
+- `youcoded/desktop/src/renderer/components/ThemeMarketplace.tsx` — theme marketplace (227 lines). Nearly identical layout. Uses direct `window.claude.theme.marketplace.list()` IPC calls — no context wrapper.
+- `youcoded/desktop/src/renderer/components/SkillManager.tsx` — installed content manager (562 lines). Two tabs: "My Skills" (list with favorite/edit/share/delete) and "Quick Chips" (input bar shortcuts). Has "Browse Marketplace" button that opens skill marketplace.
 
 Detail views:
-- `destincode/desktop/src/renderer/components/SkillDetail.tsx` — skill detail with install/uninstall/favorite/share (238 lines)
-- `destincode/desktop/src/renderer/components/ThemeDetail.tsx` — theme detail with try-before-install preview (272 lines)
+- `youcoded/desktop/src/renderer/components/SkillDetail.tsx` — skill detail with install/uninstall/favorite/share (238 lines)
+- `youcoded/desktop/src/renderer/components/ThemeDetail.tsx` — theme detail with try-before-install preview (272 lines)
 
 Card components:
-- `destincode/desktop/src/renderer/components/SkillCard.tsx` — skill card (96 lines)
-- `destincode/desktop/src/renderer/components/ThemeCard.tsx` — theme card with token preview (122 lines)
+- `youcoded/desktop/src/renderer/components/SkillCard.tsx` — skill card (96 lines)
+- `youcoded/desktop/src/renderer/components/ThemeCard.tsx` — theme card with token preview (122 lines)
 
 Data fetching:
-- `destincode/desktop/src/renderer/state/skill-context.tsx` — React context wrapping skill IPC
-- `destincode/desktop/src/renderer/state/theme-context.tsx` — theme application context (separate from marketplace)
+- `youcoded/desktop/src/renderer/state/skill-context.tsx` — React context wrapping skill IPC
+- `youcoded/desktop/src/renderer/state/theme-context.tsx` — theme application context (separate from marketplace)
 
 Entry points:
-- `destincode/desktop/src/renderer/App.tsx` — manages `marketplaceOpen`, `themeMarketplaceOpen`, `managerOpen` as separate boolean states
-- `destincode/desktop/src/renderer/components/CommandDrawer.tsx` — has pencil icon → SkillManager, "Browse Marketplace" link
+- `youcoded/desktop/src/renderer/App.tsx` — manages `marketplaceOpen`, `themeMarketplaceOpen`, `managerOpen` as separate boolean states
+- `youcoded/desktop/src/renderer/components/CommandDrawer.tsx` — has pencil icon → SkillManager, "Browse Marketplace" link
 
 IPC definitions:
-- `destincode/desktop/src/main/preload.ts` — channel definitions for skills (lines ~162-181) and themes (lines ~244-261)
-- `destincode/desktop/src/renderer/remote-shim.ts` — WebSocket IPC equivalents for Android/remote
+- `youcoded/desktop/src/main/preload.ts` — channel definitions for skills (lines ~162-181) and themes (lines ~244-261)
+- `youcoded/desktop/src/renderer/remote-shim.ts` — WebSocket IPC equivalents for Android/remote
 
 **Step 2: Implement Phase 2.** Three sub-tasks:
 
@@ -42,11 +42,11 @@ IPC definitions:
 Create a new React context (`MarketplaceContext`) that unifies the two data-fetching patterns:
 
 - Fetches both `skills/index.json` and `themes/index.json` on mount (parallel requests)
-- Loads `packages` from destincode-skills.json (via new IPC — may need to add a `marketplace:get-packages` handler)
+- Loads `packages` from youcoded-skills.json (via new IPC — may need to add a `marketplace:get-packages` handler)
 - Runs filesystem reconciliation on load: verify tracked component paths exist, scan plugin/theme dirs for untracked items
 - Exposes methods: `install(id, type)`, `uninstall(id)`, `update(id)` — work for any content type
 - Exposes filtered views: `skillEntries`, `themeEntries`, `installedEntries` (includes marketplace, user-created, and external items)
-- Exposes `privateSkills` from destincode-skills.json
+- Exposes `privateSkills` from youcoded-skills.json
 - On install/uninstall, refreshes state so all tabs re-render
 - Handles loading, error, and empty states
 
@@ -69,7 +69,7 @@ Replace `Marketplace.tsx` + `ThemeMarketplace.tsx` + `SkillManager.tsx` with a s
 **Skills tab:**
 - Type pills: All / Prompts / Plugins
 - Category pills: Personal / Work / Development / Admin / Other
-- Source pills: DestinCode / Anthropic / Community
+- Source pills: YouCoded / Anthropic / Community
 - Sort: Popular / Newest / Rating / Name
 - 2-column card grid with SkillCard components
 - Search bar

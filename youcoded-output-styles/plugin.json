@@ -1,0 +1,14 @@
+{
+  "name": "youcoded-output-styles",
+  "description": "Tone presets — casual, conversational, academic, professional",
+  "version": "1.0.0",
+  "author": { "name": "itsdestin" },
+  "license": "MIT",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "output-styles": {
+      "description": "Output tone/voice presets applied via /output-style",
+      "styles": ["casual", "conversational", "academic", "professional"]
+    }
+  }
+}

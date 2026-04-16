@@ -1,8 +1,8 @@
 {
-  "name": "destincode-marketplace",
-  "description": "DestinCode skills and plugins \ufffd productivity tools, personal knowledge management, and developer utilities",
+  "name": "wecoded-marketplace",
+  "description": "YouCoded skills and plugins \ufffd productivity tools, personal knowledge management, and developer utilities",
   "owner": {
-    "name": "DestinCode"
+    "name": "YouCoded"
   },
   "plugins": [
     {
@@ -21,8 +21,8 @@
       "prompt": "/civic-report"
     },
     {
-      "name": "destinclaude",
-      "displayName": "DestinClaude Core",
+      "name": "youcoded-core",
+      "displayName": "YouCoded Core",
       "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
       "author": {
         "name": "@destin",
@@ -31,13 +31,13 @@
       "category": "productivity",
       "source": {
         "source": "url",
-        "url": "https://github.com/itsdestin/destinclaude.git"
+        "url": "https://github.com/itsdestin/youcoded-core.git"
       },
-      "homepage": "https://github.com/itsdestin/destinclaude",
+      "homepage": "https://github.com/itsdestin/youcoded-core",
       "removable": false
     },
     {
-      "name": "destinclaude-encyclopedia",
+      "name": "youcoded-encyclopedia",
       "displayName": "Encyclopedia",
       "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
       "author": {
@@ -47,11 +47,11 @@
       "category": "personal",
       "source": {
         "source": "local",
-        "path": "destinclaude-encyclopedia"
+        "path": "youcoded-encyclopedia"
       }
     },
     {
-      "name": "destinclaude-food",
+      "name": "youcoded-food",
       "displayName": "Food",
       "description": "Fork-file: track recipes, meals, and food preferences",
       "author": {
@@ -61,11 +61,11 @@
       "category": "personal",
       "source": {
         "source": "local",
-        "path": "destinclaude-food"
+        "path": "youcoded-food"
       }
     },
     {
-      "name": "destinclaude-inbox",
+      "name": "youcoded-inbox",
       "displayName": "Inbox",
       "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
       "author": {
@@ -75,11 +75,11 @@
       "category": "personal",
       "source": {
         "source": "local",
-        "path": "destinclaude-inbox"
+        "path": "youcoded-inbox"
       }
     },
     {
-      "name": "destinclaude-themes-plugin",
+      "name": "wecoded-themes-plugin",
       "displayName": "Theme Builder",
       "description": "Build and share custom themes \u2014 AI-generated or from scratch",
       "author": {
@@ -89,11 +89,11 @@
       "category": "design",
       "source": {
         "source": "local",
-        "path": "destinclaude-themes-plugin"
+        "path": "wecoded-themes-plugin"
       }
     },
     {
-      "name": "destinclaude-drive",
+      "name": "youcoded-drive",
       "displayName": "Google Drive",
       "description": "Google Drive access via rclone \u2014 browse, search, read files",
       "author": {
@@ -103,11 +103,11 @@
       "category": "personal",
       "source": {
         "source": "local",
-        "path": "destinclaude-drive"
+        "path": "youcoded-drive"
       }
     },
     {
-      "name": "destinclaude-messaging",
+      "name": "youcoded-messaging",
       "displayName": "Messaging",
       "description": "Send and read SMS/iMessage via MCP servers",
       "author": {
@@ -117,11 +117,11 @@
       "category": "personal",
       "source": {
         "source": "local",
-        "path": "destinclaude-messaging"
+        "path": "youcoded-messaging"
       }
     },
     {
-      "name": "destinclaude-output-styles",
+      "name": "youcoded-output-styles",
       "displayName": "Output Styles",
       "description": "Tone presets \u2014 casual, conversational, academic, professional",
       "author": {
@@ -131,7 +131,7 @@
       "category": "productivity",
       "source": {
         "source": "local",
-        "path": "destinclaude-output-styles"
+        "path": "youcoded-output-styles"
       }
     }
   ]

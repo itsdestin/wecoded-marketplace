@@ -13,7 +13,7 @@
     ],
     "version": "1.0.1",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
     "sourceRef": "civic-report",
     "repoUrl": null,
@@ -38,9 +38,9 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude",
+    "id": "youcoded-core",
     "type": "plugin",
-    "displayName": "DestinClaude Core",
+    "displayName": "YouCoded Core",
     "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
     "category": "productivity",
     "author": "@destin",
@@ -51,10 +51,10 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "url",
-    "sourceRef": "https://github.com/itsdestin/destinclaude.git",
-    "repoUrl": "https://github.com/itsdestin/destinclaude",
+    "sourceRef": "https://github.com/itsdestin/youcoded-core.git",
+    "repoUrl": "https://github.com/itsdestin/youcoded-core",
     "components": {
       "skills": [
         "remote-setup",
@@ -79,14 +79,14 @@
       "hasMcpConfig": false
     },
     "tagline": "The toolkit that powers everything else.",
-    "longDescription": "DestinClaude is the foundational toolkit that powers the personal-AI side of DestinCode — the safety hooks that prevent destructive writes, the diagnostic commands (`/health`, `/update`, `/diagnose`, `/restore`) that keep your install honest, and the cross-device sync infrastructure that moves your settings between Mac, Windows, Linux, and Android. It's the glue layer most other DestinClaude plugins quietly assume is already there.\n\nInstall this first. Once it's in, you get write-guards that block stomping on memory and CLAUDE.md from concurrent sessions, a `setup-wizard` for pure-CLI users who aren't running the app, and a `theme-builder` that lets you generate full custom theme packs from a one-line vibe prompt. The toolkit is plain markdown skills + bash hooks — no opaque binaries, all readable in your editor.",
+    "longDescription": "YouCoded is the foundational toolkit that powers the personal-AI side of YouCoded — the safety hooks that prevent destructive writes, the diagnostic commands (`/health`, `/update`, `/diagnose`, `/restore`) that keep your install honest, and the cross-device sync infrastructure that moves your settings between Mac, Windows, Linux, and Android. It's the glue layer most other YouCoded plugins quietly assume is already there.\n\nInstall this first. Once it's in, you get write-guards that block stomping on memory and CLAUDE.md from concurrent sessions, a `setup-wizard` for pure-CLI users who aren't running the app, and a `theme-builder` that lets you generate full custom theme packs from a one-line vibe prompt. The toolkit is plain markdown skills + bash hooks — no opaque binaries, all readable in your editor.",
     "lifeArea": [
       "work"
     ],
     "audience": "developer"
   },
   {
-    "id": "destinclaude-drive",
+    "id": "youcoded-drive",
     "type": "plugin",
     "displayName": "Google Drive",
     "description": "Google Drive access via rclone — browse, search, read files",
@@ -99,9 +99,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-drive",
+    "sourceRef": "youcoded-drive",
     "repoUrl": null,
     "components": {
       "skills": [
@@ -115,7 +115,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Browse Google Drive without leaving chat.",
-    "longDescription": "Browse, search, read, upload, and organize Google Drive without leaving the chat. Talk to Claude in natural language (\"find the slide deck I started in March\", \"download the latest sales spreadsheet to my Desktop\", \"create a folder called 2026-Taxes and move these into it\") and it executes against the real Drive via `rclone` — no copy-paste, no tab-switching, no flaky browser automation.\n\nFirst run walks you through `rclone config` once to authorize a `gdrive:` remote; after that every Drive operation is an instant CLI call under the hood. Works with personal Drive and Workspace accounts, supports nested paths, and respects your existing folder structure. Pairs naturally with `destinclaude-encyclopedia` if you want Claude to pull source material from your Drive into your personal knowledge base.",
+    "longDescription": "Browse, search, read, upload, and organize Google Drive without leaving the chat. Talk to Claude in natural language (\"find the slide deck I started in March\", \"download the latest sales spreadsheet to my Desktop\", \"create a folder called 2026-Taxes and move these into it\") and it executes against the real Drive via `rclone` — no copy-paste, no tab-switching, no flaky browser automation.\n\nFirst run walks you through `rclone config` once to authorize a `gdrive:` remote; after that every Drive operation is an instant CLI call under the hood. Works with personal Drive and Workspace accounts, supports nested paths, and respects your existing folder structure. Pairs naturally with `youcoded-encyclopedia` if you want Claude to pull source material from your Drive into your personal knowledge base.",
     "lifeArea": [
       "personal",
       "work"
@@ -123,7 +123,7 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude-encyclopedia",
+    "id": "youcoded-encyclopedia",
     "type": "plugin",
     "displayName": "Encyclopedia",
     "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
@@ -137,9 +137,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-encyclopedia",
+    "sourceRef": "youcoded-encyclopedia",
     "repoUrl": null,
     "components": {
       "skills": [
@@ -164,7 +164,7 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude-food",
+    "id": "youcoded-food",
     "type": "plugin",
     "displayName": "Food",
     "description": "Fork-file: track recipes, meals, and food preferences",
@@ -175,9 +175,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-food",
+    "sourceRef": "youcoded-food",
     "repoUrl": null,
     "components": {
       "skills": [
@@ -199,7 +199,7 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude-inbox",
+    "id": "youcoded-inbox",
     "type": "plugin",
     "displayName": "Inbox",
     "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
@@ -212,9 +212,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-inbox",
+    "sourceRef": "youcoded-inbox",
     "repoUrl": null,
     "components": {
       "skills": [
@@ -228,7 +228,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Triage captured notes into something useful.",
-    "longDescription": "Pulls items from every inbox you actually use — Todoist tasks, Google Drive notes, Gmail, Apple Notes, Apple Reminders, iCloud Drive, even local screenshots dropped in a staging folder — and triages them in one conversation. Claude isn't just routing items; it actively *resolves* them: answering questions, applying feedback, creating tasks, deleting noise, filing screenshots into your journal or encyclopedia.\n\nProvider-agnostic by design — pick the sources you actually use during setup, leave the rest off. The session-start hook quietly counts unprocessed items and surfaces a reminder when there's something to look at, so you never have to remember to open your inbox; it comes to you. Works hand-in-glove with `destinclaude-encyclopedia` (journal entries get filed) and the toolkit's sync skill (multi-device captures all flow into one queue).",
+    "longDescription": "Pulls items from every inbox you actually use — Todoist tasks, Google Drive notes, Gmail, Apple Notes, Apple Reminders, iCloud Drive, even local screenshots dropped in a staging folder — and triages them in one conversation. Claude isn't just routing items; it actively *resolves* them: answering questions, applying feedback, creating tasks, deleting noise, filing screenshots into your journal or encyclopedia.\n\nProvider-agnostic by design — pick the sources you actually use during setup, leave the rest off. The session-start hook quietly counts unprocessed items and surfaces a reminder when there's something to look at, so you never have to remember to open your inbox; it comes to you. Works hand-in-glove with `youcoded-encyclopedia` (journal entries get filed) and the toolkit's sync skill (multi-device captures all flow into one queue).",
     "lifeArea": [
       "personal",
       "work"
@@ -236,7 +236,7 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude-messaging",
+    "id": "youcoded-messaging",
     "type": "plugin",
     "displayName": "Messaging",
     "description": "Send and read SMS/iMessage via MCP servers",
@@ -247,9 +247,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-messaging",
+    "sourceRef": "youcoded-messaging",
     "repoUrl": null,
     "components": {
       "skills": [],
@@ -261,14 +261,14 @@
       "hasMcpConfig": false
     },
     "tagline": "Text from Claude. Yes, really.",
-    "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers — `gmessages` for Android/Google Messages, `imessage` for macOS — both of which the plugin will configure during install. Pairs naturally with `destinclaude-inbox` for inbound triage, and with `destinclaude-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
+    "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers — `gmessages` for Android/Google Messages, `imessage` for macOS — both of which the plugin will configure during install. Pairs naturally with `youcoded-inbox` for inbound triage, and with `youcoded-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
     "lifeArea": [
       "personal"
     ],
     "audience": "general"
   },
   {
-    "id": "destinclaude-output-styles",
+    "id": "youcoded-output-styles",
     "type": "plugin",
     "displayName": "Output Styles",
     "description": "Tone presets — casual, conversational, academic, professional",
@@ -280,9 +280,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-output-styles",
+    "sourceRef": "youcoded-output-styles",
     "repoUrl": null,
     "components": {
       "skills": [],
@@ -301,7 +301,7 @@
     "audience": "general"
   },
   {
-    "id": "destinclaude-themes-plugin",
+    "id": "wecoded-themes-plugin",
     "type": "plugin",
     "displayName": "Theme Builder",
     "description": "Build and share custom themes — AI-generated or from scratch",
@@ -312,9 +312,9 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "sourceType": "local",
-    "sourceRef": "destinclaude-themes-plugin",
+    "sourceRef": "wecoded-themes-plugin",
     "repoUrl": null,
     "components": {
       "skills": [
@@ -328,7 +328,7 @@
       "hasMcpConfig": false
     },
     "tagline": "Make the app look like you.",
-    "longDescription": "The `/theme-builder` skill — describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full DestinCode theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real DestinCode theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
+    "longDescription": "The `/theme-builder` skill — describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full YouCoded theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real YouCoded theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
     "lifeArea": [
       "creative"
     ],
@@ -4616,7 +4616,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "check my inbox",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4626,7 +4626,7 @@
       "personal"
     ],
     "audience": "general",
-    "longDescription": "The single skill at the heart of `destinclaude-inbox` — checks your configured capture sources (Todoist, Drive, Gmail, Apple Notes/Reminders, iCloud, local staging) for unprocessed items and works through them with you in conversation. Items are normalized into a common shape, classified by intent, then resolved one at a time with your approval (answer the question, file the note, create the task, delete the noise).\n\nUse this skill standalone if you only want the triage logic without the rest of the inbox bundle, or invoke it directly with \"check my inbox\" / \"process my notes\" whenever you've been collecting captures throughout the day. The session-start hook in `destinclaude-inbox` calls it automatically when items are waiting."
+    "longDescription": "The single skill at the heart of `youcoded-inbox` — checks your configured capture sources (Todoist, Drive, Gmail, Apple Notes/Reminders, iCloud, local staging) for unprocessed items and works through them with you in conversation. Items are normalized into a common shape, classified by intent, then resolved one at a time with your approval (answer the question, file the note, create the task, delete the noise).\n\nUse this skill standalone if you only want the triage logic without the rest of the inbox bundle, or invoke it directly with \"check my inbox\" / \"process my notes\" whenever you've been collecting captures throughout the day. The session-start hook in `youcoded-inbox` calls it automatically when items are waiting."
   },
   {
     "id": "encyclopedia-compile",
@@ -4642,7 +4642,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "compile my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4667,7 +4667,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "interview me",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4693,7 +4693,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "brief me on",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4719,7 +4719,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "update my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4743,7 +4743,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "check my food inventory",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4754,7 +4754,7 @@
       "health"
     ],
     "audience": "general",
-    "longDescription": "The single skill at the core of `destinclaude-food` — the actual food tracker. Manages a grocery/pantry inventory across the storage locations you configure (pantry, fridge, freezer, garage shelves, dorm mini-fridge — whatever you've got) and tracks fast food spending broken out by restaurant, item, and size. Handles receipt processing from photos or text, food identification from pictures, manual entry, age/freshness warnings, and spending summaries.\n\nData lives in two CSVs under `~/.claude/fork-file/` — `pantry.csv` for inventory, `fastfood.csv` for spending — both human-readable and exportable. Install this if you want the food-tracking logic without the full `destinclaude-food` bundle's UX wrapping; install `destinclaude-food` if you want the snarky-friend nicknames and the rest of the experience on top."
+    "longDescription": "The single skill at the core of `youcoded-food` — the actual food tracker. Manages a grocery/pantry inventory across the storage locations you configure (pantry, fridge, freezer, garage shelves, dorm mini-fridge — whatever you've got) and tracks fast food spending broken out by restaurant, item, and size. Handles receipt processing from photos or text, food identification from pictures, manual entry, age/freshness warnings, and spending summaries.\n\nData lives in two CSVs under `~/.claude/fork-file/` — `pantry.csv` for inventory, `fastfood.csv` for spending — both human-readable and exportable. Install this if you want the food-tracking logic without the full `youcoded-food` bundle's UX wrapping; install `youcoded-food` if you want the snarky-friend nicknames and the rest of the experience on top."
   },
   {
     "id": "google-drive",
@@ -4769,7 +4769,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/google-drive",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4779,7 +4779,7 @@
       "work"
     ],
     "audience": "general",
-    "longDescription": "The single skill that powers `destinclaude-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote — never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `destinclaude-drive`'s polish, or install `destinclaude-drive` for the full bundle including helper commands and integration with the broader DestinClaude toolkit."
+    "longDescription": "The single skill that powers `youcoded-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote — never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `youcoded-drive`'s polish, or install `youcoded-drive` for the full bundle including helper commands and integration with the broader YouCoded toolkit."
   },
   {
     "id": "google-workspace",
@@ -4794,13 +4794,13 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/google-workspace",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Slides, Sheets, Gmail — all connected.",
-    "longDescription": "Drafts emails, edits spreadsheets, modifies slides, creates calendar events, and reads docs through Google's official APIs — auth once and Claude has hands-on access to your Workspace from chat. Useful for the boring 80% of Workspace tasks: \"reply to that email from Sarah and CC the team\", \"add a row to the budget tracker for this week's Stripe payout\", \"move Tuesday's 3pm meeting to Wednesday at 10\", \"summarize the doc I just pasted a link to\".\n\nUses official Google APIs rather than browser automation, so it's stable, fast, and survives Drive UI changes. Pairs with `destinclaude-encyclopedia` for \"read this doc and update my notes\" workflows, and with `destinclaude-inbox` so Gmail-sourced captures flow into your normal triage. Workspace and personal Google accounts both supported.",
+    "longDescription": "Drafts emails, edits spreadsheets, modifies slides, creates calendar events, and reads docs through Google's official APIs — auth once and Claude has hands-on access to your Workspace from chat. Useful for the boring 80% of Workspace tasks: \"reply to that email from Sarah and CC the team\", \"add a row to the budget tracker for this week's Stripe payout\", \"move Tuesday's 3pm meeting to Wednesday at 10\", \"summarize the doc I just pasted a link to\".\n\nUses official Google APIs rather than browser automation, so it's stable, fast, and survives Drive UI changes. Pairs with `youcoded-encyclopedia` for \"read this doc and update my notes\" workflows, and with `youcoded-inbox` so Gmail-sourced captures flow into your normal triage. Workspace and personal Google accounts both supported.",
     "lifeArea": [
       "work"
     ],
@@ -4818,14 +4818,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/health",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Verify the toolkit is healthy.",
     "audience": "developer",
-    "longDescription": "A lightweight diagnostic command — verifies the DestinClaude toolkit is installed, its hooks are reconciled into your Claude Code settings, and the core dependencies are present. Run it after troubleshooting an issue, after upgrading the app, or any time something feels off and you want to confirm the foundation is healthy before going deeper.\n\nUnlike `/diagnose` (which is the full deep-scan), `/health` is a quick yes/no check meant to fit on one screen — you'll know in seconds whether everything is in order. Reports specific failures with the exact command to fix each one. Read-only; never modifies your settings."
+    "longDescription": "A lightweight diagnostic command — verifies the YouCoded toolkit is installed, its hooks are reconciled into your Claude Code settings, and the core dependencies are present. Run it after troubleshooting an issue, after upgrading the app, or any time something feels off and you want to confirm the foundation is healthy before going deeper.\n\nUnlike `/diagnose` (which is the full deep-scan), `/health` is a quick yes/no check meant to fit on one screen — you'll know in seconds whether everything is in order. Reports specific failures with the exact command to fix each one. Read-only; never modifies your settings."
   },
   {
     "id": "journaling-assistant",
@@ -4841,7 +4841,7 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "let's journal",
     "authorGithub": "destinationunknown",
     "deprecated": true,
@@ -4866,14 +4866,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/remote-setup",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Set up remote access from your phone.",
     "audience": "general",
-    "longDescription": "Walks you through enabling remote access to DestinCode from your phone (or any other device) in one conversation. Installs Tailscale if you don't have it, runs the auth flow, sets a remote-access password, and confirms everything works — explained in plain language for non-technical users, with no \"open a terminal and run this\" handoffs. Claude does the work; you just sign in to Tailscale when the browser pops up.\n\nBy the end you'll have DestinCode reachable at a stable Tailscale URL on any device on your tailnet, which means full chat + terminal access from your phone over an encrypted WireGuard tunnel. Idempotent — safe to re-run if you want to change the password or move to a new device."
+    "longDescription": "Walks you through enabling remote access to YouCoded from your phone (or any other device) in one conversation. Installs Tailscale if you don't have it, runs the auth flow, sets a remote-access password, and confirms everything works — explained in plain language for non-technical users, with no \"open a terminal and run this\" handoffs. Claude does the work; you just sign in to Tailscale when the browser pops up.\n\nBy the end you'll have YouCoded reachable at a stable Tailscale URL on any device on your tailnet, which means full chat + terminal access from your phone over an encrypted WireGuard tunnel. Idempotent — safe to re-run if you want to change the password or move to a new device."
   },
   {
     "id": "setup-wizard",
@@ -4888,14 +4888,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/setup-wizard",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "First-time setup, guided.",
     "audience": "general",
-    "longDescription": "A pure-CLI fallback first-run wizard for people using the DestinClaude toolkit directly in Claude Code without the DestinCode app. Walks you through three short questions — name, comfort level, sync backend — and writes the result to `~/.claude/toolkit-state/config.json`. That config then drives the rest of the toolkit's behavior.\n\nMost people don't need this because the DestinCode app runs its own onboarding (with curated package selection, plugin registration, and hooks reconciliation built in). This skill exists for the users who installed the toolkit standalone via `git clone` and need a graceful first-run experience. Additive and non-destructive — never overwrites existing config without permission."
+    "longDescription": "A pure-CLI fallback first-run wizard for people using the YouCoded toolkit directly in Claude Code without the YouCoded app. Walks you through three short questions — name, comfort level, sync backend — and writes the result to `~/.claude/toolkit-state/config.json`. That config then drives the rest of the toolkit's behavior.\n\nMost people don't need this because the YouCoded app runs its own onboarding (with curated package selection, plugin registration, and hooks reconciliation built in). This skill exists for the users who installed the toolkit standalone via `git clone` and need a graceful first-run experience. Additive and non-destructive — never overwrites existing config without permission."
   },
   {
     "id": "sync",
@@ -4910,14 +4910,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/sync",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Keep your projects in sync across devices.",
     "audience": "developer",
-    "longDescription": "Keeps your DestinClaude toolkit state — config, journal entries, encyclopedia, inbox, themes, captured notes — in sync across every device you use Claude on. Three pluggable backends (Google Drive via rclone, GitHub via a private repo, iCloud via the native folder) — pick the one you already trust and the skill handles upload/download/conflict resolution on every session start and end.\n\nDistinguishes portable state (`config.json`, encyclopedia, journal — synced) from machine-local state (`config.local.json`, caches, OS-specific paths — never synced) so devices don't fight each other over who-runs-where settings. Works invisibly via the SessionStart and SessionEnd hooks once configured; you can also trigger a manual sync any time with \"sync now\"."
+    "longDescription": "Keeps your YouCoded toolkit state — config, journal entries, encyclopedia, inbox, themes, captured notes — in sync across every device you use Claude on. Three pluggable backends (Google Drive via rclone, GitHub via a private repo, iCloud via the native folder) — pick the one you already trust and the skill handles upload/download/conflict resolution on every session start and end.\n\nDistinguishes portable state (`config.json`, encyclopedia, journal — synced) from machine-local state (`config.local.json`, caches, OS-specific paths — never synced) so devices don't fight each other over who-runs-where settings. Works invisibly via the SessionStart and SessionEnd hooks once configured; you can also trigger a manual sync any time with \"sync now\"."
   },
   {
     "id": "toolkit",
@@ -4932,14 +4932,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/toolkit",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "What Claude can do, at a glance.",
     "audience": "general",
-    "longDescription": "The discovery surface for everything DestinClaude can do — a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation — read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
+    "longDescription": "The discovery surface for everything YouCoded can do — a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation — read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
   },
   {
     "id": "update",
@@ -4954,14 +4954,14 @@
     ],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "destinclaude",
+    "sourceMarketplace": "youcoded-core",
     "prompt": "/update",
     "authorGithub": "destinationunknown",
     "deprecated": true,
     "deprecatedAt": "2026-04-14",
     "tagline": "Keep the toolkit up to date.",
     "audience": "general",
-    "longDescription": "Fetches the latest DestinClaude toolkit release from GitHub and installs it in place — bumps the `VERSION` file, pulls new skills/hooks/commands, runs migrations, reconciles your settings.json hooks against the new manifest, and reports exactly what changed. Run it whenever you remember (no auto-update; you're in control), or when `/health` warns that you're behind.\n\nSafe to re-run; idempotent by design. Verifies the working tree is clean before touching anything, never overwrites local edits, and tells you exactly which commands to run if it can't auto-resolve a conflict. Offline-safe: gracefully tells you it can't check when there's no network rather than failing partway through."
+    "longDescription": "Fetches the latest YouCoded toolkit release from GitHub and installs it in place — bumps the `VERSION` file, pulls new skills/hooks/commands, runs migrations, reconciles your settings.json hooks against the new manifest, and reports exactly what changed. Run it whenever you remember (no auto-update; you're in control), or when `/health` warns that you're behind.\n\nSafe to re-run; idempotent by design. Verifies the working tree is clean before touching anything, never overwrites local edits, and tells you exactly which commands to run if it can't auto-resolve a conflict. Offline-safe: gracefully tells you it can't check when there's no network rather than failing partway through."
   },
   {
     "id": "sanity-plugin",
