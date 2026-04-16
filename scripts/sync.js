@@ -328,7 +328,7 @@ async function main() {
   const localEntries = [];
   for (const upstream of (localMarketplace.plugins || [])) {
     const isPrompt = upstream.type === "prompt";
-    const entry = mapEntry(upstream, "youcoded-core", localMarketplace.owner?.name || "YouCoded", isPrompt);
+    const entry = mapEntry(upstream, "youcoded", localMarketplace.owner?.name || "YouCoded", isPrompt);
 
     // For local-source plugins, compute content hash if flag is set
     if (computeLocalHash && !isPrompt && entry.sourceType === "local") {
@@ -493,11 +493,11 @@ async function main() {
     if (a.deprecated && !b.deprecated) return 1;
     if (!a.deprecated && b.deprecated) return -1;
     // YouCoded before anthropic
-    const aSource = a.sourceMarketplace || "youcoded-core";
-    const bSource = b.sourceMarketplace || "youcoded-core";
+    const aSource = a.sourceMarketplace || "youcoded";
+    const bSource = b.sourceMarketplace || "youcoded";
     if (aSource !== bSource) {
-      if (aSource === "youcoded-core") return -1;
-      if (bSource === "youcoded-core") return 1;
+      if (aSource === "youcoded") return -1;
+      if (bSource === "youcoded") return 1;
       return aSource.localeCompare(bSource);
     }
     return a.id.localeCompare(b.id);
@@ -586,7 +586,7 @@ async function main() {
   console.log(`  Added: ${added}, Updated: ${updated}, Unchanged: ${unchanged}, Deprecated: ${deprecated}`);
   const bySource = {};
   for (const e of finalEntries) {
-    const src = e.sourceMarketplace || "youcoded-core";
+    const src = e.sourceMarketplace || "youcoded";
     bySource[src] = (bySource[src] || 0) + 1;
   }
   console.log("  By source:", JSON.stringify(bySource));
