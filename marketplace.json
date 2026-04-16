@@ -93,20 +93,6 @@
       }
     },
     {
-      "name": "youcoded-drive",
-      "displayName": "Google Drive",
-      "description": "Google Drive access via rclone \u2014 browse, search, read files",
-      "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
-      },
-      "category": "personal",
-      "source": {
-        "source": "local",
-        "path": "youcoded-drive"
-      }
-    },
-    {
       "name": "youcoded-messaging",
       "displayName": "Messaging",
       "description": "Send and read SMS/iMessage via MCP servers",
