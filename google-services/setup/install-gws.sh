@@ -11,11 +11,15 @@ GWS_PINNED_VERSION="0.22.5"  # Update quarterly; last bumped 2026-04-16.
 INSTALL_DIR="$HOME/.youcoded/bin"
 
 # If an existing `gws` is on PATH, check its version.
-# `gws --version` prints TWO lines ("gws X.Y.Z" + a disclaimer) so the pipeline
-# must take only the first line, then field 2. awk '{print $NF}' on its own
-# returns garbage because $NF runs per-line and concatenates fields.
+# `gws --version` prints TWO lines ("gws X.Y.Z" + a disclaimer). We need the
+# first line's second field. Use pure-bash splitting rather than `| head -n1
+# | awk` — under MSYS/Git-Bash with pipefail, a mid-stream close of stdin
+# triggers SIGPIPE on the upstream tool and turns into exit 141.
 if command -v gws >/dev/null 2>&1; then
-  installed_version=$(gws --version 2>/dev/null | head -n1 | awk '{print $2}')
+  _ver_raw=$(gws --version 2>/dev/null || true)
+  _ver_first="${_ver_raw%%$'\n'*}"       # first line via bash parameter expansion
+  # shellcheck disable=SC2034  # _name/_rest are deliberately discarded
+  read -r _name installed_version _rest <<< "$_ver_first"
   if [ "$installed_version" = "$GWS_PINNED_VERSION" ]; then
     echo "Google Workspace helper already installed."
     exit 0
