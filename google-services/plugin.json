@@ -1,12 +1,8 @@
 {
   "name": "google-services",
-  "displayName": "Google Services",
   "description": "Connect Gmail, Drive, Docs, Sheets, Slides, and Calendar with one setup. Works on personal Google accounts.",
-  "longDescription": "Google Services gives YouCoded access to your Gmail, Drive, Docs, Sheets, Slides, and Calendar in a single install. Run /google-services-setup once and YouCoded will walk you through connecting your account — no technical setup required. Your account stays yours: every credential is stored in your OS keyring, and the connection is made through a private Google Cloud project that only you can access.\n\nAfter setup, ask Claude things like \"send an email to Mom,\" \"find my budget spreadsheet from last week,\" or \"what's on my calendar tomorrow\" — Claude picks the right Google app automatically.",
   "version": "0.1.0",
-  "author": "YouCoded",
-  "category": "integrations",
-  "tags": ["google", "gmail", "drive", "docs", "sheets", "slides", "calendar", "workspace"],
-  "publishedAt": "2026-04-16",
-  "sourceMarketplace": "youcoded"
+  "author": { "name": "YouCoded" },
+  "license": "MIT",
+  "homepage": "https://github.com/itsdestin/wecoded-marketplace/tree/master/google-services"
 }
