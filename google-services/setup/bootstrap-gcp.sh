@@ -6,7 +6,9 @@
 #
 # Writes the created/found project_id to $YOUCODED_OUTPUT_DIR/project.env for
 # later scripts to consume. Does NOT handle OAuth consent/client creation —
-# that moved to consent-walkthrough.sh (per IAP OAuth Admin API shutdown).
+# those three Cloud Console pages are driven by the /google-services-setup
+# slash command (Steps 3B/3C/3D) and the user's downloaded credentials JSON
+# is ingested by ingest-oauth-json.sh.
 #
 # Emits plain-language progress as lines prefixed with "  ✓" for the slash
 # command to echo directly.

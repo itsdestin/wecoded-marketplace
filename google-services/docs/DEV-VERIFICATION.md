@@ -4,7 +4,10 @@ This checklist runs on a clean test machine before `google-services` is allowed 
 
 - [ ] `/google-services-setup` completes end-to-end on macOS, Windows, Linux with no pre-existing `gcloud` or `gws` installed.
 - [ ] Idempotent re-run with existing valid auth reports "already set up" and skips to probes.
-- [ ] Partial-state re-run (re-run after bootstrap-gcp.sh but before consent-walkthrough.sh completes) detects existing project, skips project creation, resumes at the consent walkthrough.
+- [ ] Partial-state re-run (re-run after bootstrap-gcp.sh but before Steps 3B–3E complete) detects existing project, skips project creation, resumes at the consent screen page.
+- [ ] Copy fidelity: every user-visible message in /google-services-setup renders as chat prose (never a code block or tool-output pane). No "gws," "gcloud," "PATH," "terminal," "scope," "directory," or "credentials file" surfaces to the user.
+- [ ] Per-substep browser flow: each of Steps 3B/3C/3D opens exactly one Cloud Console page, includes a "come back here and press Enter" instruction, and waits for the user before proceeding.
+- [ ] Credentials ingest: saving client_secret_*.json to ~/Downloads and pressing Enter in Step 3E finds the file automatically; saving it elsewhere and pasting the path in response to the fallback prompt also works. Malformed files (non-JSON, wrong shape, missing fields) surface a clear error to the user.
 - [ ] Gmail round-trip: send draft to self → fetch → delete. Leaves no residue.
 - [ ] Drive round-trip: upload → list → download → trash.
 - [ ] Docs round-trip: create → read → trash.

@@ -2,167 +2,245 @@
 description: "Set up Google Services (Gmail, Drive, Docs, Sheets, Slides, Calendar) with one command. Installs helper tools, connects your Google account, and verifies each service works."
 ---
 
-Run the Google Services bundle setup. Follow these steps in order. Show the user each line exactly as specified — all user-visible text below is final copy, do NOT paraphrase.
+Run the Google Services bundle setup. Follow the steps below in order.
+
+All user-visible copy in this command is **final** — do not paraphrase. It must also be sent as **regular chat prose**, never wrapped in a ``` fence or surfaced as tool output. Fenced code blocks in this command are for bash you run, not for text the user reads.
 
 ## Step 0 — System check
 
-Echo:
+Send this in chat:
 
-```
-Getting Google apps ready for YouCoded...
-```
+> Getting Google apps ready for YouCoded...
 
-Detect the OS with `uname -s`. If the OS is not one of Darwin / Linux / MINGW*/MSYS*/CYGWIN*, abort with:
+Detect OS with `uname -s`. If not Darwin / Linux / MINGW*/MSYS*/CYGWIN*, send this in chat and abort:
 
-```
-Sorry — Google Services setup doesn't support your system yet.
-```
+> Sorry — Google Services setup doesn't support your system yet.
 
-Silently prepend `$HOME/.youcoded/bin` to PATH for this session, so every subsequent step can invoke the helper tool regardless of shell profile state. Emit no output for this.
+Silently prepend `$HOME/.youcoded/bin` to PATH for this session (emit nothing in chat):
 
 ```bash
 export PATH="$HOME/.youcoded/bin:$PATH"
+export YOUCODED_OUTPUT_DIR="$HOME/.youcoded/google-services"
 ```
 
 ## Step 1 — Helper tools
 
-Run `bash $PLUGIN_DIR/setup/install-gcloud.sh` and `bash $PLUGIN_DIR/setup/install-gws.sh` in that order. Each may prompt the user for install consent; honor their response. If either exits with code 2 (install complete but PATH not updated), stop and tell the user to restart their terminal and re-run `/google-services-setup`.
+Run `bash $PLUGIN_DIR/setup/install-gcloud.sh` then `bash $PLUGIN_DIR/setup/install-gws.sh` in that order. Each may prompt for install consent — honor the user's response. Echo only what each script prints; do not add narration.
+
+If either exits with code 2, echo the script's message verbatim and abort.
 
 ## Step 2 — First sign-in
 
-Echo the framing text:
+Send this in chat:
 
-```
-Next, YouCoded will open your browser twice to connect to Google:
+> Next, I'll open your browser so you can sign in to Google. Pick your personal Google account when the page loads.
+>
+> When Google shows you the "You're all set" page, come back here — I'll carry on automatically.
+>
+> Press Enter when you're ready.
 
-  1. First, to create a private connection in your Google account
-  2. Then, to ask your permission to use Gmail, Drive, Calendar,
-     and your Google documents
+Wait for the user's reply (Enter or any message). Then run `gcloud auth login`. If it exits nonzero, send this in chat and abort:
 
-The private connection is yours — it belongs to your Google
-account, not to YouCoded or anyone else.
+> Sign-in didn't complete. Run /google-services-setup again when you're ready.
 
-Press Enter to open your browser...
-```
+## Step 3 — Setting it up
 
-Wait for Enter, then run `gcloud auth login`. If it exits nonzero, abort with:
+### Step 3A — Scaffold your Google project
 
-```
-Sign-in didn't complete. Run /google-services-setup again when you're ready.
-```
+Send this in chat:
 
-## Step 3 — Setting it up (4-phase hybrid)
-
-Per the spec, this splits into (A) scripted scaffolding, (B) guided consent screen, (C) paste OAuth client credentials, (D) automated OAuth. Set the output dir once and run the scripts in order.
-
-### Step 3A — Scripted scaffold
-
-Echo "Setting up..." then run:
-
-```bash
-export YOUCODED_OUTPUT_DIR="$HOME/.youcoded/google-services"
-bash $PLUGIN_DIR/setup/bootstrap-gcp.sh
-```
-
-`bootstrap-gcp.sh` emits each `  ✓` line itself — do not add extras. If it exits nonzero, abort with the error it printed.
-
-### Step 3B + 3C — Guided console walkthrough
+> Setting things up on your Google account — this takes about a minute.
 
 Run:
 
 ```bash
-bash $PLUGIN_DIR/setup/consent-walkthrough.sh
+bash $PLUGIN_DIR/setup/bootstrap-gcp.sh
 ```
 
-The script:
-- Prints the Step 3B block ("One quick thing I can't do for you automatically...") and opens Cloud Console's OAuth Consent Screen page. Waits for user to press Enter.
-- Prints the Step 3C block ("One more page...") and opens Cloud Console's Credentials page. Prompts for client ID and client secret paste-in.
-- Writes `$YOUCODED_OUTPUT_DIR/oauth-credentials.json`.
+`bootstrap-gcp.sh` emits `  ✓` lines itself as each piece lands — echo those in chat as they appear. If it exits nonzero, echo the error verbatim and abort.
 
-If it exits nonzero, abort with the error it printed.
-
-## Step 4 — Unverified-app warning
-
-Read the generated client_id to show the exact project ID:
+Source the project id so the next sub-steps can use it:
 
 ```bash
-PROJECT_ID=$(python -c "import json; print(json.load(open('$YOUCODED_OUTPUT_DIR/oauth-credentials.json'))['project_id'])")
+source "$YOUCODED_OUTPUT_DIR/project.env"
 ```
 
-Then echo (substituting `$PROJECT_ID`):
+Send this in chat:
 
+> Now I need you to set up three short pages inside Google's control panel. Each opens in your browser, takes a minute, and then you come back here and let me know. Ready?
+
+Wait for the user's reply before proceeding to 3B.
+
+### Step 3B — Configure the consent screen
+
+Send this in chat:
+
+> **Page 1 of 3 — the consent screen.** This is a short form Google requires so your account knows you're connecting it to YouCoded.
+>
+> I'll open the page in your browser. Once it's loaded:
+>
+> 1. If the page asks you to "Get started," click that first.
+> 2. App name: type **YouCoded**
+> 3. User support email: pick your email from the dropdown
+> 4. Audience: pick **External**
+> 5. Developer contact email: type your email again
+> 6. Click **Save and continue** through any remaining pages until you're back at the overview.
+>
+> When you see the overview page, come back here and press Enter (or type "done").
+
+Open the page and wait for confirmation:
+
+```bash
+python -m webbrowser "https://console.cloud.google.com/auth/overview?project=$PROJECT_ID"
 ```
-⚠ Heads up: on the next screen, Google will show you a warning
-that says "Google hasn't verified this app."
 
-This is expected and safe. The "app" is you — YouCoded just set
-up a private connection inside your own Google account, and now
-you're giving yourself permission to use it.
+Wait for the user's reply before proceeding to 3C.
 
-To continue through Google's warning:
-  • Click "Advanced"
-  • Click "Go to $PROJECT_ID (unsafe)"
+### Step 3C — Add yourself as a test user
 
-Press Enter to continue...
+Send this in chat:
+
+> **Page 2 of 3 — add yourself as a test user.** Google requires everyone using a new app to be on a test-users list while the app is in its warmup period. You're adding yourself.
+>
+> I'll open the test-users page:
+>
+> 1. Find the section titled **Test users**
+> 2. Click **+ Add users**
+> 3. Type your own Gmail address (the same one you signed in with earlier)
+> 4. Click **Save**
+>
+> When you see your email in the test-users list, come back here and press Enter (or type "done").
+
+Open the page and wait for confirmation:
+
+```bash
+python -m webbrowser "https://console.cloud.google.com/auth/audience?project=$PROJECT_ID"
 ```
 
-Wait for Enter.
+Wait for the user's reply before proceeding to 3D.
+
+### Step 3D — Create the connection key
+
+Send this in chat:
+
+> **Page 3 of 3 — create the connection key.** This is the actual key YouCoded uses to talk to your Google account. You'll download it as a small file.
+>
+> I'll open the Credentials page:
+>
+> 1. Click **+ Create Credentials** at the top, then choose **OAuth client ID**
+> 2. Application type: pick **Desktop app**
+> 3. Name: type **YouCoded**
+> 4. Click **Create** — a popup appears with your new key
+> 5. Click **Download JSON** (top of the popup, or the button at the bottom). The file saves to your Downloads folder — you don't need to open it.
+>
+> Once the file has downloaded, come back here and press Enter (or type "done"). I'll find it automatically.
+
+Open the page and wait for confirmation:
+
+```bash
+python -m webbrowser "https://console.cloud.google.com/apis/credentials?project=$PROJECT_ID"
+```
+
+Wait for the user's reply before proceeding to 3E.
+
+### Step 3E — Read the downloaded file
+
+Run:
+
+```bash
+bash $PLUGIN_DIR/setup/ingest-oauth-json.sh
+```
+
+If it exits 0, echo the `  ✓` line the script printed and proceed to Step 4.
+
+If it exits nonzero (no file found, or file malformed), echo whatever the script printed to stderr, then send this in chat:
+
+> If you saved the file somewhere other than Downloads, paste the full path here — I'll use that instead.
+
+Wait for the user's reply. Take their reply as the path and re-run:
+
+```bash
+bash $PLUGIN_DIR/setup/ingest-oauth-json.sh "<the path the user pasted>"
+```
+
+Loop up to 3 times. If all 3 attempts fail, abort with the last error the script printed.
+
+## Step 4 — Before the last browser step
+
+Make sure `$PROJECT_ID` is set (re-source if needed):
+
+```bash
+source "$YOUCODED_OUTPUT_DIR/project.env"
+```
+
+Send this in chat (substituting `$PROJECT_ID` into the bolded button label):
+
+> Heads up: in a moment Google will show you a screen that says "Google hasn't verified this app."
+>
+> This is expected and safe. The "app" is you — YouCoded just set up a private connection inside your own Google account, and now you're giving yourself permission to use it.
+>
+> When you see the warning page:
+>
+> • Click **Advanced**
+> • Click **Go to $PROJECT_ID (unsafe)**
+>
+> After that, Google will show one more page asking which permissions to grant. **Please check every box** — any unchecked permission means some features won't work.
+>
+> When you finish approving the permissions, come back here — I'll verify everything works.
+>
+> Press Enter when you're ready for this last step.
+
+Wait for the user's reply.
 
 ## Step 5 — Grant permissions
 
-Echo:
+Parse the client id and secret from the normalized credentials file, then run `gws auth setup`:
 
-```
-Opening Google's permission page...
-
-Google will ask whether YouCoded can read your email, access
-your Drive files, and so on. Please check every box — leaving
-any unchecked will cause some features to not work.
+```bash
+CLIENT_ID=$(python -c "import json; print(json.load(open('$YOUCODED_OUTPUT_DIR/oauth-credentials.json'))['installed']['client_id'])")
+CLIENT_SECRET=$(python -c "import json; print(json.load(open('$YOUCODED_OUTPUT_DIR/oauth-credentials.json'))['installed']['client_secret'])")
+gws auth setup --client-id "$CLIENT_ID" --client-secret "$CLIENT_SECRET"
 ```
 
-Run `gws auth setup --client-id <id> --client-secret <secret>` sourcing the credentials from `$YOUCODED_OUTPUT_DIR/oauth-credentials.json` (parse via `python -c "import json; ..."`). If `gws auth setup` exits nonzero, abort with:
+If `gws auth setup` exits nonzero, send this in chat and abort:
 
-```
-Looks like you didn't finish approving the permissions. When
-you're ready, run /google-services-setup again — this time click
-"Advanced" then "Continue" on Google's warning screen.
-```
+> Looks like the permissions weren't fully approved. When you're ready, run /google-services-setup again — this time click **Advanced** then **Continue** on Google's warning screen, and check every permission box.
 
 ## Step 6 — Make sure it actually works
 
-Echo "Testing your connection..." then run `bash $PLUGIN_DIR/setup/smoke-test.sh`.
+Send this in chat:
 
-If exit 0: echo the "All set!" block:
+> Testing your connection...
 
-```
-All set! Try asking YouCoded something like:
-  "Send an email to Mom"
-  "Find my budget spreadsheet from last week"
-  "What's on my calendar tomorrow?"
-```
+Run `bash $PLUGIN_DIR/setup/smoke-test.sh`. If it exits 0, send this in chat:
 
-If exit nonzero: the smoke-test script already printed which service failed. Add:
+> All set! Try asking YouCoded something like:
+> • "Send an email to Mom"
+> • "Find my budget spreadsheet from last week"
+> • "What's on my calendar tomorrow?"
 
-```
-Setup not yet complete. Run /google-services-setup again to retry the failing service.
-```
+If it exits nonzero, echo the per-service error the smoke-test script printed, then send this in chat:
 
-Do NOT report success when any probe failed.
+> Setup not yet complete. Run /google-services-setup again to retry the failing service.
+
+Do NOT say the setup succeeded when any probe failed.
 
 ## Step 7 — Migration cleanup
 
-Run `bash $PLUGIN_DIR/setup/migrate-legacy.sh` (exists only if legacy artifacts detected; script echoes its own `  ✓` line or nothing). The migrate script is added in Phase 6 of implementation; if not present yet, skip this step silently.
+Run `bash $PLUGIN_DIR/setup/migrate-legacy.sh`. Echo any `  ✓` line it emits. If it emits nothing, say nothing.
 
 ---
 
 ## Throughout all steps
 
-**User-facing language only.** Never surface "API," "gws," "gcloud," "OAuth scope," "PATH," "terminal," "shell," "directory," or other technical terms in strings the user reads. Internal log lines for debugging are fine — the user doesn't see tool output panes.
+**User-facing language only.** Never surface "API," "gws," "gcloud," "OAuth," "scope," "PATH," "terminal," "shell," "directory," "credentials," "JSON" (when referring to the file — "connection key" is fine), or similar technical terms in messages to the user. The scripts themselves may use these terms in debug output; that's fine — just don't surface that debug output as chat.
 
-**Do not narrate.** Do not emit any chat text that is not either:
-- explicitly inside a fenced ```…``` block in this command, or
+**Everything the user reads is regular chat.** Fenced code blocks (```) in this command are exclusively for bash commands that you run. Never wrap user-visible copy in a fence. Never let script output be shown as a tool-output pane if you can echo it as chat — when a script prints a `  ✓` line or a user-facing error, echo that line as chat prose.
+
+**Do not narrate between steps.** Do not emit any chat text that is not either:
+- specified as user-facing copy in this command, or
 - printed by a script you just invoked.
 
-No status updates ("OS check passed," "Now finding the plugin directory," "Running Step 1…"), no tool-call summaries, no step introductions beyond what is specified. If a script succeeds silently, say nothing — just proceed to the next step. Your job is to orchestrate, not to commentate.
+No status updates ("OS check passed," "Now moving to Step 3," "Finding the plugin directory"), no tool-call summaries, no step introductions beyond what is specified. If a script succeeds silently, say nothing — just proceed to the next step.
 
-**If a script exits nonzero**, echo exactly what the script printed (no paraphrase, no additions) plus any abort copy specified for that step. Do not invent replacement guidance like "add X to your PATH" — the scripts handle every case they can, and anything they can't handle is a bug to report back, not to work around in chat.
+**If a script exits nonzero**, echo exactly what the script printed (no paraphrase, no additions) plus any abort copy specified for that step. Do not invent replacement guidance — if something isn't handled here, that's a bug to report back.
