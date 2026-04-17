@@ -46,6 +46,17 @@ Any helper's name, API, Google Cloud, OAuth, scope, permission scope, helper, li
 
 Every gate between steps uses `AskUserQuestion`, never a "Press Enter" prompt. YouCoded is a chat — the user can't press Enter at a terminal. Free-text input (pasting a file path) is the only exception; those use a regular chat prompt.
 
+### Don't invent extra gates
+
+Every `AskUserQuestion` you should use is written explicitly into a step below. **If a step doesn't specify an `AskUserQuestion`, do not add one.** When a step tells you to "open the page" or "run this script," just do it — no "Ready to open the browser?" confirmation, no "Sign in to Google?" re-confirmation.
+
+The user's consent for the whole phase was captured once at the phase-start gate. Specifically:
+- **Step 2's gate ("Ready to sign in to Google?")** covers the `gcloud auth login` browser flow in that step. Don't re-ask inside Step 2.
+- **Step 3A's gate ("Ready to set up the three Google pages?")** covers the browser opens for **all three** pages in Step 3B, 3C, and 3D. Don't re-ask before each page.
+- **Step 4's gate ("Ready for the last browser step?")** covers the `gws auth login` browser flow in Step 5. Don't re-ask inside Step 5.
+
+Repeated "open the browser?" prompts confuse the user — they can't tell what they're consenting to this time vs last time.
+
 ### Ask-Claude, don't narrate
 
 Between steps, don't narrate what you're about to do or what just finished ("OS check passed," "moving to Step 3," etc.). The user sees only what's specified as user-facing copy in this command.
