@@ -18,6 +18,12 @@ Detect the OS with `uname -s`. If the OS is not one of Darwin / Linux / MINGW*/M
 Sorry — Google Services setup doesn't support your system yet.
 ```
 
+Silently prepend `$HOME/.youcoded/bin` to PATH for this session, so every subsequent step can invoke the helper tool regardless of shell profile state. Emit no output for this.
+
+```bash
+export PATH="$HOME/.youcoded/bin:$PATH"
+```
+
 ## Step 1 — Helper tools
 
 Run `bash $PLUGIN_DIR/setup/install-gcloud.sh` and `bash $PLUGIN_DIR/setup/install-gws.sh` in that order. Each may prompt the user for install consent; honor their response. If either exits with code 2 (install complete but PATH not updated), stop and tell the user to restart their terminal and re-run `/google-services-setup`.
@@ -149,4 +155,14 @@ Run `bash $PLUGIN_DIR/setup/migrate-legacy.sh` (exists only if legacy artifacts 
 
 ---
 
-Throughout all steps: user-facing language only. Never surface "API," "gws," "gcloud," "OAuth scope," etc. in strings the user reads. Internal log lines for debugging are fine.
+## Throughout all steps
+
+**User-facing language only.** Never surface "API," "gws," "gcloud," "OAuth scope," "PATH," "terminal," "shell," "directory," or other technical terms in strings the user reads. Internal log lines for debugging are fine — the user doesn't see tool output panes.
+
+**Do not narrate.** Do not emit any chat text that is not either:
+- explicitly inside a fenced ```…``` block in this command, or
+- printed by a script you just invoked.
+
+No status updates ("OS check passed," "Now finding the plugin directory," "Running Step 1…"), no tool-call summaries, no step introductions beyond what is specified. If a script succeeds silently, say nothing — just proceed to the next step. Your job is to orchestrate, not to commentate.
+
+**If a script exits nonzero**, echo exactly what the script printed (no paraphrase, no additions) plus any abort copy specified for that step. Do not invent replacement guidance like "add X to your PATH" — the scripts handle every case they can, and anything they can't handle is a bug to report back, not to work around in chat.

@@ -8,6 +8,15 @@
 #   2 — auth expired; stderr contains exactly one line "AUTH_EXPIRED:<service>"
 #   other — any other gws error; stderr forwarded verbatim
 
+# Ensure the managed install dir is on PATH. Covers fresh shells that haven't
+# sourced the user's profile, non-interactive shell spawns, and any Claude Code
+# tool invocations that start from a clean environment. Belt-and-suspenders
+# complement to install-gws.sh, which writes the same path into the profile.
+case ":$PATH:" in
+  *":$HOME/.youcoded/bin:"*) ;;
+  *) PATH="$HOME/.youcoded/bin:$PATH" ;;
+esac
+
 gws_auth_status() {
   # 0 if gws has a valid token for the current account, nonzero otherwise.
   gws auth status --json 2>/dev/null | grep -q '"authenticated": true'

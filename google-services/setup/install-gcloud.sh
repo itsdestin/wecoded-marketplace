@@ -66,10 +66,13 @@ esac
 
 # Verify the install
 if ! command -v gcloud >/dev/null 2>&1; then
-  # On some platforms gcloud is installed but not yet on PATH in this shell
+  # Installed but not yet discoverable in this shell (package manager placed
+  # the binary in a location PATH doesn't cover yet). Exit 2 so the slash
+  # command's Step 1 guidance fires. Copy deliberately avoids the words
+  # "terminal" and "PATH" — YouCoded users don't reliably know what those are.
   echo ""
-  echo "Installation complete, but you may need to restart your terminal"
-  echo "to use the tool. After restarting, run /google-services-setup again."
+  echo "Google's helper tool was installed, but YouCoded can't reach it yet."
+  echo "Start a new conversation in YouCoded, then run /google-services-setup again."
   exit 2
 fi
 
