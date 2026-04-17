@@ -16,9 +16,14 @@ const path = require("path");
 const INDEX_PATH = path.join(__dirname, "..", "integrations", "index.json");
 
 const REQUIRED_FIELDS = ["slug", "displayName", "tagline", "kind", "setup", "status"];
-const ALLOWED_KINDS = new Set(["mcp", "shell", "http"]);
+const ALLOWED_KINDS = new Set(["mcp", "shell", "http", "plugin"]);
 const ALLOWED_STATUSES = new Set(["available", "planned", "deprecated"]);
-const ALLOWED_SETUP_TYPES = new Set(["script", "api-key", "macos-only"]);
+// "plugin" wraps an existing marketplace plugin; setup.pluginId names it, and
+// optional setup.postInstallCommand is a slash command the app will run in a
+// fresh session after the plugin install completes.
+const ALLOWED_SETUP_TYPES = new Set(["script", "api-key", "macos-only", "plugin"]);
+const ALLOWED_PLATFORMS = new Set(["darwin", "linux", "win32"]);
+const ICONS_DIR = path.join(__dirname, "..", "integrations", "icons");
 
 function main() {
   const raw = JSON.parse(fs.readFileSync(INDEX_PATH, "utf8"));
@@ -42,6 +47,32 @@ function main() {
     }
     if (e.setup?.type && !ALLOWED_SETUP_TYPES.has(e.setup.type)) {
       errors.push(`${e.slug}: setup.type "${e.setup.type}" unrecognized`);
+    }
+    if (e.setup?.type === "plugin" && !e.setup.pluginId) {
+      errors.push(`${e.slug}: setup.type "plugin" requires setup.pluginId`);
+    }
+    if (e.platforms) {
+      if (!Array.isArray(e.platforms)) {
+        errors.push(`${e.slug}: platforms must be an array`);
+      } else {
+        for (const p of e.platforms) {
+          if (!ALLOWED_PLATFORMS.has(p)) {
+            errors.push(`${e.slug}: platform "${p}" not in ${[...ALLOWED_PLATFORMS].join(", ")}`);
+          }
+        }
+      }
+    }
+    // iconUrl is a relative path under integrations/icons/ — keeps the
+    // registry self-contained instead of coupling to external asset hosts.
+    if (e.iconUrl) {
+      if (typeof e.iconUrl !== "string" || !e.iconUrl.startsWith("icons/")) {
+        errors.push(`${e.slug}: iconUrl must start with "icons/"`);
+      } else {
+        const iconFile = path.join(ICONS_DIR, e.iconUrl.slice("icons/".length));
+        if (!fs.existsSync(iconFile)) {
+          errors.push(`${e.slug}: iconUrl points to missing file ${e.iconUrl}`);
+        }
+      }
     }
   }
 

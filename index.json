@@ -2213,7 +2213,14 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": true
-    }
+    },
+    "integrationOnly": true,
+    "tagline": "Read your iMessage threads, send texts from chat.",
+    "longDescription": "Surfaced through the iMessage integration tile rather than the plugins grid. Installs the Anthropic imessage plugin under the hood. macOS only.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general"
   },
   {
     "id": "intercom",
@@ -4968,6 +4975,7 @@
       "hasHooksManifest": false,
       "hasMcpConfig": false
     },
-    "longDescription": "Google Services gives YouCoded access to your Gmail, Drive, Docs, Sheets, Slides, and Calendar in a single install. Run /google-services-setup once and YouCoded will walk you through connecting your account \u00e2\u20ac\u201d no technical setup required. Your account stays yours: every credential is stored in your OS keyring, and the connection is made through a private Google Cloud project that only you can access.\n\nAfter setup, ask Claude things like \"send an email to Mom,\" \"find my budget spreadsheet from last week,\" or \"what's on my calendar tomorrow\" \u00e2\u20ac\u201d Claude picks the right Google app automatically."
+    "longDescription": "Google Services gives YouCoded access to your Gmail, Drive, Docs, Sheets, Slides, and Calendar in a single install. Run /google-services-setup once and YouCoded will walk you through connecting your account \u00e2\u20ac\u201d no technical setup required. Your account stays yours: every credential is stored in your OS keyring, and the connection is made through a private Google Cloud project that only you can access.\n\nAfter setup, ask Claude things like \"send an email to Mom,\" \"find my budget spreadsheet from last week,\" or \"what's on my calendar tomorrow\" \u00e2\u20ac\u201d Claude picks the right Google app automatically.",
+    "integrationOnly": true
   }
 ]

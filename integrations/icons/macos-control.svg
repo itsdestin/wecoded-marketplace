@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="macOS">
+  <!-- 1977-1998 rainbow Apple logo. Apple silhouette with bite + leaf as a
+       clipping path, rainbow-striped fills showing through. -->
+  <defs>
+    <clipPath id="apple-silhouette">
+      <path fill-rule="evenodd" d="
+        M 32 20
+        C 22 20 12 28 12 40
+        C 12 52 20 58 26 58
+        C 29 58 30 57 32 56
+        C 34 57 35 58 38 58
+        C 44 58 52 52 52 40
+        C 52 28 42 20 32 20
+        Z
+        M 38 12
+        C 43 11 45 15 42 19
+        C 37 20 35 16 38 12
+        Z
+        M 50 34
+        C 52 36 52 40 50 42
+        C 46 40 46 36 50 34
+        Z
+      "/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#apple-silhouette)">
+    <rect x="0" y="10"  width="64" height="9" fill="#5FB53F"/>
+    <rect x="0" y="19"  width="64" height="9" fill="#FDB827"/>
+    <rect x="0" y="28"  width="64" height="9" fill="#F47421"/>
+    <rect x="0" y="37"  width="64" height="9" fill="#E03A3E"/>
+    <rect x="0" y="46"  width="64" height="9" fill="#963D97"/>
+    <rect x="0" y="55"  width="64" height="9" fill="#1BA7E1"/>
+  </g>
+</svg>

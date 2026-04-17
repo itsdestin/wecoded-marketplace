@@ -93,6 +93,19 @@
       }
     },
     {
+      "name": "google-services",
+      "displayName": "Google Services",
+      "description": "Gmail, Drive, Docs, Sheets, Slides, Calendar \u2014 one connect. Surfaced through the Google Services integration tile.",
+      "author": {
+        "name": "YouCoded"
+      },
+      "category": "integrations",
+      "source": {
+        "source": "local",
+        "path": "google-services"
+      }
+    },
+    {
       "name": "youcoded-messaging",
       "displayName": "Messaging",
       "description": "Send and read SMS/iMessage via MCP servers",
