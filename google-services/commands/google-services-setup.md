@@ -6,6 +6,8 @@ Run the Google Services bundle setup. Follow the steps below in order.
 
 All user-visible copy in this command is **final** — do not paraphrase. It must also be sent as **regular chat prose**, never wrapped in a ``` fence or surfaced as tool output. Fenced code blocks in this command are for bash you run, not for text the user reads.
 
+**Gates between steps use the `AskUserQuestion` tool, never "Press Enter."** "Press Enter" is a terminal concept that doesn't exist in the YouCoded chat UI — saying it confuses the user. Whenever this command tells you to wait for confirmation, invoke `AskUserQuestion` with the specified question + options. Free-text user input (such as "paste a file path") is the only exception — those use a regular chat prompt.
+
 ## Step 0 — System check
 
 Send this in chat:
@@ -33,13 +35,21 @@ If either exits with code 2, echo the script's message verbatim and abort.
 
 Send this in chat:
 
-> Next, I'll open your browser so you can sign in to Google. Pick your personal Google account when the page loads.
->
-> When Google shows you the "You're all set" page, come back here — I'll carry on automatically.
->
-> Press Enter when you're ready.
+> Next, I'll open your browser so you can sign in to Google. Pick your personal Google account when the page loads. I'll take it from there once you finish on Google's side.
 
-Wait for the user's reply (Enter or any message). Then run `gcloud auth login`. If it exits nonzero, send this in chat and abort:
+Then ask with `AskUserQuestion`:
+
+- **question:** "Ready to sign in to Google?"
+- **header:** "Sign in"
+- **options:**
+  - label: "Yes, open Google" — description: "Opens your browser so you can sign in to your Google account."
+  - label: "Cancel setup" — description: "Stops here. You can run /google-services-setup again whenever you're ready."
+
+If the user picks "Cancel setup" (or an "Other" answer that amounts to cancellation), send this in chat and abort:
+
+> No problem — run /google-services-setup again whenever you're ready.
+
+Otherwise run `gcloud auth login`. If it exits nonzero, send this in chat and abort:
 
 > Sign-in didn't complete. Run /google-services-setup again when you're ready.
 
@@ -67,9 +77,17 @@ source "$YOUCODED_OUTPUT_DIR/project.env"
 
 Send this in chat:
 
-> Now I need you to set up three short pages inside Google's control panel. Each opens in your browser, takes a minute, and then you come back here and let me know. Ready?
+> Now I need you to set up three short pages inside Google's control panel. Each opens in your browser, takes a minute, and then you come back here and let me know.
 
-Wait for the user's reply before proceeding to 3B.
+Then ask with `AskUserQuestion`:
+
+- **question:** "Ready to set up the three Google pages?"
+- **header:** "Continue"
+- **options:**
+  - label: "Yes, let's go" — description: "I'll walk you through each page one at a time."
+  - label: "Pause for now" — description: "Stops here. Progress is saved; running /google-services-setup again will pick up where we left off."
+
+If the user picks "Pause for now", abort silently — no chat message needed beyond the pause confirmation. Otherwise proceed to 3B.
 
 ### Step 3B — Configure the consent screen
 
@@ -86,15 +104,25 @@ Send this in chat:
 > 5. Developer contact email: type your email again
 > 6. Click **Save and continue** through any remaining pages until you're back at the overview.
 >
-> When you see the overview page, come back here and press Enter (or type "done").
+> When you see the overview page, come back here and let me know.
 
-Open the page and wait for confirmation:
+Open the page:
 
 ```bash
 python -m webbrowser "https://console.cloud.google.com/auth/overview?project=$PROJECT_ID"
 ```
 
-Wait for the user's reply before proceeding to 3C.
+Then ask with `AskUserQuestion`:
+
+- **question:** "Did the consent screen save successfully?"
+- **header:** "Consent screen"
+- **options:**
+  - label: "Done, continue" — description: "I'll open the next page."
+  - label: "I hit a problem" — description: "Tell me what happened and I'll help sort it out."
+
+If the user picks "I hit a problem" (or provides an "Other" answer describing an issue), ask them in chat what went wrong, help them troubleshoot, then re-ask the question. If they abandon, abort politely.
+
+Otherwise proceed to 3C.
 
 ### Step 3C — Add yourself as a test user
 
@@ -109,15 +137,23 @@ Send this in chat:
 > 3. Type your own Gmail address (the same one you signed in with earlier)
 > 4. Click **Save**
 >
-> When you see your email in the test-users list, come back here and press Enter (or type "done").
+> When you see your email in the test-users list, come back here and let me know.
 
-Open the page and wait for confirmation:
+Open the page:
 
 ```bash
 python -m webbrowser "https://console.cloud.google.com/auth/audience?project=$PROJECT_ID"
 ```
 
-Wait for the user's reply before proceeding to 3D.
+Then ask with `AskUserQuestion`:
+
+- **question:** "Did you add yourself as a test user?"
+- **header:** "Test user"
+- **options:**
+  - label: "Done, continue" — description: "I'll open the last page."
+  - label: "I hit a problem" — description: "Tell me what happened and I'll help sort it out."
+
+Handle "I hit a problem" same as Step 3B. Otherwise proceed to 3D.
 
 ### Step 3D — Create the connection key
 
@@ -133,15 +169,23 @@ Send this in chat:
 > 4. Click **Create** — a popup appears with your new key
 > 5. Click **Download JSON** (top of the popup, or the button at the bottom). The file saves to your Downloads folder — you don't need to open it.
 >
-> Once the file has downloaded, come back here and press Enter (or type "done"). I'll find it automatically.
+> Once the file has downloaded, come back here and let me know. I'll find it automatically.
 
-Open the page and wait for confirmation:
+Open the page:
 
 ```bash
 python -m webbrowser "https://console.cloud.google.com/apis/credentials?project=$PROJECT_ID"
 ```
 
-Wait for the user's reply before proceeding to 3E.
+Then ask with `AskUserQuestion`:
+
+- **question:** "Did the file download?"
+- **header:** "Downloaded"
+- **options:**
+  - label: "Yes, it downloaded" — description: "I'll find it in your Downloads folder and use it automatically."
+  - label: "I hit a problem" — description: "Tell me what happened and I'll help sort it out."
+
+Handle "I hit a problem" same as Step 3B. Otherwise proceed to 3E.
 
 ### Step 3E — Read the downloaded file
 
@@ -155,9 +199,9 @@ If it exits 0, echo the `  ✓` line the script printed and proceed to Step 4.
 
 If it exits nonzero (no file found, or file malformed), echo whatever the script printed to stderr, then send this in chat:
 
-> If you saved the file somewhere other than Downloads, paste the full path here — I'll use that instead.
+> If you saved the file somewhere other than Downloads, paste the full path here and I'll use that instead.
 
-Wait for the user's reply. Take their reply as the path and re-run:
+Wait for the user's next chat reply (free-text path). Take their reply as the path and re-run:
 
 ```bash
 bash $PLUGIN_DIR/setup/ingest-oauth-json.sh "<the path the user pasted>"
@@ -187,10 +231,16 @@ Send this in chat (substituting `$PROJECT_ID` into the bolded button label):
 > After that, Google will show one more page asking which permissions to grant. **Please check every box** — any unchecked permission means some features won't work.
 >
 > When you finish approving the permissions, come back here — I'll verify everything works.
->
-> Press Enter when you're ready for this last step.
 
-Wait for the user's reply.
+Then ask with `AskUserQuestion`:
+
+- **question:** "Ready for the last browser step?"
+- **header:** "Permissions"
+- **options:**
+  - label: "Yes, open it" — description: "Opens Google's permissions page so you can approve what YouCoded can access."
+  - label: "Cancel setup" — description: "Stops here. You can run /google-services-setup again whenever you're ready."
+
+If the user picks "Cancel setup", abort with the same copy as Step 2. Otherwise proceed to Step 5.
 
 ## Step 5 — Grant permissions
 
@@ -233,9 +283,11 @@ Run `bash $PLUGIN_DIR/setup/migrate-legacy.sh`. Echo any `  ✓` line it emits. 
 
 ## Throughout all steps
 
-**User-facing language only.** Never surface "API," "gws," "gcloud," "OAuth," "scope," "PATH," "terminal," "shell," "directory," "credentials," "JSON" (when referring to the file — "connection key" is fine), or similar technical terms in messages to the user. The scripts themselves may use these terms in debug output; that's fine — just don't surface that debug output as chat.
+**User-facing language only.** Never surface "API," "gws," "gcloud," "OAuth," "scope," "PATH," "terminal," "shell," "directory," "credentials," "JSON" (when referring to the file — "connection key" is fine), "Press Enter," or similar technical terms in messages to the user. The scripts themselves may use these terms in debug output; that's fine — just don't surface that debug output as chat.
 
 **Everything the user reads is regular chat.** Fenced code blocks (```) in this command are exclusively for bash commands that you run. Never wrap user-visible copy in a fence. Never let script output be shown as a tool-output pane if you can echo it as chat — when a script prints a `  ✓` line or a user-facing error, echo that line as chat prose.
+
+**Confirmations go through `AskUserQuestion`, not "Press Enter."** YouCoded is a chat UI, not a terminal — there is no stdin for the user to hit Enter against. Every explicit user-gate in this command specifies an `AskUserQuestion` invocation; use it exactly as written. Only free-text inputs (like an unknown filesystem path) are collected via a normal chat prompt.
 
 **Do not narrate between steps.** Do not emit any chat text that is not either:
 - specified as user-facing copy in this command, or
