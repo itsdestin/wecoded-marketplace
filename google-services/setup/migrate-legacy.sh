@@ -18,8 +18,13 @@ fi
 # Disable deprecated google-workspace plugin if enabled
 SETTINGS="$HOME/.claude/settings.json"
 if [ -f "$SETTINGS" ] && grep -q "\"google-workspace@" "$SETTINGS"; then
-  # Remove the entry via python (preserves JSON formatting)
-  python - <<'PY' "$SETTINGS"
+  # Remove the entry via python (preserves JSON formatting).
+  # Detect interpreter lazily — only needed if this branch fires.
+  PYTHON=$(command -v python3 || command -v python || command -v py) || {
+    echo "Python 3 is required but was not found." >&2
+    exit 1
+  }
+  "$PYTHON" - <<'PY' "$SETTINGS"
 import json, sys
 p = sys.argv[1]
 with open(p) as f: s = json.load(f)

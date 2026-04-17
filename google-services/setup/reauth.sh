@@ -7,22 +7,35 @@
 set -u
 
 CREDS_FILE="$HOME/.youcoded/google-services/oauth-credentials.json"
+ENV_FILE="$HOME/.youcoded/google-services/client.env"
 
 if [ ! -f "$CREDS_FILE" ]; then
   echo "No saved Google setup found. Run /google-services-setup first." >&2
   exit 1
 fi
 
-CLIENT_ID=$(python - <<PY "$CREDS_FILE"
+# Prefer the pre-parsed env file written by ingest-oauth-json.sh — it lets us
+# skip the Python round-trip on reauth, which runs whenever a token expires.
+# Fall back to parsing the JSON directly for installs that predate client.env.
+if [ -f "$ENV_FILE" ]; then
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+else
+  PYTHON=$(command -v python3 || command -v python || command -v py) || {
+    echo "Python 3 is required but was not found." >&2
+    exit 1
+  }
+  CLIENT_ID=$("$PYTHON" - <<PY "$CREDS_FILE"
 import json, sys
-print(json.load(open(sys.argv[1]))["client_id"])
+print(json.load(open(sys.argv[1]))["installed"]["client_id"])
 PY
 )
-CLIENT_SECRET=$(python - <<PY "$CREDS_FILE"
+  CLIENT_SECRET=$("$PYTHON" - <<PY "$CREDS_FILE"
 import json, sys
-print(json.load(open(sys.argv[1]))["client_secret"])
+print(json.load(open(sys.argv[1]))["installed"]["client_secret"])
 PY
 )
+fi
 
 # gws auth setup re-runs the browser OAuth flow using the provided credentials.
 # The exact flag surface is version-sensitive; adjust if the pinned gws version

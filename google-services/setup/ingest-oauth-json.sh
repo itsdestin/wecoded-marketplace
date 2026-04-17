@@ -21,6 +21,15 @@ set -euo pipefail
 
 : "${YOUCODED_OUTPUT_DIR:?must be set}"
 
+# Python 3 locator. Bare `python` is not reliable: modern macOS ships only
+# `python3`, Debian/Ubuntu default to `python3`, and Windows installs may
+# expose `py` instead. Try all three in that order.
+PYTHON=$(command -v python3 || command -v python || command -v py) || {
+  echo "Python 3 is required but was not found." >&2
+  echo "Install it from https://www.python.org/downloads/ then re-run setup." >&2
+  exit 1
+}
+
 TARGET_PATH="${1:-}"
 
 # Strip surrounding quotes (user may paste a path with quotes around it).
@@ -67,9 +76,10 @@ fi
 # parse it uniformly regardless of whether Google's raw file used "installed"
 # (desktop app) or "web" (web app) as the outer key.
 DST="$YOUCODED_OUTPUT_DIR/oauth-credentials.json"
-python - "$TARGET_PATH" "$DST" <<'PY'
+ENV_DST="$YOUCODED_OUTPUT_DIR/client.env"
+"$PYTHON" - "$TARGET_PATH" "$DST" "$ENV_DST" <<'PY'
 import json, os, sys
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, env_dst = sys.argv[1], sys.argv[2], sys.argv[3]
 try:
     with open(src, "rb") as f:
         data = json.load(f)
@@ -96,11 +106,20 @@ if missing:
 os.makedirs(os.path.dirname(dst), exist_ok=True)
 with open(dst, "w") as f:
     json.dump({"installed": dict(inner)}, f, indent=2)
+
+# Also emit a shell-sourceable env file so downstream bash steps can read
+# CLIENT_ID / CLIENT_SECRET without invoking Python again. Single-quoting
+# defends against any future special characters in the secret.
+with open(env_dst, "w") as f:
+    f.write(f"CLIENT_ID='{inner['client_id']}'\n")
+    f.write(f"CLIENT_SECRET='{inner['client_secret']}'\n")
+
 # Best-effort: restrict to owner-only on Unix. Silently skipped on Windows.
-try:
-    os.chmod(dst, 0o600)
-except Exception:
-    pass
+for p in (dst, env_dst):
+    try:
+        os.chmod(p, 0o600)
+    except Exception:
+        pass
 PY
 
 echo "  ✓ Saved your Google connection"
