@@ -29,11 +29,14 @@ case "$(uname -s)" in
     fi
     ;;
   MINGW*|MSYS*|CYGWIN*)
-    # Under Git Bash, `start` is a cmd.exe builtin — invoke through cmd.
-    # The `//c` (double slash) avoids MSYS auto-converting `/c` into a path.
-    # Empty "" is the window-title placeholder `start` wants when the next
-    # arg is quoted.
-    cmd //c start "" "$URL"
+    # Use PowerShell's Start-Process. Two Windows openers we tried first
+    # both corrupt URLs containing `&` (very common in OAuth query strings):
+    #   - `cmd //c start "" "$URL"` — cmd interprets `&` as command separator
+    #     even through nested quotes in the MSYS→cmd.exe translation.
+    #   - `explorer.exe "$URL"` — truncates long URLs somewhere in the
+    #     ShellExecute pipeline, dropping params past the first ~200 chars.
+    # PowerShell single-quotes are literal, so the URL passes through intact.
+    powershell.exe -NoProfile -Command "Start-Process '$URL'"
     ;;
   *)
     echo "Unsupported platform: $(uname -s)" >&2

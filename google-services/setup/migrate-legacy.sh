@@ -7,6 +7,11 @@ set -u
 
 any_cleaned=0
 
+# Note: stale gws credentials at ~/.config/gws/{credentials.enc,token_cache.json,...}
+# are cleaned up by ingest-oauth-json.sh BEFORE setup writes fresh credentials —
+# cleaning them here would run at Step 7 (after gws auth login) and destroy
+# the just-completed auth.
+
 # rclone gdrive: remote (from youcoded-drive)
 if command -v rclone >/dev/null 2>&1; then
   if rclone listremotes 2>/dev/null | grep -q "^gdrive:$"; then

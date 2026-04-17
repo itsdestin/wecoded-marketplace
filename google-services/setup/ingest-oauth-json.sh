@@ -77,9 +77,15 @@ fi
 # (desktop app) or "web" (web app) as the outer key.
 DST="$YOUCODED_OUTPUT_DIR/oauth-credentials.json"
 ENV_DST="$YOUCODED_OUTPUT_DIR/client.env"
-"$PYTHON" - "$TARGET_PATH" "$DST" "$ENV_DST" <<'PY'
+# gws 0.22.5 reads its OAuth client from a fixed path and pulls the project_id
+# from that on-disk file (even when GOOGLE_WORKSPACE_CLI_CLIENT_ID env vars
+# override the client identity). So we also write the normalized credentials
+# to gws's expected location — env-var-only auth leaks a stale project_id
+# into API calls and breaks quota routing.
+GWS_DST="$HOME/.config/gws/client_secret.json"
+"$PYTHON" - "$TARGET_PATH" "$DST" "$ENV_DST" "$GWS_DST" <<'PY'
 import json, os, sys
-src, dst, env_dst = sys.argv[1], sys.argv[2], sys.argv[3]
+src, dst, env_dst, gws_dst = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     with open(src, "rb") as f:
         data = json.load(f)
@@ -103,9 +109,29 @@ if missing:
     print("Make sure you chose 'Desktop app' as the OAuth client type.", file=sys.stderr)
     sys.exit(2)
 
+normalized = {"installed": dict(inner)}
 os.makedirs(os.path.dirname(dst), exist_ok=True)
 with open(dst, "w") as f:
-    json.dump({"installed": dict(inner)}, f, indent=2)
+    json.dump(normalized, f, indent=2)
+
+# Clear stale gws state from any prior setup attempt at the standard path.
+# A leftover encrypted token cache pins gws's project_id to the previous
+# client's project (even after we write a fresh client_secret.json below),
+# which causes subsequent API calls to 403 with "Project X has been
+# deleted" — we hit this live during testing. Must happen before we write
+# the new client_secret.json so gws starts cleanly on next `auth login`.
+import shutil
+gws_dir = os.path.dirname(gws_dst)
+if os.path.isdir(gws_dir):
+    for stale in ("credentials.enc", "credentials.json", "token_cache.json"):
+        try:
+            os.unlink(os.path.join(gws_dir, stale))
+        except FileNotFoundError:
+            pass
+    try:
+        shutil.rmtree(os.path.join(gws_dir, "cache"))
+    except FileNotFoundError:
+        pass
 
 # Also emit a shell-sourceable env file so downstream bash steps can read
 # CLIENT_ID / CLIENT_SECRET without invoking Python again. Single-quoting
@@ -114,8 +140,16 @@ with open(env_dst, "w") as f:
     f.write(f"CLIENT_ID='{inner['client_id']}'\n")
     f.write(f"CLIENT_SECRET='{inner['client_secret']}'\n")
 
+# Write the same normalized credentials to gws's expected path. Overwrites
+# any prior content — intentional, because a pre-existing credentials file
+# from an earlier install attempt can leak a stale project_id into gws's
+# API calls (we hit this live during testing).
+os.makedirs(os.path.dirname(gws_dst), exist_ok=True)
+with open(gws_dst, "w") as f:
+    json.dump(normalized, f, indent=2)
+
 # Best-effort: restrict to owner-only on Unix. Silently skipped on Windows.
-for p in (dst, env_dst):
+for p in (dst, env_dst, gws_dst):
     try:
         os.chmod(p, 0o600)
     except Exception:

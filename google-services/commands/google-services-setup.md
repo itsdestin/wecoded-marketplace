@@ -269,22 +269,13 @@ Try up to 3 times. If all 3 tries fail, use the failure flow: say "I couldn't fi
 
 ## Step 4 — Before the last browser step
 
-Make sure `$PROJECT_ID` is set (re-source if needed):
-
-```bash
-source "$YOUCODED_OUTPUT_DIR/project.env"
-```
-
-Send this in chat (substituting the actual value of `$PROJECT_ID` into the bolded button label):
+Send this in chat:
 
 > Heads up: in a moment Google will show you a screen that says "Google hasn't verified this app."
 >
 > This is expected and safe. The "app" is you — YouCoded just set up a private connection inside your own Google account, and now you're giving yourself permission to use it.
 >
-> When you see the warning page:
->
-> • Click **Advanced**
-> • Click **Go to $PROJECT_ID (unsafe)**
+> When you see the warning page, click **Continue**.
 >
 > After that, Google will show one more page asking which permissions to grant. **Please check every box** — any unchecked permission means some features won't work.
 >
@@ -302,16 +293,28 @@ If the user picks "Cancel setup," send the same stop copy as Step 2. Otherwise c
 
 ## Step 5 — Grant permissions
 
-The connection key helper wrote a shell-sourceable env file. Read it, then run `gws auth setup`:
+Run `gws auth login`. It prints the consent URL to stdout on a line starting with two spaces, then waits for the browser callback. Grab the URL, open it for the user, and let gws finish.
 
 ```bash
-source "$YOUCODED_OUTPUT_DIR/client.env"
-gws auth setup --client-id "$CLIENT_ID" --client-secret "$CLIENT_SECRET"
+gws auth login > "$YOUCODED_OUTPUT_DIR/gws-auth.log" 2>&1 &
+GWS_PID=$!
+# Wait up to 10s for the URL to appear, then open it in the user's browser.
+for _ in $(seq 1 100); do
+  URL=$(grep -m1 "^  https://accounts.google.com" "$YOUCODED_OUTPUT_DIR/gws-auth.log" 2>/dev/null | sed 's/^  //')
+  [ -n "$URL" ] && break
+  sleep 0.1
+done
+if [ -z "$URL" ]; then
+  kill "$GWS_PID" 2>/dev/null
+  exit 1
+fi
+bash "$CLAUDE_PLUGIN_ROOT/setup/open-browser.sh" "$URL"
+wait "$GWS_PID"
 ```
 
 On success, continue to Step 6.
 
-If `gws auth setup` doesn't finish, use the failure flow: say "Your account verification isn't working."
+If `gws auth login` doesn't finish (nonzero exit or never prints a URL), use the failure flow: say "Your account verification isn't working."
 
 ## Step 6 — Make sure it actually works
 

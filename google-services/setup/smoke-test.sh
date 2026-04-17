@@ -21,12 +21,28 @@ probe() {
   fi
 }
 
-probe "Gmail"    "may need to re-approve the Gmail permission"    gws gmail list --max 5
-probe "Drive"    "may need to re-approve the Drive permission"    gws drive list --max 5
-probe "Docs"     "may need to re-approve the Docs permission"     gws docs list --max 1  # gws drive list --mime-type doc is alt
-probe "Sheets"   "may need to re-approve the Sheets permission"   gws sheets list --max 1
-probe "Slides"   "may need to re-approve the Slides permission"   gws slides list --max 1
-probe "Calendar" "may need to re-approve the Calendar permission" gws calendar events list --max 5
+# gws 0.22.5 uses service-resource-method paths + JSON --params, not simple
+# `gws gmail list` shortcuts. Each probe below hits a minimal read-only
+# endpoint that exercises the OAuth scope for that service.
+#
+# Docs/Sheets/Slides have no top-level "list" in the Google API surface —
+# those services are document-scoped (you operate on a specific file ID).
+# We verify their scope indirectly by asking Drive to list files of the
+# relevant mimeType: if Drive scope + the document scope were both granted,
+# the filtered list succeeds.
+
+probe "Gmail"    "may need to re-approve the Gmail permission"    \
+  gws gmail users messages list --params '{"userId":"me","maxResults":1}'
+probe "Drive"    "may need to re-approve the Drive permission"    \
+  gws drive files list --params '{"pageSize":1}'
+probe "Docs"     "may need to re-approve the Docs permission"     \
+  gws drive files list --params '{"pageSize":1,"q":"mimeType=\"application/vnd.google-apps.document\""}'
+probe "Sheets"   "may need to re-approve the Sheets permission"   \
+  gws drive files list --params '{"pageSize":1,"q":"mimeType=\"application/vnd.google-apps.spreadsheet\""}'
+probe "Slides"   "may need to re-approve the Slides permission"   \
+  gws drive files list --params '{"pageSize":1,"q":"mimeType=\"application/vnd.google-apps.presentation\""}'
+probe "Calendar" "may need to re-approve the Calendar permission" \
+  gws calendar events list --params '{"calendarId":"primary","maxResults":1}'
 
 # Exit nonzero if any probe failed
 for label in "${!RESULTS[@]}"; do

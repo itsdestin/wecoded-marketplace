@@ -19,14 +19,16 @@ esac
 
 gws_auth_status() {
   # 0 if gws has a valid token for the current account, nonzero otherwise.
+  # `gws auth status` outputs JSON by default in 0.22.5 — no --json flag.
+  # The truth field is `"token_valid": true` (not `"authenticated": true`).
   # Uses command substitution + pattern match rather than `| grep -q`, which
   # SIGPIPEs against gws on MSYS/Git-Bash under pipefail (gws writes more than
   # grep reads before grep closes stdin on match). Skills source this file
   # and may run with pipefail enabled, so the wrapper must be pipeline-safe.
   local _status
-  _status=$(gws auth status --json 2>/dev/null || true)
+  _status=$(gws auth status 2>/dev/null || true)
   case "$_status" in
-    *'"authenticated": true'*) return 0 ;;
+    *'"token_valid": true'*) return 0 ;;
     *) return 1 ;;
   esac
 }
