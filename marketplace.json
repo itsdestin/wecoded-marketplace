@@ -93,17 +93,16 @@
       }
     },
     {
-      "name": "youcoded-drive",
-      "displayName": "Google Drive",
-      "description": "Google Drive access via rclone \u2014 browse, search, read files",
+      "name": "google-services",
+      "displayName": "Google Services",
+      "description": "Gmail, Drive, Docs, Sheets, Slides, Calendar \u2014 one connect. Surfaced through the Google Services integration tile.",
       "author": {
-        "name": "@destin",
-        "github": "destinationunknown"
+        "name": "YouCoded"
       },
-      "category": "personal",
+      "category": "integrations",
       "source": {
         "source": "local",
-        "path": "youcoded-drive"
+        "path": "google-services"
       }
     },
     {

@@ -1,23 +1,45 @@
 {
-  "version": "2026-04-14T18:48:05.668Z",
+  "version": "2026-04-17T10:37:17.064Z",
   "generatedBy": "build-integrations.js",
   "integrations": [
     {
-      "slug": "google-workspace",
-      "displayName": "Google Workspace",
-      "tagline": "Gmail, Calendar, Drive in-chat.",
-      "longDescription": "Connect your Google account to ask about inbox threads, schedule events, and pull files into the chat without leaving it.",
-      "kind": "mcp",
+      "slug": "google-services",
+      "displayName": "Google Services",
+      "tagline": "Gmail, Drive, Docs, Sheets, Slides, Calendar — one connect.",
+      "longDescription": "Connect your Google account once and Claude can read and send Gmail, manage Drive files, edit Docs/Sheets/Slides, and read/write Calendar events — all from chat. Setup walks you through a short OAuth flow, then verifies every service responds.",
+      "kind": "plugin",
       "setup": {
-        "type": "script",
-        "path": "scripts/install-google-workspace.sh",
+        "type": "plugin",
+        "pluginId": "google-services",
+        "postInstallCommand": "/google-services-setup",
         "requiresOAuth": true,
         "oauthProvider": "google"
       },
       "status": "available",
       "accentColor": "#4285F4",
+      "iconUrl": "icons/google-services.svg",
       "lifeArea": [
         "work",
+        "personal"
+      ]
+    },
+    {
+      "slug": "imessage",
+      "displayName": "iMessage",
+      "tagline": "Read your iMessage threads, send texts from chat.",
+      "longDescription": "Reads your chat.db directly and sends via AppleScript. Built-in access control lets you pair devices and manage an allowlist via /imessage:access. macOS only.",
+      "kind": "plugin",
+      "setup": {
+        "type": "plugin",
+        "pluginId": "imessage"
+      },
+      "status": "available",
+      "accentColor": "#00CA46",
+      "iconUrl": "icons/imessage.svg",
+      "platforms": [
+        "darwin"
+      ],
+      "lifeArea": [
         "personal"
       ]
     },
@@ -34,9 +56,30 @@
       },
       "status": "available",
       "accentColor": "#E44332",
+      "iconUrl": "icons/todoist.svg",
       "lifeArea": [
         "personal",
         "work"
+      ]
+    },
+    {
+      "slug": "apple-services",
+      "displayName": "Apple Services",
+      "tagline": "Notes, Reminders, iCloud — one Apple connect.",
+      "longDescription": "Reads and creates Apple Notes, manages Reminders lists, and syncs files to iCloud Drive — all through a single macOS integration. Uses native Apple APIs so it stays fast and doesn't depend on the web UI.",
+      "kind": "shell",
+      "setup": {
+        "type": "macos-only",
+        "requiresOAuth": false
+      },
+      "status": "planned",
+      "accentColor": "#555555",
+      "iconUrl": "icons/apple-services.svg",
+      "platforms": [
+        "darwin"
+      ],
+      "lifeArea": [
+        "personal"
       ]
     },
     {
@@ -51,8 +94,91 @@
       },
       "status": "planned",
       "accentColor": "#555555",
+      "platforms": [
+        "darwin"
+      ],
       "lifeArea": [
         "creative",
+        "personal"
+      ]
+    },
+    {
+      "slug": "canva",
+      "displayName": "Canva",
+      "tagline": "Draft designs, decks, and posts from chat.",
+      "longDescription": "Pull Canva designs into a conversation, edit copy, and export new versions without switching tabs. Planned OAuth flow — will land alongside Canva's stable public API.",
+      "kind": "http",
+      "setup": {
+        "type": "script",
+        "requiresOAuth": true,
+        "oauthProvider": "canva"
+      },
+      "status": "planned",
+      "accentColor": "#00C4CC",
+      "iconUrl": "icons/canva.svg",
+      "lifeArea": [
+        "creative",
+        "work"
+      ]
+    },
+    {
+      "slug": "github",
+      "displayName": "GitHub",
+      "tagline": "Your repos, issues, and PRs in chat.",
+      "longDescription": "Reads repos, drafts PR descriptions, triages issues, and runs common gh commands through a signed-in GitHub session. Pairs with code-review and civic-report.",
+      "kind": "shell",
+      "setup": {
+        "type": "script",
+        "requiresOAuth": true,
+        "oauthProvider": "github"
+      },
+      "status": "planned",
+      "accentColor": "#24292F",
+      "iconUrl": "icons/github.svg",
+      "lifeArea": [
+        "work"
+      ]
+    },
+    {
+      "slug": "macos-control",
+      "displayName": "macOS Control",
+      "tagline": "Drive your Mac — open apps, click, type.",
+      "longDescription": "Lets Claude open apps, click, type, take screenshots, and drive the macOS desktop directly. Think of it as giving your Mac hands. Permissions-gated and macOS only.",
+      "kind": "shell",
+      "setup": {
+        "type": "macos-only",
+        "requiresOAuth": false
+      },
+      "status": "planned",
+      "accentColor": "#A1A1A6",
+      "iconUrl": "icons/macos-control.svg",
+      "platforms": [
+        "darwin"
+      ],
+      "lifeArea": [
+        "work",
+        "personal",
+        "creative"
+      ]
+    },
+    {
+      "slug": "windows-control",
+      "displayName": "Windows Control",
+      "tagline": "Drive your PC — open apps, click, type.",
+      "longDescription": "Lets Claude open apps, click, type, take screenshots, and drive the Windows desktop directly. Permissions-gated and Windows only. Sibling to macOS Control.",
+      "kind": "shell",
+      "setup": {
+        "type": "script",
+        "requiresOAuth": false
+      },
+      "status": "planned",
+      "accentColor": "#0078D4",
+      "iconUrl": "icons/windows-control.svg",
+      "platforms": [
+        "win32"
+      ],
+      "lifeArea": [
+        "work",
         "personal"
       ]
     }

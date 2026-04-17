@@ -1,0 +1,8 @@
+{
+  "name": "google-services",
+  "description": "Connect Gmail, Drive, Docs, Sheets, Slides, and Calendar with one setup. Works on personal Google accounts.",
+  "version": "0.1.0",
+  "author": { "name": "YouCoded" },
+  "license": "MIT",
+  "homepage": "https://github.com/itsdestin/wecoded-marketplace/tree/master/google-services"
+}

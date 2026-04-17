@@ -1,0 +1,9 @@
+{
+  "integrationOnly": true,
+  "tagline": "Read your iMessage threads, send texts from chat.",
+  "longDescription": "Surfaced through the iMessage integration tile rather than the plugins grid. Installs the Anthropic imessage plugin under the hood. macOS only.",
+  "lifeArea": [
+    "personal"
+  ],
+  "audience": "general"
+}

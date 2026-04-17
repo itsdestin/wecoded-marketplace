@@ -1,30 +1,62 @@
 {
   "hero": [
-    { "id": "civic-report", "blurb": "Source-linked report on your federal reps, tuned to your angle and depth.", "accentColor": "#d8a84b" },
-    { "id": "youcoded-encyclopedia", "blurb": "Your personal knowledge graph — facts, notes, and memories that persist across sessions.", "accentColor": "#6b8ecf" },
-    { "id": "code-review", "blurb": "Multi-agent PR review with confidence-based filtering to cut false positives.", "accentColor": "#9b6cd4" }
+    {
+      "id": "civic-report",
+      "blurb": "Source-linked report on your federal reps, tuned to your angle and depth.",
+      "accentColor": "#d8a84b"
+    },
+    {
+      "id": "youcoded-encyclopedia",
+      "blurb": "Your personal knowledge graph \u00e2\u20ac\u201d facts, notes, and memories that persist across sessions.",
+      "accentColor": "#6b8ecf"
+    },
+    {
+      "id": "code-review",
+      "blurb": "Multi-agent PR review with confidence-based filtering to cut false positives.",
+      "accentColor": "#9b6cd4"
+    }
   ],
   "rails": [
     {
       "title": "Destin's picks",
       "description": "What I'm using this week.",
-      "slugs": ["civic-report", "youcoded-encyclopedia", "youcoded-inbox", "code-review", "wecoded-themes-plugin"]
+      "slugs": [
+        "civic-report",
+        "youcoded-encyclopedia",
+        "youcoded-inbox",
+        "code-review",
+        "wecoded-themes-plugin"
+      ]
     },
     {
       "title": "If you journal",
       "description": "Capture, recall, connect.",
-      "slugs": ["youcoded-encyclopedia", "youcoded-inbox", "youcoded-food"]
+      "slugs": [
+        "youcoded-encyclopedia",
+        "youcoded-inbox",
+        "youcoded-food"
+      ]
     },
     {
       "title": "For everyday life",
       "description": "Not just for coders.",
-      "slugs": ["civic-report", "youcoded-drive", "youcoded-messaging", "youcoded-food"]
+      "slugs": [
+        "civic-report",
+        "youcoded-messaging",
+        "youcoded-food"
+      ]
     }
   ],
   "skills": [
-    { "id": "code-review", "tagline": "AI-powered PR analysis with specialized review agents" }
+    {
+      "id": "code-review",
+      "tagline": "AI-powered PR analysis with specialized review agents"
+    }
   ],
   "themes": [
-    { "slug": "golden-sunbreak", "tagline": "Weathering With You \u2014 Tokyo bathed in god-ray light" }
+    {
+      "slug": "golden-sunbreak",
+      "tagline": "Weathering With You \u2014 Tokyo bathed in god-ray light"
+    }
   ]
 }
