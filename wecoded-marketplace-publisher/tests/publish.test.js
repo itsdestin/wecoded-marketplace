@@ -96,3 +96,51 @@ test('publishCommunity fails gracefully when repo create fails', async () => {
     });
   }, /already taken/);
 });
+
+import { publishAdoptionRequest, publish } from '../scripts/publish.js';
+
+test('publishAdoptionRequest opens a PR with request file contents', async () => {
+  const spawn = recordingSpawn({
+    'pr create': { exitCode: 0, stdout: 'https://github.com/itsdestin/wecoded-marketplace/pull/101', stderr: '' },
+  });
+  const result = await publishAdoptionRequest({
+    pluginId: 'demo',
+    ghUser: 'alice',
+    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    communityPR: 'https://github.com/itsdestin/wecoded-marketplace/pull/100',
+    reason: 'I do not have time to maintain this long-term.',
+    repoUrl: 'https://github.com/alice/demo',
+    spawn,
+  });
+  assert.equal(result.adoptionPR, 'https://github.com/itsdestin/wecoded-marketplace/pull/101');
+  const prCreateCall = spawn.calls.find(c => c.startsWith('gh pr create'));
+  assert.match(prCreateCall, /adoption-request/);
+});
+
+test('publish resumes from "repo-created" state in ledger', async () => {
+  const configDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wmp-resume-'));
+  await writeLedgerEntry({ configDir, entry: {
+    pluginId: 'resumer',
+    repoUrl: 'https://github.com/alice/resumer',
+    version: '0.1.0',
+    publishedAt: new Date().toISOString(),
+    state: 'repo-created',
+  }});
+
+  const spawn = recordingSpawn({
+    'pr create': { exitCode: 0, stdout: 'https://.../pull/5', stderr: '' },
+  });
+
+  const result = await publish({
+    workingDir: '/tmp/xx',
+    pluginId: 'resumer',
+    ghUser: 'alice',
+    metadata: { displayName: 'R', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    pathChoice: 'community',
+    configDir,
+    spawn,
+  });
+  assert.ok(!spawn.calls.some(c => c.startsWith('gh repo create')));
+  assert.ok(spawn.calls.some(c => c.startsWith('gh pr create')));
+  assert.equal(result.communityPR, 'https://.../pull/5');
+});

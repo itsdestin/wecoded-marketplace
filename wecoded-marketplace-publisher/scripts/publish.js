@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
+import { readLedger, writeLedgerEntry } from './lib/ledger.js';
 
 function defaultSpawn(cmd, args) {
   return new Promise((resolve) => {
@@ -97,4 +98,92 @@ export async function publishCommunity({ workingDir, pluginId, ghUser, metadata,
     communityPR,
     marketplaceEntry: marketplaceEntryFor(pluginId, metadata, repoUrl),
   };
+}
+
+// Build the body for an adoption request PR.
+function adoptionRequestBody({ pluginId, metadata, communityPR, reason, repoUrl, ghUser }) {
+  return [
+    `# Adoption Request: ${metadata.displayName}`,
+    '',
+    `**Plugin ID:** \`${pluginId}\``,
+    `**Submitter:** @${ghUser}`,
+    `**Source repo:** ${repoUrl}`,
+    `**Community listing PR:** ${communityPR}`,
+    `**Category:** ${metadata.category}`,
+    '',
+    '## Description',
+    '',
+    metadata.description || '',
+    '',
+    '## Why adoption?',
+    '',
+    reason,
+    '',
+    '## Acknowledgments',
+    '',
+    'I understand that if WeCoded accepts this adoption request:',
+    '- WeCoded will host and maintain the adopted version of this plugin.',
+    '- The community listing from my repo will be delisted in favor of the adopted copy.',
+    '- I will no longer control updates, bug fixes, or the plugin itself.',
+    '- I keep ownership of my source repo, but it will no longer be what the marketplace lists.',
+    '',
+    'If WeCoded declines this request, nothing changes — my community listing remains.',
+  ].join('\n');
+}
+
+// Phase 3 (optional): open an adoption-request PR on itsdestin/wecoded-marketplace.
+// Returns { adoptionPR }.
+export async function publishAdoptionRequest({ pluginId, ghUser, metadata, communityPR, reason, repoUrl, spawn = defaultSpawn }) {
+  const body = adoptionRequestBody({ pluginId, metadata, communityPR, reason, repoUrl, ghUser });
+  const branch = `adoption-request/${pluginId}`;
+  const r = await run(spawn, 'gh', [
+    'pr', 'create',
+    '--repo', 'itsdestin/wecoded-marketplace',
+    '--head', branch,
+    '--title', `[Adoption Request] ${metadata.displayName}`,
+    '--body', body,
+    '--label', 'adoption-request',
+  ]);
+  return { adoptionPR: (r.stdout || '').trim() };
+}
+
+// Top-level orchestrator: reads the ledger to resume interrupted runs,
+// calls createUserRepo + openCommunityPr (skipping phases already done),
+// and optionally adds the adoption PR. Writes ledger state after each phase.
+export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoice, reason, configDir, spawn = defaultSpawn }) {
+  const ledger = await readLedger({ configDir });
+  const prior = ledger.entries.find(e => e.pluginId === pluginId);
+
+  let repoUrl = prior?.repoUrl;
+  let communityPR = prior?.communityPR;
+  let adoptionPR = prior?.adoptionPR;
+
+  // Phase 1: create user repo (skip if ledger already records repoUrl from a prior run).
+  if (!repoUrl) {
+    const created = await createUserRepo({ workingDir, pluginId, ghUser, spawn });
+    repoUrl = created.repoUrl;
+    await writeLedgerEntry({ configDir, entry: {
+      pluginId, repoUrl, version: '0.1.0', publishedAt: new Date().toISOString(), state: 'repo-created',
+    }});
+  }
+
+  // Phase 2: open community PR (skip if ledger already has a communityPR).
+  if (!communityPR) {
+    const pr = await openCommunityPr({ pluginId, metadata, repoUrl, spawn });
+    communityPR = pr.communityPR;
+    await writeLedgerEntry({ configDir, entry: { pluginId, communityPR, state: 'community-pr-open' } });
+  }
+
+  // Phase 3 (optional): adoption PR (skip if already done or not requested).
+  if (pathChoice === 'adoption' && !adoptionPR) {
+    const adoption = await publishAdoptionRequest({
+      pluginId, ghUser, metadata, communityPR, reason, repoUrl, spawn,
+    });
+    adoptionPR = adoption.adoptionPR;
+    await writeLedgerEntry({ configDir, entry: { pluginId, adoptionPR, state: 'complete-with-adoption' } });
+  } else if (pathChoice !== 'adoption') {
+    await writeLedgerEntry({ configDir, entry: { pluginId, state: 'complete' } });
+  }
+
+  return { repoUrl, communityPR, adoptionPR };
 }
