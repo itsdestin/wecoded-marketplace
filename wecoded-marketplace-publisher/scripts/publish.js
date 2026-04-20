@@ -200,3 +200,34 @@ export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoi
 
   return { repoUrl, communityPR, adoptionPR };
 }
+
+async function runCli() {
+  const [, scriptPath, subcommand, ...rest] = process.argv;
+  try {
+    if (subcommand === 'preflight-gh') {
+      const result = await verifyGhAvailable();
+      process.stdout.write(JSON.stringify(result));
+      return;
+    }
+
+    if (subcommand === 'publish') {
+      const input = JSON.parse(rest[0] || '{}');
+      const result = await publish(input);
+      process.stdout.write(JSON.stringify(result));
+      return;
+    }
+
+    process.stderr.write(JSON.stringify({
+      error: `Unknown subcommand: ${subcommand || '(none)'}`,
+      usage: 'node publish.js preflight-gh | publish \'{...}\'',
+    }));
+    process.exit(2);
+  } catch (err) {
+    process.stderr.write(JSON.stringify({ error: err.message }));
+    process.exit(1);
+  }
+}
+
+if (import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  runCli();
+}
