@@ -48,3 +48,9 @@ Example state entry:
   "x-apple-reminder://ABC123": { "presented": "2026-03-23" }
 }
 ```
+
+---
+
+## Related: apple-services bundle
+
+> For general-purpose Reminders operations (create, list, complete, update across lists), see the `apple-services` marketplace bundle's `apple-reminders` skill. This provider is inbox-specific and includes re-presentation logic the general-purpose skill does not.
