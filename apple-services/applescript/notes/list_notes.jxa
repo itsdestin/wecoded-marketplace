@@ -1,0 +1,24 @@
+// Run with: osascript -l JavaScript list_notes.jxa [folderName]
+function run(argv) {
+    const Notes = Application('Notes');
+    Notes.includeStandardAdditions = true;
+    const folderFilter = argv[0] || '';
+
+    let notesToShow;
+    if (folderFilter) {
+        const folder = Notes.folders.whose({name: folderFilter})[0];
+        if (!folder) {
+            return JSON.stringify({error: {code: 'NOT_FOUND', service: 'notes', message: `Folder not found: ${folderFilter}`, recovery: 'Check folder name.'}});
+        }
+        notesToShow = folder.notes();
+    } else {
+        notesToShow = Notes.notes();
+    }
+
+    const result = notesToShow.map(n => ({
+        id: n.id(),
+        name: n.name(),
+        modified: n.modificationDate().toISOString(),
+    }));
+    return JSON.stringify(result);
+}
