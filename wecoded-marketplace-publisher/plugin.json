@@ -1,0 +1,10 @@
+{
+  "name": "wecoded-marketplace-publisher",
+  "version": "0.1.0",
+  "description": "Publish your skills, commands, hooks, and MCPs to the WeCoded marketplace — conversational, non-technical-user friendly.",
+  "author": {
+    "name": "@destin"
+  },
+  "homepage": "https://github.com/itsdestin/wecoded-marketplace/tree/master/wecoded-marketplace-publisher",
+  "keywords": ["publish", "marketplace", "plugin", "skill", "mcp", "submission"]
+}
