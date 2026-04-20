@@ -213,3 +213,150 @@ Show the user the proposed values as a clean list. Then ask:
 If they say "looks good," move on. If they want to change specific fields, update only those — don't re-ask everything. Keep the loop tight.
 
 Once metadata is confirmed, you're ready for preflight in **Step 9** (filled in during Task 16).
+
+## Step 9 — Preflight
+
+Run the full preflight checks against the working dir:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/preflight.js" '{
+  "pluginDir": "~/.claude/wecoded-marketplace-publisher/working/<pluginId>",
+  "pluginId": "<pluginId>",
+  "metadata": { "displayName": "...", "description": "...", "category": "...", "audience": "..." }
+}'
+```
+
+Replace `<pluginId>` with the confirmed plugin ID and fill in the metadata object with the values from Step 8.
+
+Parse the JSON output. For each `check` entry:
+
+- **If `status: "pass"`** — silently continue; no need to report these.
+- **If `status: "warn"`** — briefly describe the concern to the user and ask if they want to proceed. Example: *"Heads up — I noticed your plugin references a Gmail tool, but there's no Gmail MCP in your dependencies yet. Want to add it, or continue without?"*
+- **If `status: "fail"`** — don't proceed. Translate the `detail` field into plain language and jump back to the appropriate earlier step:
+  - `secret-scan` fail → **loop back to Step 7** and quote the preflight's findings so the user sees exactly what was flagged
+  - `required-fields` fail → **loop back to Step 8** and fix the missing fields
+  - `id-uniqueness` fail → the plugin ID is taken on the marketplace. Suggest 2-3 alternatives based on the displayName (e.g. "summarize-emails" → "summarize-my-emails" or "email-summarizer"). Ask the user to pick one, update the manifest, and re-run build-plugin (Step 6) with the new ID before looping back here
+  - `size` / `hygiene` fail → show the offending files. Offer to exclude them from the build (ask the user to confirm each) and re-run build-plugin with the updated piece list
+
+Only proceed to Step 10 when `pass: true`.
+
+## Step 10 — Show finished plugin
+
+Give the user a human summary of what's ready to publish. Translate the metadata and component list into prose:
+
+> *"Here's what's ready to publish:*
+>
+> *- **Name:** Summarize Emails*
+> *- **Description:** Summarize your inbox using the Gmail MCP, grouped by sender importance.*
+> *- **Category:** productivity*
+> *- **Tags:** email, summary, gmail, mcp-integration*
+> *- **Contains:** 1 skill (`summarize-emails`), 1 MCP dependency (Gmail)*
+> *- **Installers will need to configure:** `GMAIL_TOKEN` (your `SETUP.md` explains how)*
+>
+> *Everything looks good. Ready to publish?"*
+
+If the user says no or wants a change, figure out what they want to adjust and jump back to the relevant step (usually Step 8 for metadata).
+
+## Step 11 — Path choice
+
+This is the most consequential decision in the flow. The user chooses between maintaining the plugin themselves (community path) or asking WeCoded to adopt it. Present it clearly — especially the irreversible consequences of adoption.
+
+Show the user the two options verbatim (keep this framing — it's been reviewed for clarity):
+
+```
+Two options for publishing:
+
+Option A: Community plugin (you maintain it)
+  • Your plugin lives in your own GitHub repo
+  • You can edit, update, or remove it any time
+  • If people report bugs, you fix them
+  • Marketplace shows a "Community" badge
+
+Option B: Request WeCoded adoption (they may take over)
+  • Your plugin still gets published to your GitHub repo and listed
+    as Community — no matter what, you end up with a working listing
+  • Separately, WeCoded reviews and decides whether to adopt it
+
+  If WeCoded accepts:
+    • WeCoded copies your plugin into their own repo
+    • Marketplace shows an "Official WeCoded" badge
+    • Your community version is delisted (adopted copy replaces it)
+    • You no longer control updates, bug fixes, or the plugin itself
+    • You still have YOUR repo — it's just no longer what the
+      marketplace lists
+
+  If WeCoded declines:
+    • Nothing changes — your community version stays listed
+    • WeCoded gives you a reason
+
+  Response usually takes 1-2 weeks.
+```
+
+Then ask:
+
+> *"Which would you like — A (community, you maintain) or B (request adoption)?"*
+
+If the user picks **B**, follow up with one more question:
+
+> *"In a sentence or two, why would you like WeCoded to take this over?"*
+
+Save their answer as `reason`. This goes into the adoption-request PR body so WeCoded knows what they're responding to.
+
+If the user hesitates or asks questions, answer them honestly. Common ones:
+- *"What does adoption mean again?"* → restate the consequences in fresh language, emphasize "you lose control if accepted"
+- *"Can I change my mind later?"* → once the adoption PR is merged, no — the community listing is delisted. Before merge, yes — they can close the adoption PR themselves.
+- *"How will I know WeCoded's decision?"* → they'll get a GitHub notification on the adoption-request PR.
+
+## Step 12 — Publish
+
+Call the publish orchestrator:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/publish.js" publish '{
+  "workingDir": "~/.claude/wecoded-marketplace-publisher/working/<pluginId>",
+  "pluginId": "<pluginId>",
+  "ghUser": "<from gh auth>",
+  "metadata": { ... },
+  "pathChoice": "community" | "adoption",
+  "reason": "...",
+  "configDir": "~/.claude/wecoded-marketplace-publisher"
+}'
+```
+
+Fill in the actual values:
+- `pluginId` — the confirmed plugin ID
+- `ghUser` — the user's GitHub handle (get this via `gh api user --jq .login` if you don't already have it)
+- `metadata` — the full confirmed metadata object from Step 8
+- `pathChoice` — `"community"` or `"adoption"` based on Step 11
+- `reason` — only include if `pathChoice` is `"adoption"`
+
+The script writes a ledger to `~/.claude/wecoded-marketplace-publisher/published.json` as it progresses, so if it fails partway through, re-running `/publish-to-marketplace` will resume from where it stopped.
+
+Parse the JSON output. If the script throws (exits non-zero):
+
+- **`gh repo create` failure with "name already taken"** — the user's GitHub already has a repo with that name. Suggest appending a number or rewording (e.g. `summarize-emails-v2`). Ask the user to pick a new ID, update the manifest, and re-run Step 12 with the new ID.
+- **PR creation failure after the repo is live** — tell the user: *"Your GitHub repo was created successfully, but opening the PR to the marketplace failed. Your working copy is saved — run `/publish-to-marketplace` again and I'll pick up from where we left off."* The ledger handles this — do not retry manually.
+- **Adoption PR fails after community PR succeeded** — tell the user: *"Your community listing PR is open, but the adoption request PR failed. The community listing will still go live. I'll retry the adoption request now."* Then re-call the publish script (it'll skip completed phases via the ledger).
+- **Any other failure** — surface the error message, apologize, and stop. The ledger preserves partial state for a later resume.
+
+## Step 13 — Confirmation
+
+On success, give a warm, concrete summary:
+
+> *"**Done.** Here's what happened:*
+>
+> *- **Your repo:** https://github.com/{user}/{pluginId}*
+> *- **Community listing PR:** https://github.com/itsdestin/wecoded-marketplace/pull/NNN*
+> *- **Adoption request PR:** https://github.com/itsdestin/wecoded-marketplace/pull/MMM  (if applicable)*
+>
+> *What happens next:*
+>
+> *- The WeCoded team reviews community PRs typically within a few days. You'll get a GitHub notification when they respond.*
+> *- If you chose adoption: the adoption review usually takes 1-2 weeks. Either way, your community listing is already live as soon as the community PR is merged.*
+> *- If you need to make changes before the PR is merged, just push commits to your repo and the PR will update automatically.*
+>
+> *You can always find these URLs in `~/.claude/wecoded-marketplace-publisher/published.json` if you need them later.*
+>
+> *Thanks for publishing — your plugin is on its way to the marketplace."*
+
+End the session. Do not poll PR status. GitHub will notify the user directly when there's activity.
