@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { inventorySkills, inventoryHooks, inventoryMcpServers, inventoryCommands, inventoryAgents } from '../scripts/inventory.js';
+import { inventorySkills, inventoryHooks, inventoryMcpServers, inventoryCommands, inventoryAgents, detectReferences, scoreCandidate, runInventoryCli } from '../scripts/inventory.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -58,4 +58,40 @@ test('inventoryAgents finds user-level agent files', async () => {
   assert.equal(agents.length, 1);
   assert.equal(agents[0].name, 'weekly-reviewer');
   assert.equal(agents[0].type, 'agent');
+});
+
+test('detectReferences captures mcp__ tool names', () => {
+  const refs = detectReferences('This uses mcp__gmail__list and mcp__github__search_issues.');
+  const targets = refs.map(r => r.target).sort();
+  assert.deepEqual(targets, ['mcp__github__search_issues', 'mcp__gmail__list']);
+});
+
+test('detectReferences resolves to MCP server name', () => {
+  const refs = detectReferences('mcp__gmail__send');
+  assert.equal(refs[0].resolvedTo, 'gmail');
+});
+
+test('scoreCandidate weighs keyword overlap', () => {
+  const high = scoreCandidate(
+    { name: 'summarize-emails', description: 'summarize user emails' },
+    ['email', 'summary']
+  );
+  const low = scoreCandidate(
+    { name: 'random-thing', description: 'unrelated' },
+    ['email', 'summary']
+  );
+  assert.ok(high > low);
+});
+
+test('runInventoryCli produces full JSON report', async () => {
+  const out = await runInventoryCli({
+    signals: { hasSkill: true, hasMCP: true, hasHook: true, hasCommand: true, hasAgent: true },
+    userDescription: 'summarize my emails with gmail',
+    userKeywords: ['email', 'gmail', 'summary'],
+    home: ALL_TYPES_HOME,
+    cwd: ALL_TYPES_HOME,
+  });
+  assert.ok(Array.isArray(out.candidates));
+  assert.ok(out.candidates.length >= 4);
+  assert.ok(out.candidates[0].score >= out.candidates[out.candidates.length - 1].score);
 });

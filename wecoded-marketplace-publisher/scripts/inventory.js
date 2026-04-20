@@ -166,3 +166,68 @@ export async function inventoryAgents({ home, cwd }) {
   }
   return out;
 }
+
+export function detectReferences(text) {
+  if (!text) return [];
+  const out = [];
+  const mcpPattern = /mcp__([a-zA-Z0-9_-]+)__([a-zA-Z0-9_-]+)/g;
+  let m;
+  while ((m = mcpPattern.exec(text)) !== null) {
+    out.push({
+      target: m[0],
+      kind: 'mcp-tool',
+      resolvedTo: m[1],
+    });
+  }
+  return out;
+}
+
+function tokenize(str) {
+  return (str || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+export function scoreCandidate(candidate, keywords) {
+  const haystack = tokenize(`${candidate.name} ${candidate.description} ${candidate.content || ''}`);
+  const haySet = new Set(haystack);
+  const kw = keywords.map(k => k.toLowerCase());
+  let score = 0;
+  for (const k of kw) {
+    if (haySet.has(k)) score += 10;
+    else if (haystack.some(h => h.includes(k))) score += 3;
+  }
+  return score;
+}
+
+export async function runInventoryCli({ signals, userDescription, userKeywords, home, cwd }) {
+  const candidates = [];
+  if (signals.hasSkill) candidates.push(...(await inventorySkills({ home })));
+  if (signals.hasHook) candidates.push(...(await inventoryHooks({ home })));
+  if (signals.hasMCP) candidates.push(...(await inventoryMcpServers({ home, cwd })));
+  if (signals.hasCommand) candidates.push(...(await inventoryCommands({ home, cwd })));
+  if (signals.hasAgent) candidates.push(...(await inventoryAgents({ home, cwd })));
+
+  const keywords = userKeywords && userKeywords.length ? userKeywords : tokenize(userDescription || '');
+
+  const enriched = candidates.map(c => ({
+    ...c,
+    references: detectReferences(c.content || ''),
+    score: scoreCandidate(c, keywords),
+    matchReason: null,
+  }));
+  enriched.sort((a, b) => b.score - a.score);
+  return { candidates: enriched };
+}
+
+// Use fileURLToPath + path.resolve to normalize both sides for Windows-safe comparison
+import { fileURLToPath } from 'node:url';
+const _thisFile = fileURLToPath(import.meta.url);
+if (process.argv[1] && path.resolve(_thisFile) === path.resolve(process.argv[1])) {
+  const input = JSON.parse(process.argv[2] || '{}');
+  runInventoryCli({ home: process.env.HOME || process.env.USERPROFILE, cwd: process.cwd(), ...input })
+    .then(out => { process.stdout.write(JSON.stringify(out)); })
+    .catch(err => { process.stderr.write(JSON.stringify({ error: err.message })); process.exit(1); });
+}
