@@ -115,3 +115,53 @@ test('scanForSecrets returns file + line for each finding', async () => {
     assert.ok(f.excerpt.length > 0);
   }
 });
+
+test('buildPlugin with sanitize replaces JS secrets with env reads', async () => {
+  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const manifest = {
+    pluginId: 'sanity',
+    metadata: { displayName: 'Sanity', description: 'd', author: { name: 'x' }, category: 'personal' },
+    pieces: [
+      { type: 'skill', sourcePath: path.join(srcDir, 'scripts/fetch.js'), targetPath: 'scripts/fetch.js' },
+    ],
+  };
+  const result = await buildPlugin({ manifest, workingRoot: tmp, sanitize: true });
+  assert.equal(result.status, 'ok');
+  assert.ok(result.sanitizedFindings.length >= 2);
+
+  const copied = await fs.readFile(path.join(tmp, 'sanity/scripts/fetch.js'), 'utf8');
+  assert.doesNotMatch(copied, /sk-ant-api03/);
+  assert.doesNotMatch(copied, /ghp_Example/);
+  assert.match(copied, /process\.env\.ANTHROPIC_API_KEY/);
+  assert.match(copied, /process\.env\.GITHUB_TOKEN/);
+});
+
+test('buildPlugin with sanitize generates SETUP.md listing env vars', async () => {
+  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const manifest = {
+    pluginId: 'setup-md',
+    metadata: { displayName: 'Setup MD', description: 'd', author: { name: 'x' }, category: 'personal' },
+    pieces: [
+      { type: 'skill', sourcePath: path.join(srcDir, 'scripts/fetch.js'), targetPath: 'scripts/fetch.js' },
+    ],
+  };
+  await buildPlugin({ manifest, workingRoot: tmp, sanitize: true });
+  const setup = await fs.readFile(path.join(tmp, 'setup-md/SETUP.md'), 'utf8');
+  assert.match(setup, /ANTHROPIC_API_KEY/);
+  assert.match(setup, /GITHUB_TOKEN/);
+});
+
+test('buildPlugin without sanitize returns findings but leaves content intact', async () => {
+  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const manifest = {
+    pluginId: 'raw',
+    metadata: { displayName: 'Raw', description: 'd', author: { name: 'x' }, category: 'personal' },
+    pieces: [
+      { type: 'skill', sourcePath: path.join(srcDir, 'scripts/fetch.js'), targetPath: 'scripts/fetch.js' },
+    ],
+  };
+  const result = await buildPlugin({ manifest, workingRoot: tmp, sanitize: false });
+  assert.ok(result.unsanitizedFindings.length >= 2);
+  const copied = await fs.readFile(path.join(tmp, 'raw/scripts/fetch.js'), 'utf8');
+  assert.match(copied, /sk-ant-api03/);
+});
