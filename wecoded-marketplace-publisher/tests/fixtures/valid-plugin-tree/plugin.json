@@ -1,0 +1,7 @@
+{
+  "name": "valid-plugin",
+  "version": "0.1.0",
+  "description": "A valid test plugin.",
+  "author": { "name": "tester" },
+  "keywords": ["test"]
+}
