@@ -1,0 +1,43 @@
+// osascript -l JavaScript search.jxa <query> [mailbox] [from] [to] [since ISO] [limit]
+function run(argv) {
+    const query = (argv[0] || '').toLowerCase();
+    const mailbox = argv[1] || '';
+    const from = (argv[2] || '').toLowerCase();
+    const to = (argv[3] || '').toLowerCase();
+    const sinceStr = argv[4] || '';
+    const limit = parseInt(argv[5] || '50', 10);
+    const sinceDate = sinceStr ? new Date(sinceStr) : null;
+
+    const Mail = Application('Mail');
+    const results = [];
+
+    for (const acct of Mail.accounts()) {
+        for (const box of acct.mailboxes()) {
+            if (mailbox && box.name() !== mailbox) continue;
+            for (const msg of box.messages()) {
+                try {
+                    const subj = (msg.subject() || '').toLowerCase();
+                    const sender = (msg.sender() || '').toLowerCase();
+                    const recips = (msg.toRecipients.address() || []).join(' ').toLowerCase();
+                    const preview = (msg.content() || '').substring(0, 200).toLowerCase();
+                    if (query && !(subj + ' ' + preview).includes(query)) continue;
+                    if (from && !sender.includes(from)) continue;
+                    if (to && !recips.includes(to)) continue;
+                    if (sinceDate) {
+                        const d = new Date(msg.dateSent());
+                        if (d < sinceDate) continue;
+                    }
+                    results.push({
+                        id: msg.id(),
+                        from: msg.sender(),
+                        subject: msg.subject(),
+                        date: new Date(msg.dateSent()).toISOString(),
+                        preview: (msg.content() || '').substring(0, 200),
+                    });
+                    if (results.length >= limit) return JSON.stringify(results);
+                } catch (e) { /* skip problematic messages */ }
+            }
+        }
+    }
+    return JSON.stringify(results);
+}
