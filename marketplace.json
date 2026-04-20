@@ -21,6 +21,21 @@
       "prompt": "/civic-report"
     },
     {
+      "name": "wecoded-marketplace-publisher",
+      "displayName": "WeCoded Marketplace Publisher",
+      "description": "Publish your plugins to the WeCoded marketplace — conversational, non-technical-user friendly.",
+      "author": {
+        "name": "@destin",
+        "github": "itsdestin"
+      },
+      "category": "productivity",
+      "source": {
+        "source": "local",
+        "path": "wecoded-marketplace-publisher"
+      },
+      "prompt": "/publish-to-marketplace"
+    },
+    {
       "name": "youcoded-core",
       "displayName": "YouCoded Core",
       "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
