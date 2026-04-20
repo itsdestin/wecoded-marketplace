@@ -144,3 +144,22 @@ test('publish resumes from "repo-created" state in ledger', async () => {
   assert.ok(spawn.calls.some(c => c.startsWith('gh pr create')));
   assert.equal(result.communityPR, 'https://.../pull/5');
 });
+
+test('publish with dryRun does not call gh repo create', async () => {
+  const configDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wmp-dry-'));
+  const spawn = recordingSpawn({});
+  const result = await publish({
+    workingDir: '/tmp/xx',
+    pluginId: 'dryplugin',
+    ghUser: 'alice',
+    metadata: { displayName: 'D', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    pathChoice: 'community',
+    configDir,
+    spawn,
+    dryRun: true,
+  });
+  assert.equal(spawn.calls.length, 0);
+  assert.equal(result.dryRun, true);
+  assert.ok(result.plan);
+  assert.match(result.plan, /would create/i);
+});

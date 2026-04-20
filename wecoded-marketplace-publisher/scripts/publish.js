@@ -150,7 +150,20 @@ export async function publishAdoptionRequest({ pluginId, ghUser, metadata, commu
 // Top-level orchestrator: reads the ledger to resume interrupted runs,
 // calls createUserRepo + openCommunityPr (skipping phases already done),
 // and optionally adds the adoption PR. Writes ledger state after each phase.
-export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoice, reason, configDir, spawn = defaultSpawn }) {
+export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoice, reason, configDir, spawn = defaultSpawn, dryRun = false }) {
+  // Dry-run: return a human-readable plan without calling any gh operations.
+  if (dryRun) {
+    const planLines = [
+      `Would create GitHub repo: ${ghUser}/${pluginId}`,
+      `Would push working dir: ${workingDir}`,
+      `Would open community PR at: itsdestin/wecoded-marketplace (branch: add-plugin/${pluginId})`,
+    ];
+    if (pathChoice === 'adoption') {
+      planLines.push(`Would open adoption-request PR at: itsdestin/wecoded-marketplace (branch: adoption-request/${pluginId})`);
+    }
+    return { dryRun: true, plan: planLines.join('\n') };
+  }
+
   const ledger = await readLedger({ configDir });
   const prior = ledger.entries.find(e => e.pluginId === pluginId);
 
