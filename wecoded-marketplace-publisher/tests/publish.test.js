@@ -49,3 +49,50 @@ test('verifyGhAvailable reports unauthed when gh auth status fails', async () =>
   assert.equal(result.ok, false);
   assert.match(result.reason, /auth/i);
 });
+
+import { publishCommunity } from '../scripts/publish.js';
+
+function recordingSpawn(responses) {
+  const calls = [];
+  const impl = async (cmd, args) => {
+    calls.push([cmd, ...args].join(' '));
+    const key = Object.keys(responses).find(k => calls[calls.length - 1].includes(k));
+    return responses[key] || { exitCode: 0, stdout: '', stderr: '' };
+  };
+  impl.calls = calls;
+  return impl;
+}
+
+test('publishCommunity runs gh repo create, push, and opens PR', async () => {
+  const spawn = recordingSpawn({
+    'repo create': { exitCode: 0, stdout: 'https://github.com/alice/demo', stderr: '' },
+    'pr create': { exitCode: 0, stdout: 'https://github.com/itsdestin/wecoded-marketplace/pull/100', stderr: '' },
+  });
+  const result = await publishCommunity({
+    workingDir: '/tmp/does-not-matter',
+    pluginId: 'demo',
+    ghUser: 'alice',
+    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    spawn,
+  });
+  assert.ok(spawn.calls.some(c => c.startsWith('gh repo create')));
+  assert.ok(spawn.calls.some(c => c.startsWith('git push')) || spawn.calls.some(c => c.includes('--push')));
+  assert.ok(spawn.calls.some(c => c.startsWith('gh pr create')));
+  assert.equal(result.repoUrl, 'https://github.com/alice/demo');
+  assert.equal(result.communityPR, 'https://github.com/itsdestin/wecoded-marketplace/pull/100');
+});
+
+test('publishCommunity fails gracefully when repo create fails', async () => {
+  const spawn = async (cmd, args) => args.includes('repo') && args.includes('create')
+    ? { exitCode: 1, stdout: '', stderr: 'name already taken' }
+    : { exitCode: 0, stdout: '', stderr: '' };
+  await assert.rejects(async () => {
+    await publishCommunity({
+      workingDir: '/tmp/does-not-matter',
+      pluginId: 'demo',
+      ghUser: 'alice',
+      metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+      spawn,
+    });
+  }, /already taken/);
+});
