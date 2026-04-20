@@ -1,6 +1,6 @@
 {
   "name": "wecoded-marketplace",
-  "description": "YouCoded skills and plugins \ufffd productivity tools, personal knowledge management, and developer utilities",
+  "description": "YouCoded skills and plugins � productivity tools, personal knowledge management, and developer utilities",
   "owner": {
     "name": "YouCoded"
   },
@@ -23,7 +23,7 @@
     {
       "name": "youcoded-core",
       "displayName": "YouCoded Core",
-      "description": "Foundation toolkit \u2014 safety hooks, commands, sync infrastructure, diagnostics",
+      "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -39,7 +39,7 @@
     {
       "name": "youcoded-encyclopedia",
       "displayName": "Encyclopedia",
-      "description": "Personal knowledge system \u2014 journaling, encyclopedia, interviewer, librarian, compiler",
+      "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -81,7 +81,7 @@
     {
       "name": "wecoded-themes-plugin",
       "displayName": "Theme Builder",
-      "description": "Build and share custom themes \u2014 AI-generated or from scratch",
+      "description": "Build and share custom themes — AI-generated or from scratch",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -95,7 +95,7 @@
     {
       "name": "google-services",
       "displayName": "Google Services",
-      "description": "Gmail, Drive, Docs, Sheets, Slides, Calendar \u2014 one connect. Surfaced through the Google Services integration tile.",
+      "description": "Gmail, Drive, Docs, Sheets, Slides, Calendar — one connect. Surfaced through the Google Services integration tile.",
       "author": {
         "name": "YouCoded"
       },
@@ -122,7 +122,7 @@
     {
       "name": "youcoded-output-styles",
       "displayName": "Output Styles",
-      "description": "Tone presets \u2014 casual, conversational, academic, professional",
+      "description": "Tone presets — casual, conversational, academic, professional",
       "author": {
         "name": "@destin",
         "github": "destinationunknown"
@@ -132,6 +132,22 @@
         "source": "local",
         "path": "youcoded-output-styles"
       }
+    },
+    {
+      "name": "apple-services",
+      "displayName": "Apple Services",
+      "description": "Calendar, Reminders, Contacts, Notes, Mail, and iCloud Drive — one setup. macOS only.",
+      "author": {
+        "name": "YouCoded"
+      },
+      "category": "integrations",
+      "source": {
+        "source": "local",
+        "path": "apple-services"
+      },
+      "platforms": [
+        "macos"
+      ]
     }
   ]
 }
