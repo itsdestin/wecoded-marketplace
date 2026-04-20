@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/gmail-mcp"],
+      "env": { "GMAIL_TOKEN": "ghp_EXAMPLEONLYdoNOTuse123456789" }
+    }
+  }
+}
