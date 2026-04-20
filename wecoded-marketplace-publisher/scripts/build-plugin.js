@@ -164,3 +164,18 @@ export async function buildPlugin({ manifest, workingRoot, sanitize = false }) {
 
   return { status: 'ok', outDir, sanitizedFindings: allFindings, unsanitizedFindings };
 }
+
+async function runCli() {
+  try {
+    const input = JSON.parse(process.argv[2] || '{}');
+    const result = await buildPlugin(input);
+    process.stdout.write(JSON.stringify(result));
+  } catch (err) {
+    process.stderr.write(JSON.stringify({ error: err.message }));
+    process.exit(1);
+  }
+}
+
+if (import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  runCli();
+}

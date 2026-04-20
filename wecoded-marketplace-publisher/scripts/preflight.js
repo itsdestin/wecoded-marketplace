@@ -152,3 +152,38 @@ export async function preflightNetwork({ pluginId, metadata, fetchImpl }) {
   const pass = checks.every(c => c.status !== 'fail');
   return { pass, checks };
 }
+
+async function runCli() {
+  try {
+    const input = JSON.parse(process.argv[2] || '{}');
+    const { pluginDir, pluginId, metadata } = input;
+
+    const local = await preflightLocal({ pluginDir, metadata });
+    let network = { pass: true, checks: [] };
+    try {
+      network = await preflightNetwork({ pluginId, metadata });
+    } catch (err) {
+      network = {
+        pass: false,
+        checks: [{
+          name: 'network-preflight-error',
+          status: 'warn',
+          detail: `Could not fetch marketplace schema: ${err.message}. Skipping network checks.`,
+        }],
+      };
+    }
+
+    const merged = {
+      pass: local.pass && network.pass,
+      checks: [...local.checks, ...network.checks],
+    };
+    process.stdout.write(JSON.stringify(merged));
+  } catch (err) {
+    process.stderr.write(JSON.stringify({ error: err.message }));
+    process.exit(1);
+  }
+}
+
+if (import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  runCli();
+}
