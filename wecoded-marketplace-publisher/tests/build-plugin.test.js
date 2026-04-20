@@ -54,3 +54,43 @@ test('buildPlugin generates plugin.json from metadata', async () => {
   assert.equal(pkg.description, 'Test description');
   assert.deepEqual(pkg.keywords, ['one', 'two']);
 });
+
+test('buildPlugin generates hooks-manifest.json from hook pieces', async () => {
+  const manifest = {
+    pluginId: 'hooky',
+    metadata: { displayName: 'Hooky', description: 'd', author: { name: 'x' }, category: 'personal' },
+    pieces: [
+      { type: 'hook', event: 'SessionStart', matcher: null, command: '~/scripts/on-start.sh', sourcePath: null },
+    ],
+  };
+  await buildPlugin({ manifest, workingRoot: tmp });
+  const hm = JSON.parse(await fs.readFile(path.join(tmp, 'hooky/hooks/hooks-manifest.json'), 'utf8'));
+  assert.ok(hm.hooks.SessionStart);
+  assert.equal(hm.hooks.SessionStart[0].hooks[0].command, '~/scripts/on-start.sh');
+});
+
+test('buildPlugin generates .mcp.json stub for declared MCP deps', async () => {
+  const manifest = {
+    pluginId: 'mcpy',
+    metadata: { displayName: 'Mcpy', description: 'd', author: { name: 'x' }, category: 'personal' },
+    pieces: [
+      { type: 'mcp', name: 'gmail', config: { command: 'npx', args: ['-y', '@mcp/gmail'] } },
+    ],
+  };
+  await buildPlugin({ manifest, workingRoot: tmp });
+  const mcp = JSON.parse(await fs.readFile(path.join(tmp, 'mcpy/.mcp.json'), 'utf8'));
+  assert.ok(mcp.mcpServers.gmail);
+  assert.equal(mcp.mcpServers.gmail.command, 'npx');
+});
+
+test('buildPlugin templates a README when none is provided', async () => {
+  const manifest = {
+    pluginId: 'readmeless',
+    metadata: { displayName: 'Readme-less', description: 'A test plugin.', author: { name: 'x' }, category: 'personal' },
+    pieces: [],
+  };
+  await buildPlugin({ manifest, workingRoot: tmp });
+  const readme = await fs.readFile(path.join(tmp, 'readmeless/README.md'), 'utf8');
+  assert.match(readme, /Readme-less/);
+  assert.match(readme, /A test plugin/);
+});

@@ -21,19 +21,66 @@ function generatePluginJson(pluginId, metadata) {
   };
 }
 
+async function writeHooksManifest(outDir, hookPieces) {
+  if (hookPieces.length === 0) return;
+  const manifest = { hooks: {} };
+  for (const h of hookPieces) {
+    manifest.hooks[h.event] ||= [];
+    manifest.hooks[h.event].push({
+      matcher: h.matcher || undefined,
+      hooks: [{ type: 'command', command: h.command }],
+    });
+  }
+  const p = path.join(outDir, 'hooks', 'hooks-manifest.json');
+  await ensureDir(path.dirname(p));
+  await fs.writeFile(p, JSON.stringify(manifest, null, 2));
+}
+
+async function writeMcpStub(outDir, mcpPieces) {
+  if (mcpPieces.length === 0) return;
+  const stub = { mcpServers: {} };
+  for (const m of mcpPieces) {
+    stub.mcpServers[m.name] = m.config;
+  }
+  await fs.writeFile(path.join(outDir, '.mcp.json'), JSON.stringify(stub, null, 2));
+}
+
+async function writeReadmeIfMissing(outDir, metadata) {
+  const p = path.join(outDir, 'README.md');
+  try {
+    await fs.access(p);
+    return;
+  } catch {}
+  const body = `# ${metadata.displayName}\n\n${metadata.description}\n\n## Installation\n\nInstall via the WeCoded marketplace or directly from this repo.\n`;
+  await fs.writeFile(p, body);
+}
+
 export async function buildPlugin({ manifest, workingRoot }) {
   const { pluginId, metadata, pieces } = manifest;
   const outDir = path.join(workingRoot, pluginId);
   await ensureDir(outDir);
 
+  const hookPieces = [];
+  const mcpPieces = [];
   for (const piece of pieces) {
-    if (piece.sourcePath && piece.targetPath && piece.type !== 'mcp' && piece.type !== 'hook') {
+    if (piece.type === 'hook') {
+      hookPieces.push(piece);
+      continue;
+    }
+    if (piece.type === 'mcp') {
+      mcpPieces.push(piece);
+      continue;
+    }
+    if (piece.sourcePath && piece.targetPath) {
       await copyFile(piece.sourcePath, path.join(outDir, piece.targetPath));
     }
   }
 
   const pluginJson = generatePluginJson(pluginId, metadata);
   await fs.writeFile(path.join(outDir, 'plugin.json'), JSON.stringify(pluginJson, null, 2));
+  await writeHooksManifest(outDir, hookPieces);
+  await writeMcpStub(outDir, mcpPieces);
+  await writeReadmeIfMissing(outDir, metadata);
 
   return { status: 'ok', outDir };
 }
