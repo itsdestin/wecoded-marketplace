@@ -33,3 +33,54 @@ test('preflightLocal fails when secrets remain in source', async () => {
   assert.equal(result.pass, false);
   assert.ok(result.checks.find(c => c.name === 'secret-scan' && c.status === 'fail'));
 });
+
+import { preflightNetwork } from '../scripts/preflight.js';
+
+function fakeFetch(responses) {
+  return async (url) => {
+    const key = Object.keys(responses).find(k => url.includes(k));
+    if (!key) throw new Error(`Unexpected fetch: ${url}`);
+    return { ok: true, text: async () => responses[key] };
+  };
+}
+
+test('preflightNetwork passes with unique plugin ID and valid enums', async () => {
+  const fetchImpl = fakeFetch({
+    'marketplace.json': JSON.stringify({ plugins: [{ name: 'other-plugin' }] }),
+    'schema.js': 'export const CATEGORIES = ["personal","productivity","development"]; export const LIFE_AREAS = ["personal","work"]; export const AUDIENCES = ["general","developer"];',
+  });
+  const result = await preflightNetwork({
+    pluginId: 'new-plugin',
+    metadata: { category: 'personal', lifeArea: ['personal'], audience: 'general', tags: [] },
+    fetchImpl,
+  });
+  assert.equal(result.pass, true);
+});
+
+test('preflightNetwork fails on duplicate plugin ID', async () => {
+  const fetchImpl = fakeFetch({
+    'marketplace.json': JSON.stringify({ plugins: [{ name: 'existing' }] }),
+    'schema.js': 'export const CATEGORIES = ["personal"]; export const LIFE_AREAS = []; export const AUDIENCES = [];',
+  });
+  const result = await preflightNetwork({
+    pluginId: 'existing',
+    metadata: { category: 'personal', lifeArea: [], audience: '', tags: [] },
+    fetchImpl,
+  });
+  assert.equal(result.pass, false);
+  assert.ok(result.checks.find(c => c.name === 'id-uniqueness' && c.status === 'fail'));
+});
+
+test('preflightNetwork fails on invalid category enum', async () => {
+  const fetchImpl = fakeFetch({
+    'marketplace.json': JSON.stringify({ plugins: [] }),
+    'schema.js': 'export const CATEGORIES = ["personal"]; export const LIFE_AREAS = []; export const AUDIENCES = [];',
+  });
+  const result = await preflightNetwork({
+    pluginId: 'x',
+    metadata: { category: 'madeup', lifeArea: [], audience: '', tags: [] },
+    fetchImpl,
+  });
+  assert.equal(result.pass, false);
+  assert.ok(result.checks.find(c => c.name === 'category-enum' && c.status === 'fail'));
+});

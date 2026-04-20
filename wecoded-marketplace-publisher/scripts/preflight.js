@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { SECRET_PATTERNS } from './lib/secret-patterns.js';
+import { fetchMarketplace, fetchSchemaEnums } from './lib/schema-fetch.js';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const FORBIDDEN = ['.env', 'node_modules', '.git'];
@@ -106,6 +107,46 @@ export async function preflightLocal({ pluginDir, metadata }) {
       secretFindings.length === 0
         ? 'No secrets detected'
         : `Detected: ${secretFindings.map(f => `${f.file} (${f.pattern})`).join('; ')}`,
+  });
+
+  const pass = checks.every(c => c.status !== 'fail');
+  return { pass, checks };
+}
+
+/**
+ * Run network preflight checks against the live marketplace registry and schema.
+ * Validates that the plugin ID is unique and all enum fields match the live schema.
+ * Returns { pass: boolean, checks: Array<{ name, status, detail }> }.
+ */
+export async function preflightNetwork({ pluginId, metadata, fetchImpl }) {
+  const checks = [];
+
+  // Check 1: plugin ID must not already exist in the marketplace.
+  const marketplace = await fetchMarketplace(fetchImpl);
+  const existingIds = new Set((marketplace.plugins || []).map(p => p.name));
+  const unique = !existingIds.has(pluginId);
+  checks.push({
+    name: 'id-uniqueness',
+    status: unique ? 'pass' : 'fail',
+    detail: unique ? 'Plugin ID is not taken' : `Plugin ID "${pluginId}" is already used in the marketplace`,
+  });
+
+  // Check 2: category must be in the live CATEGORIES enum.
+  const schema = await fetchSchemaEnums(fetchImpl);
+
+  const catOk = schema.categories.length === 0 || schema.categories.includes(metadata.category);
+  checks.push({
+    name: 'category-enum',
+    status: catOk ? 'pass' : 'fail',
+    detail: catOk ? 'Category accepted' : `Category "${metadata.category}" not in [${schema.categories.join(', ')}]`,
+  });
+
+  // Check 3: audience must be in the live AUDIENCES enum.
+  const audOk = schema.audiences.length === 0 || schema.audiences.includes(metadata.audience || '');
+  checks.push({
+    name: 'audience-enum',
+    status: audOk ? 'pass' : 'fail',
+    detail: audOk ? 'Audience accepted' : `Audience "${metadata.audience}" not in [${schema.audiences.join(', ')}]`,
   });
 
   const pass = checks.every(c => c.status !== 'fail');
