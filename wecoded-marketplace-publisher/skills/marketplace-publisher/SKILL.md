@@ -110,3 +110,106 @@ Build a "confirmed manifest" in your scratchpad as the user confirms pieces. Str
 For `pluginId`: suggest a kebab-case version of the displayName. Confirm with the user — they may want something different. Rules: lowercase only, words separated by `-`, no spaces, no capital letters, no special characters other than `-`. If the user proposes an invalid ID, gently reformat it for them and confirm: *"So I'll use `their-reformatted-id` — sound right?"* Don't reject their suggestion — always propose a valid version and ask for approval.
 
 Once the user has confirmed the manifest, proceed to **Step 6 — rebuild** (filled in during Task 15).
+
+## Step 6 — Rebuild
+
+You now have a confirmed manifest from Step 5. Call the build-plugin script with `sanitize: false` for this first pass. Running unsanitized first means we can see any secret findings BEFORE we modify anything — so we can show them to the user for review.
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/build-plugin.js" '{
+  "manifest": { "pluginId": "...", "metadata": { ... }, "pieces": [ ... ] },
+  "workingRoot": "~/.claude/wecoded-marketplace-publisher/working",
+  "sanitize": false
+}'
+```
+
+Replace the JSON placeholders with the actual confirmed manifest plus initial metadata (you'll gather fuller metadata in Step 8 — for now include at least `displayName` from the user's casual name, and a working `description` and `author.name`).
+
+Parse the JSON output. If `unsanitizedFindings` is non-empty, go to **Step 7**. Otherwise skip directly to **Step 8**.
+
+## Step 7 — Secret review & sanitization
+
+If the build found anything that looks like a secret (API keys, GitHub tokens, etc.), explain what you found to the user BEFORE making any changes. Frame it as a safety check — because shipping a secret to a public GitHub repo is serious, and non-technical users may not realize their plugin contains one.
+
+Show each finding with:
+- The **file and line number** where the secret was found
+- **What kind of secret** it looks like (GitHub token, Anthropic API key, etc.) in plain language
+- A **short, masked excerpt** — e.g. `ghp_...` — never the full value
+
+Then explain the options clearly:
+
+> *"I found **N** things that look like secrets in your plugin. Before we publish anywhere, I want to show you what I found and figure out what to do.*
+>
+> *[List each finding as above.]*
+>
+> ***Recommended:** I can sanitize the published version — take these secrets out of the code and set up a place where anyone who installs your plugin configures their own values. That way you're not sharing your personal keys with anyone. I'll also write a **SETUP.md** file that tells installers exactly what values to provide and where to get them. Your local copy stays exactly as it is — only the version we publish is sanitized.*
+>
+> *Or: if these are deliberately-shared demo values (rotated, revoked, or never sensitive), I can keep them in. But I have to warn you — anyone who installs this plugin will be able to see and use those values. Not recommended unless you're 100% sure.*
+>
+> *Or: cancel publishing so you can review things yourself first.*
+>
+> *Which would you like?"*
+
+### If they choose sanitize (recommended)
+
+Re-run the build-plugin script with `sanitize: true`:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/build-plugin.js" '{
+  "manifest": { ... same as before ... },
+  "workingRoot": "~/.claude/wecoded-marketplace-publisher/working",
+  "sanitize": true
+}'
+```
+
+Parse the output. If `sanitizedFindings.length` is GREATER than the original `unsanitizedFindings.length`, the sanitize pass found secrets the first scan missed. Surface those additional findings clearly: *"I found a few more secrets on the sanitize pass that didn't show up in the first scan — here's everything I replaced."*
+
+For each item in `sanitizedFindings`, show a before/after summary in plain language:
+
+> *"In `scripts/fetch.js`, I replaced the Anthropic API key with `process.env.ANTHROPIC_API_KEY` and added `ANTHROPIC_API_KEY` to `SETUP.md`."*
+
+Make sure the transformation feels transparent — the user should understand roughly what happened, not feel like something was done to them.
+
+### If they choose keep-as-is
+
+Proceed without re-running sanitize. The unsanitized files are already in the working dir from Step 6.
+
+**Warning:** the Step 9 preflight will likely fail on the secret-scan check — preflight re-scans the working dir as a safety net. When Step 9 returns a `secret-scan` failure, loop back to Step 7 and offer sanitization again, quoting the preflight's findings. Non-technical users often change their minds once they realize the consequences are real.
+
+### If they choose cancel
+
+Stop the flow. Tell them:
+
+> *"No problem — I'll leave your working copy in place so you can review it. Run `/publish-to-marketplace` again when you're ready."*
+
+Do not delete the working dir on cancel — user may want to inspect.
+
+## Step 8 — Metadata
+
+The marketplace listing needs more than just the plugin files — it needs metadata that makes it discoverable. The `plugin.json` generated in Step 6 has basics, but the marketplace entry itself needs `displayName`, `description`, `category`, `tags`, `lifeArea`, and `audience`.
+
+Propose values based on:
+
+- **`displayName`** — the casual name the user gave in Step 2, cleaned up (Title Case, no weird punctuation). Example: "summarize emails" → "Summarize Emails".
+- **`description`** — the one-sentence description from Step 2, gently polished for marketplace prose (remove "it" at the start, add a subject if missing). Target length: 1-2 sentences, under 150 characters.
+- **`category`** — pick ONE from the valid set. The first time you reach this step, fetch the live marketplace schema to get the current valid categories (the preflight script already knows how — you can read `scripts/schema.js` source via a plain `fetch` or reuse the schema-fetch helpers the preflight script uses). Common values: `personal`, `productivity`, `development`, `work`, `fun`. Match based on what the plugin does. If it's a Gmail skill → `productivity`. If it's a journaling skill → `personal`.
+- **`tags`** — 3-5 lowercase kebab-case keywords that help people find it. Draw from the user's intake words + the component types detected (e.g. `email`, `summary`, `mcp-integration`, `gmail`). Rules: lowercase only, words within a tag separated by `-`, no spaces or special characters. If the user proposes an invalid tag, reformat it silently and confirm: *"I'll use `their-reformatted-tag` — sound right?"*
+- **`lifeArea`** — infer from category: `personal` category → `["personal"]`; `work` → `["work"]`; others can be empty `[]` or mirror the category.
+- **`audience`** — default to `"general"` unless the plugin is clearly for developers (mentions git, terminals, CI, etc.), in which case `"developer"`.
+
+Show the user the proposed values as a clean list. Then ask:
+
+> *"Here's how your plugin will appear in the marketplace:*
+>
+> *- **Name:** Summarize Emails*
+> *- **Description:** Summarize your inbox using the Gmail MCP, grouped by sender importance.*
+> *- **Category:** productivity*
+> *- **Tags:** email, summary, gmail, mcp-integration*
+> *- **Life area:** work*
+> *- **Audience:** general*
+>
+> *Any of these you want to change?"*
+
+If they say "looks good," move on. If they want to change specific fields, update only those — don't re-ask everything. Keep the loop tight.
+
+Once metadata is confirmed, you're ready for preflight in **Step 9** (filled in during Task 16).
