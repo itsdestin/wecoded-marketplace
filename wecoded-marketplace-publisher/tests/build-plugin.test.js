@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { buildPlugin } from '../scripts/build-plugin.js';
+import { scanForSecrets } from '../scripts/build-plugin.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(__dirname, 'fixtures/source-skill/SKILL.md');
@@ -93,4 +94,24 @@ test('buildPlugin templates a README when none is provided', async () => {
   const readme = await fs.readFile(path.join(tmp, 'readmeless/README.md'), 'utf8');
   assert.match(readme, /Readme-less/);
   assert.match(readme, /A test plugin/);
+});
+
+test('scanForSecrets finds Anthropic keys', async () => {
+  const p = path.join(__dirname, 'fixtures/plugin-with-secrets/scripts/fetch.js');
+  const text = await fs.readFile(p, 'utf8');
+  const findings = scanForSecrets(text, p);
+  const patterns = findings.map(f => f.patternName).sort();
+  assert.ok(patterns.includes('anthropic-api-key'));
+  assert.ok(patterns.includes('github-token'));
+});
+
+test('scanForSecrets returns file + line for each finding', async () => {
+  const p = path.join(__dirname, 'fixtures/plugin-with-secrets/scripts/fetch.js');
+  const text = await fs.readFile(p, 'utf8');
+  const findings = scanForSecrets(text, p);
+  for (const f of findings) {
+    assert.equal(f.file, p);
+    assert.ok(f.line > 0);
+    assert.ok(f.excerpt.length > 0);
+  }
 });

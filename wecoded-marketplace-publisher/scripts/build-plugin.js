@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { SECRET_PATTERNS } from './lib/secret-patterns.js';
 
 async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
@@ -53,6 +54,28 @@ async function writeReadmeIfMissing(outDir, metadata) {
   } catch {}
   const body = `# ${metadata.displayName}\n\n${metadata.description}\n\n## Installation\n\nInstall via the WeCoded marketplace or directly from this repo.\n`;
   await fs.writeFile(p, body);
+}
+
+export function scanForSecrets(text, filePath) {
+  const findings = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    for (const pat of SECRET_PATTERNS) {
+      pat.regex.lastIndex = 0;
+      let m;
+      while ((m = pat.regex.exec(lines[i])) !== null) {
+        findings.push({
+          file: filePath,
+          line: i + 1,
+          patternName: pat.name,
+          envHint: pat.envHint,
+          excerpt: m[0].slice(0, 6) + '...',
+          matched: m[0],
+        });
+      }
+    }
+  }
+  return findings;
 }
 
 export async function buildPlugin({ manifest, workingRoot }) {
