@@ -1,0 +1,23 @@
+{
+  "name": "apple-services",
+  "description": "Calendar, Reminders, Contacts, Notes, Mail, and iCloud Drive in one setup. macOS only.",
+  "version": "0.1.0",
+  "author": { "name": "YouCoded" },
+  "license": "MIT",
+  "homepage": "https://github.com/itsdestin/wecoded-marketplace/tree/master/apple-services",
+  "platforms": ["macos"],
+  "attributions": [
+    {
+      "name": "iMCP",
+      "url": "https://github.com/mattt/iMCP",
+      "license": "MIT",
+      "scope": "Reference-only for EventKit/Contacts patterns used when writing bin/apple-helper (no bytes vendored)"
+    },
+    {
+      "name": "apple-mcp",
+      "url": "https://github.com/supermemoryai/apple-mcp",
+      "license": "MIT",
+      "scope": "AppleScript snippets extracted for Notes and Mail integrations"
+    }
+  ]
+}
