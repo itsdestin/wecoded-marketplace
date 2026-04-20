@@ -58,3 +58,9 @@ Example state entry:
   "note-20260323.txt": { "presented": "2026-03-23" }
 }
 ```
+
+---
+
+## Related: apple-services bundle
+
+> For general-purpose iCloud Drive operations (list, read, write, move, delete across folders), see the `apple-services` marketplace bundle's `icloud-drive` skill. This provider is inbox-specific and includes re-presentation logic the general-purpose skill does not.

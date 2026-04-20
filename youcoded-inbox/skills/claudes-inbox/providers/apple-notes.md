@@ -54,3 +54,9 @@ end tell'
 ```
 
 The note is NOT deleted — it stays in the folder until resolved or cleared.
+
+---
+
+## Related: apple-services bundle
+
+> For general-purpose Notes operations (search, CRUD across folders), see the `apple-services` marketplace bundle's `apple-notes` skill. This provider is inbox-specific and includes re-presentation logic the general-purpose skill does not.

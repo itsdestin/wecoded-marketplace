@@ -1,0 +1,19 @@
+// osascript -l JavaScript list_mailboxes.jxa [accountName]
+function run(argv) {
+    const Mail = Application('Mail');
+    const filterAccount = argv[0] || '';
+    const result = [];
+    const accounts = filterAccount
+        ? Mail.accounts.whose({name: filterAccount})()
+        : Mail.accounts();
+    for (const acct of accounts) {
+        for (const box of acct.mailboxes()) {
+            result.push({
+                name: box.name(),
+                account: acct.name(),
+                unread_count: box.unreadCount(),
+            });
+        }
+    }
+    return JSON.stringify(result);
+}

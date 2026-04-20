@@ -1,0 +1,26 @@
+// Run with: osascript -l JavaScript search_notes.jxa <query> [folderName]
+function run(argv) {
+    const query = (argv[0] || '').toLowerCase();
+    const folderFilter = argv[1] || '';
+    if (!query) return JSON.stringify({error: {code: 'INVALID_ARG', service: 'notes', message: 'search requires a query', recovery: 'Pass the query as the first argument.'}});
+
+    const Notes = Application('Notes');
+    const source = folderFilter
+        ? (Notes.folders.whose({name: folderFilter})[0] || {}).notes
+        : Notes.notes;
+    if (!source) return JSON.stringify([]);
+
+    const results = [];
+    for (const n of source()) {
+        const name = n.name();
+        const body = n.plaintext();  // plaintext strips HTML — good for snippet
+        const hay = (name + ' ' + body).toLowerCase();
+        if (hay.includes(query)) {
+            const idx = hay.indexOf(query);
+            const snippet = body.substring(Math.max(0, idx - 40), idx + query.length + 40);
+            results.push({id: n.id(), name: name, snippet: snippet});
+        }
+        if (results.length >= 20) break;
+    }
+    return JSON.stringify(results);
+}
