@@ -62,9 +62,16 @@ function titleCase(kebab) {
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
+    // Same pattern extract-components.js uses: opt-in auth via GITHUB_TOKEN
+    // bumps the per-IP rate limit from 60/hr (anon) to 5000/hr (authenticated)
+    // so a full sync doesn't blow the budget on a developer machine.
+    const headers = { "User-Agent": "wecoded-marketplace-sync" };
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
     const get = (u) => {
       https
-        .get(u, { headers: { "User-Agent": "wecoded-marketplace-sync" } }, (res) => {
+        .get(u, { headers }, (res) => {
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             get(res.headers.location);
             return;
