@@ -1,7 +1,30 @@
 {
-  "version": "2026-04-17T10:37:17.064Z",
+  "version": "2026-04-21T18:52:01.743Z",
   "generatedBy": "build-integrations.js",
   "integrations": [
+    {
+      "slug": "apple-services",
+      "displayName": "Apple Services",
+      "tagline": "Calendar, Reminders, Contacts, Notes, Mail, iCloud — one setup.",
+      "longDescription": "Reads and writes Apple Calendar, Reminders, Contacts, Notes, and Mail, and syncs files to iCloud Drive — all through a single macOS integration. Uses native Apple APIs (EventKit, Contacts, AppleScript) so it stays fast and doesn't depend on the web UI. Setup walks you through the one-time permission prompts.",
+      "kind": "plugin",
+      "setup": {
+        "type": "plugin",
+        "pluginId": "apple-services",
+        "postInstallCommand": "/apple-services-setup",
+        "requiresOAuth": false
+      },
+      "status": "available",
+      "accentColor": "#000000",
+      "iconUrl": "icons/apple-services.svg",
+      "platforms": [
+        "darwin"
+      ],
+      "lifeArea": [
+        "personal",
+        "work"
+      ]
+    },
     {
       "slug": "google-services",
       "displayName": "Google Services",
@@ -60,26 +83,6 @@
       "lifeArea": [
         "personal",
         "work"
-      ]
-    },
-    {
-      "slug": "apple-services",
-      "displayName": "Apple Services",
-      "tagline": "Notes, Reminders, iCloud — one Apple connect.",
-      "longDescription": "Reads and creates Apple Notes, manages Reminders lists, and syncs files to iCloud Drive — all through a single macOS integration. Uses native Apple APIs so it stays fast and doesn't depend on the web UI.",
-      "kind": "shell",
-      "setup": {
-        "type": "macos-only",
-        "requiresOAuth": false
-      },
-      "status": "planned",
-      "accentColor": "#555555",
-      "iconUrl": "icons/apple-services.svg",
-      "platforms": [
-        "darwin"
-      ],
-      "lifeArea": [
-        "personal"
       ]
     },
     {
