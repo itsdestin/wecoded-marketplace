@@ -1,5 +1,47 @@
 [
   {
+    "id": "apple-services",
+    "type": "plugin",
+    "displayName": "Apple Services",
+    "description": "Calendar, Reminders, Contacts, Notes, Mail, and iCloud Drive — one setup. macOS only.",
+    "category": "integrations",
+    "author": "YouCoded",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "apple-services",
+    "repoUrl": null,
+    "components": {
+      "skills": [
+        "apple-calendar",
+        "apple-calendar-agenda",
+        "apple-calendar-create",
+        "apple-contacts",
+        "apple-contacts-find",
+        "apple-mail",
+        "apple-mail-search",
+        "apple-mail-send",
+        "apple-notes",
+        "apple-notes-search",
+        "apple-notes-write",
+        "apple-reminders",
+        "apple-reminders-add",
+        "apple-reminders-list",
+        "icloud-drive"
+      ],
+      "hooks": [],
+      "commands": [
+        "apple-services-setup"
+      ],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
+  },
+  {
     "id": "civic-report",
     "type": "plugin",
     "displayName": "Civic Report",
@@ -11,12 +53,18 @@
       "personal",
       "ai"
     ],
-    "version": "1.0.1",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.2",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "civic-report",
     "repoUrl": null,
+    "tagline": "Know your federal reps, tailored to what you care about.",
+    "longDescription": "Drop in your address and Claude generates a personalized briefing on every federal official who represents you — President, VP, both U.S. Senators, and your House Rep — with state-level officials included as named stubs. Pick the angle you care about (housing, climate, immigration, foreign policy, or anything you type), choose a tone (neutral, critical, positive, civic, friendly, deep-research), and decide whether you want the full eight-section report per rep or a custom subset.\n\nEvery factual claim in the output is footnoted with a source URL you can click through to verify, and reports are saved to your Encyclopedia by default so you can reread them before voting, calling an office, or writing a letter. The first-time setup runs a one-line interactive prompt to capture an API key for the data source; everything after that is just conversation.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general",
     "components": {
       "skills": [
         "civic-report"
@@ -29,19 +77,123 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Know your federal reps, tailored to what you care about.",
-    "longDescription": "Drop in your address and Claude generates a personalized briefing on every federal official who represents you â€” President, VP, both U.S. Senators, and your House Rep â€” with state-level officials included as named stubs. Pick the angle you care about (housing, climate, immigration, foreign policy, or anything you type), choose a tone (neutral, critical, positive, civic, friendly, deep-research), and decide whether you want the full eight-section report per rep or a custom subset.\n\nEvery factual claim in the output is footnoted with a source URL you can click through to verify, and reports are saved to your Encyclopedia by default so you can reread them before voting, calling an office, or writing a letter. The first-time setup runs a one-line interactive prompt to capture an API key for the data source; everything after that is just conversation.",
-    "lifeArea": [
-      "personal"
+    }
+  },
+  {
+    "id": "google-services",
+    "type": "plugin",
+    "displayName": "Google Services",
+    "description": "Gmail, Drive, Docs, Sheets, Slides, Calendar — one connect. Surfaced through the Google Services integration tile.",
+    "category": "integrations",
+    "author": "YouCoded",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "google-services",
+    "repoUrl": null,
+    "components": {
+      "skills": [
+        "gws-calendar",
+        "gws-calendar-agenda",
+        "gws-calendar-insert",
+        "gws-docs",
+        "gws-docs-write",
+        "gws-drive",
+        "gws-drive-upload",
+        "gws-gmail",
+        "gws-gmail-forward",
+        "gws-gmail-read",
+        "gws-gmail-reply",
+        "gws-gmail-reply-all",
+        "gws-gmail-send",
+        "gws-gmail-triage",
+        "gws-gmail-watch",
+        "gws-shared",
+        "gws-sheets",
+        "gws-sheets-append",
+        "gws-sheets-read",
+        "gws-slides",
+        "youcoded-gws-reauth"
+      ],
+      "hooks": [],
+      "commands": [
+        "google-services-setup"
+      ],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
+  },
+  {
+    "id": "wecoded-marketplace-publisher",
+    "type": "plugin",
+    "displayName": "WeCoded Marketplace Publisher",
+    "description": "Publish your plugins to the WeCoded marketplace — conversational, non-technical-user friendly.",
+    "category": "productivity",
+    "author": "@destin",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "wecoded-marketplace-publisher",
+    "repoUrl": null,
+    "components": {
+      "skills": [
+        "marketplace-publisher"
+      ],
+      "hooks": [],
+      "commands": [
+        "publish-to-marketplace"
+      ],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
+  },
+  {
+    "id": "wecoded-themes-plugin",
+    "type": "plugin",
+    "displayName": "Theme Builder",
+    "description": "Build and share custom themes — AI-generated or from scratch",
+    "category": "design",
+    "author": "@destin",
+    "tags": [
+      "design"
     ],
-    "audience": "general"
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "wecoded-themes-plugin",
+    "repoUrl": null,
+    "tagline": "Make the app look like you.",
+    "longDescription": "The `/theme-builder` skill — describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full YouCoded theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real YouCoded theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
+    "lifeArea": [
+      "creative"
+    ],
+    "audience": "general",
+    "components": {
+      "skills": [
+        "theme-builder"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
   },
   {
     "id": "youcoded-core",
     "type": "plugin",
     "displayName": "YouCoded Core",
-    "description": "Foundation toolkit â€” safety hooks, commands, sync infrastructure, diagnostics",
+    "description": "Foundation toolkit — safety hooks, commands, sync infrastructure, diagnostics",
     "category": "productivity",
     "author": "@destin",
     "tags": [
@@ -49,12 +201,18 @@
       "automation",
       "plugin"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "url",
     "sourceRef": "https://github.com/itsdestin/youcoded-core.git",
     "repoUrl": "https://github.com/itsdestin/youcoded-core",
+    "tagline": "The toolkit that powers everything else.",
+    "longDescription": "YouCoded is the foundational toolkit that powers the personal-AI side of YouCoded — the safety hooks that prevent destructive writes, the diagnostic commands (`/health`, `/update`, `/diagnose`, `/restore`) that keep your install honest, and the cross-device sync infrastructure that moves your settings between Mac, Windows, Linux, and Android. It's the glue layer most other YouCoded plugins quietly assume is already there.\n\nInstall this first. Once it's in, you get write-guards that block stomping on memory and CLAUDE.md from concurrent sessions, a `setup-wizard` for pure-CLI users who aren't running the app, and a `theme-builder` that lets you generate full custom theme packs from a one-line vibe prompt. The toolkit is plain markdown skills + bash hooks — no opaque binaries, all readable in your editor.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "developer",
     "components": {
       "skills": [
         "remote-setup",
@@ -70,26 +228,19 @@
       "commands": [
         "diagnose",
         "health",
-        "restore",
         "update"
       ],
       "agents": [],
       "mcpServers": [],
       "hasHooksManifest": true,
       "hasMcpConfig": false
-    },
-    "tagline": "The toolkit that powers everything else.",
-    "longDescription": "YouCoded is the foundational toolkit that powers the personal-AI side of YouCoded â€” the safety hooks that prevent destructive writes, the diagnostic commands (`/health`, `/update`, `/diagnose`, `/restore`) that keep your install honest, and the cross-device sync infrastructure that moves your settings between Mac, Windows, Linux, and Android. It's the glue layer most other YouCoded plugins quietly assume is already there.\n\nInstall this first. Once it's in, you get write-guards that block stomping on memory and CLAUDE.md from concurrent sessions, a `setup-wizard` for pure-CLI users who aren't running the app, and a `theme-builder` that lets you generate full custom theme packs from a one-line vibe prompt. The toolkit is plain markdown skills + bash hooks â€” no opaque binaries, all readable in your editor.",
-    "lifeArea": [
-      "work"
-    ],
-    "audience": "developer"
+    }
   },
   {
     "id": "youcoded-encyclopedia",
     "type": "plugin",
     "displayName": "Encyclopedia",
-    "description": "Personal knowledge system â€” journaling, encyclopedia, interviewer, librarian, compiler",
+    "description": "Personal knowledge system — journaling, encyclopedia, interviewer, librarian, compiler",
     "category": "personal",
     "author": "@destin",
     "tags": [
@@ -98,12 +249,18 @@
       "reference",
       "research"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "youcoded-encyclopedia",
     "repoUrl": null,
+    "tagline": "Your life, written down and searchable.",
+    "longDescription": "Your life, written down once and reachable forever. The Encyclopedia bundle is four skills working together: `journaling-assistant` runs a daily check-in that prompts you through the parts of your day worth remembering; `encyclopedia-update` routes new journal content into eight modular source files (people, places, beliefs, goals, work, etc.); `encyclopedia-interviewer` proactively notices gaps and runs targeted interviews to fill them; and `encyclopedia-librarian` produces purpose-built briefings — \"prep me for tomorrow's meeting with X\", \"review my last six months\", \"pull together everything I've said about Y\".\n\nThe whole system is plain markdown stored locally in `~/.claude/encyclopedia/` — you own every word, you can read and edit it in any text editor, and you can sync it across devices via the toolkit's sync skill. Four detail levels (Full, Personal, Professional, Public) let you control how much intimate context appears in any given output, so the same encyclopedia can power both deeply personal reflection and cleanly shareable professional summaries.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general",
     "components": {
       "skills": [
         "encyclopedia-compile",
@@ -118,13 +275,7 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Your life, written down and searchable.",
-    "longDescription": "Your life, written down once and reachable forever. The Encyclopedia bundle is four skills working together: `journaling-assistant` runs a daily check-in that prompts you through the parts of your day worth remembering; `encyclopedia-update` routes new journal content into eight modular source files (people, places, beliefs, goals, work, etc.); `encyclopedia-interviewer` proactively notices gaps and runs targeted interviews to fill them; and `encyclopedia-librarian` produces purpose-built briefings â€” \"prep me for tomorrow's meeting with X\", \"review my last six months\", \"pull together everything I've said about Y\".\n\nThe whole system is plain markdown stored locally in `~/.claude/encyclopedia/` â€” you own every word, you can read and edit it in any text editor, and you can sync it across devices via the toolkit's sync skill. Four detail levels (Full, Personal, Professional, Public) let you control how much intimate context appears in any given output, so the same encyclopedia can power both deeply personal reflection and cleanly shareable professional summaries.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "youcoded-food",
@@ -136,12 +287,19 @@
     "tags": [
       "personal"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "youcoded-food",
     "repoUrl": null,
+    "tagline": "Groceries, pantry, and spending — logged.",
+    "longDescription": "A two-part food tracker with personality. The first part keeps a live inventory of what's actually in your pantry, fridge, and freezer — log a grocery run by texting Claude a receipt or a fridge photo, ask \"what do I have for dinner?\", and get age/freshness warnings on items getting old. The second part tracks fast food spending and ordering patterns by restaurant and item, so you can see how much that DoorDash habit is actually costing you.\n\nClaude addresses you with rotating affectionate-roast nicknames (Fatty, Chonk, Sir Eats-a-Lot…) and the teasing escalates with the size of the order — light ribbing for a $30 grocery run, full grief for a $14 fast food trip for one. Data lives in two CSVs under `~/.claude/fork-file/` so you can always export, edit, or back it up yourself. Built on `fork-file` underneath; install this bundle for the full UX.",
+    "lifeArea": [
+      "personal",
+      "health"
+    ],
+    "audience": "general",
     "components": {
       "skills": [
         "fork-file"
@@ -152,14 +310,7 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Groceries, pantry, and spending â€” logged.",
-    "longDescription": "A two-part food tracker with personality. The first part keeps a live inventory of what's actually in your pantry, fridge, and freezer â€” log a grocery run by texting Claude a receipt or a fridge photo, ask \"what do I have for dinner?\", and get age/freshness warnings on items getting old. The second part tracks fast food spending and ordering patterns by restaurant and item, so you can see how much that DoorDash habit is actually costing you.\n\nClaude addresses you with rotating affectionate-roast nicknames (Fatty, Chonk, Sir Eats-a-Lotâ€¦) and the teasing escalates with the size of the order â€” light ribbing for a $30 grocery run, full grief for a $14 fast food trip for one. Data lives in two CSVs under `~/.claude/fork-file/` so you can always export, edit, or back it up yourself. Built on `fork-file` underneath; install this bundle for the full UX.",
-    "lifeArea": [
-      "personal",
-      "health"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "youcoded-inbox",
@@ -173,12 +324,19 @@
       "productivity",
       "automation"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "youcoded-inbox",
     "repoUrl": null,
+    "tagline": "Triage captured notes into something useful.",
+    "longDescription": "Pulls items from every inbox you actually use — Todoist tasks, Google Drive notes, Gmail, Apple Notes, Apple Reminders, iCloud Drive, even local screenshots dropped in a staging folder — and triages them in one conversation. Claude isn't just routing items; it actively *resolves* them: answering questions, applying feedback, creating tasks, deleting noise, filing screenshots into your journal or encyclopedia.\n\nProvider-agnostic by design — pick the sources you actually use during setup, leave the rest off. The session-start hook quietly counts unprocessed items and surfaces a reminder when there's something to look at, so you never have to remember to open your inbox; it comes to you. Works hand-in-glove with `youcoded-encyclopedia` (journal entries get filed) and the toolkit's sync skill (multi-device captures all flow into one queue).",
+    "lifeArea": [
+      "personal",
+      "work"
+    ],
+    "audience": "general",
     "components": {
       "skills": [
         "claudes-inbox"
@@ -189,14 +347,7 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Triage captured notes into something useful.",
-    "longDescription": "Pulls items from every inbox you actually use â€” Todoist tasks, Google Drive notes, Gmail, Apple Notes, Apple Reminders, iCloud Drive, even local screenshots dropped in a staging folder â€” and triages them in one conversation. Claude isn't just routing items; it actively *resolves* them: answering questions, applying feedback, creating tasks, deleting noise, filing screenshots into your journal or encyclopedia.\n\nProvider-agnostic by design â€” pick the sources you actually use during setup, leave the rest off. The session-start hook quietly counts unprocessed items and surfaces a reminder when there's something to look at, so you never have to remember to open your inbox; it comes to you. Works hand-in-glove with `youcoded-encyclopedia` (journal entries get filed) and the toolkit's sync skill (multi-device captures all flow into one queue).",
-    "lifeArea": [
-      "personal",
-      "work"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "youcoded-messaging",
@@ -208,12 +359,18 @@
     "tags": [
       "communication"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "youcoded-messaging",
     "repoUrl": null,
+    "tagline": "Text from Claude. Yes, really.",
+    "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers — `gmessages` for Android/Google Messages, `imessage` for macOS — both of which the plugin will configure during install. Pairs naturally with `youcoded-inbox` for inbound triage, and with `youcoded-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general",
     "components": {
       "skills": [],
       "hooks": [],
@@ -222,31 +379,31 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Text from Claude. Yes, really.",
-    "longDescription": "Send and read SMS and iMessage from inside Claude. Drafts replies in your voice, sends from the phone number bridged through the configured MCP server, and surfaces incoming messages so Claude can react to them in your normal chat session. Useful for catching up on a thread without picking up your phone, or for asking Claude to draft something tricky and then send it for you.\n\nThe heavy lifting is in the bundled MCP servers â€” `gmessages` for Android/Google Messages, `imessage` for macOS â€” both of which the plugin will configure during install. Pairs naturally with `youcoded-inbox` for inbound triage, and with `youcoded-encyclopedia`'s deep-search mode for \"go find that thing I texted Mom about in October\" queries.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "youcoded-output-styles",
     "type": "plugin",
     "displayName": "Output Styles",
-    "description": "Tone presets â€” casual, conversational, academic, professional",
+    "description": "Tone presets — casual, conversational, academic, professional",
     "category": "productivity",
     "author": "@destin",
     "tags": [
       "writing",
       "productivity"
     ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "sourceType": "local",
     "sourceRef": "youcoded-output-styles",
     "repoUrl": null,
+    "tagline": "Match Claude's tone to the task.",
+    "longDescription": "A small library of tone presets for Claude — `casual`, `conversational`, `academic`, and `professional` — that you can flip between with a single command depending on what you're doing. Use `casual` for chat with friends, `academic` for paper drafts and lit-review summaries, `professional` for emails and proposals, `conversational` for blog posts and personal essays.\n\nEach style is a plain markdown file under `styles/` describing the voice rules (formality, structure, vocabulary, hedging) so the presets are inspectable and forkable — copy one, tweak it, and now you have your own. No model switching, no settings menu — just type the name and Claude takes on the voice for the rest of the conversation.",
+    "lifeArea": [
+      "work"
+    ],
+    "audience": "general",
     "components": {
       "skills": [],
       "hooks": [],
@@ -255,58 +412,18 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": false
-    },
-    "tagline": "Match Claude's tone to the task.",
-    "longDescription": "A small library of tone presets for Claude â€” `casual`, `conversational`, `academic`, and `professional` â€” that you can flip between with a single command depending on what you're doing. Use `casual` for chat with friends, `academic` for paper drafts and lit-review summaries, `professional` for emails and proposals, `conversational` for blog posts and personal essays.\n\nEach style is a plain markdown file under `styles/` describing the voice rules (formality, structure, vocabulary, hedging) so the presets are inspectable and forkable â€” copy one, tweak it, and now you have your own. No model switching, no settings menu â€” just type the name and Claude takes on the voice for the rest of the conversation.",
-    "lifeArea": [
-      "work"
-    ],
-    "audience": "general"
-  },
-  {
-    "id": "wecoded-themes-plugin",
-    "type": "plugin",
-    "displayName": "Theme Builder",
-    "description": "Build and share custom themes â€” AI-generated or from scratch",
-    "category": "design",
-    "author": "@destin",
-    "tags": [
-      "design"
-    ],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
-    "sourceMarketplace": "youcoded",
-    "sourceType": "local",
-    "sourceRef": "wecoded-themes-plugin",
-    "repoUrl": null,
-    "components": {
-      "skills": [
-        "theme-builder"
-      ],
-      "hooks": [],
-      "commands": [],
-      "agents": [],
-      "mcpServers": [],
-      "hasHooksManifest": false,
-      "hasMcpConfig": false
-    },
-    "tagline": "Make the app look like you.",
-    "longDescription": "The `/theme-builder` skill â€” describe a vibe, drop in a wallpaper, or write a detailed brief, and Claude generates three full YouCoded theme concepts in a side-by-side browser preview. Pick one and you land on a single-page kit refiner where palette, chrome, bubbles, fonts, effects, wallpaper, mascots, and icons are all swappable columns; iterate until it feels like you, then build the pack and the app hot-reloads with your new look.\n\nFinished themes are real YouCoded theme packs (manifest + assets + custom CSS) you can install locally, share with friends via QR/link, or publish to the community theme registry where they get an auto-generated preview PNG. The skill enforces the 15 required theme tokens and runs contrast validation on the way out, so anything you publish is guaranteed legible.",
-    "lifeArea": [
-      "creative"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "adlc",
     "type": "plugin",
     "displayName": "Adlc",
-    "description": "Agentforce Agent Development Life Cycle â€” author, discover, scaffold, deploy, test, and optimize .agent files",
+    "description": "Agentforce Agent Development Life Cycle — author, discover, scaffold, deploy, test, and optimize .agent files",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/SalesforceAIResearch/agentforce-adlc.git",
@@ -449,12 +566,12 @@
     "id": "aikido",
     "type": "plugin",
     "displayName": "Aikido",
-    "description": "Aikido Security scanning for Claude Code â€” SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
+    "description": "Aikido Security scanning for Claude Code — SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/AikidoSec/aikido-claude-plugin.git",
@@ -505,25 +622,54 @@
     "id": "amplitude",
     "type": "plugin",
     "displayName": "Amplitude",
-    "description": "Use Amplitude as an expert analyst â€” instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
+    "description": "Use Amplitude as an expert analyst — instrument Amplitude, discover product opportunities, analyze charts, create dashboards, manage experiments, and understand users and accounts.",
     "category": "monitoring",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-13T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
-    "sourceType": "url",
+    "sourceType": "git-subdir",
     "sourceRef": "https://github.com/amplitude/mcp-marketplace.git",
-    "sourceSha": "be54ccb66b10593721dd3a31e47b2db20ea02d2f",
+    "sourceSubdir": "plugins/amplitude",
+    "sourceGitRef": "main",
     "repoUrl": "https://github.com/amplitude/mcp-marketplace",
     "components": {
-      "skills": [],
+      "skills": [
+        "add-analytics-instrumentation",
+        "analyze-account-health",
+        "analyze-ai-topics",
+        "analyze-chart",
+        "analyze-dashboard",
+        "analyze-experiment",
+        "analyze-feedback",
+        "compare-user-journeys",
+        "create-chart",
+        "create-dashboard",
+        "daily-brief",
+        "debug-replay",
+        "diagnose-errors",
+        "diff-intake",
+        "discover-analytics-patterns",
+        "discover-event-surfaces",
+        "discover-opportunities",
+        "instrument-events",
+        "investigate-ai-session",
+        "monitor-ai-quality",
+        "monitor-experiments",
+        "monitor-reliability",
+        "replay-ux-audit",
+        "review-agent-insights",
+        "taxonomy",
+        "weekly-brief",
+        "what-would-lenny-do"
+      ],
       "hooks": [],
       "commands": [],
       "agents": [],
       "mcpServers": [],
       "hasHooksManifest": false,
-      "hasMcpConfig": false
+      "hasMcpConfig": true
     }
   },
   {
@@ -701,6 +847,34 @@
     }
   },
   {
+    "id": "aws-amplify",
+    "type": "plugin",
+    "displayName": "AWS Amplify",
+    "description": "Build full-stack apps with AWS Amplify Gen 2 using guided workflows for authentication, data models, storage, GraphQL APIs, and Lambda functions.",
+    "category": "development",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/awslabs/agent-plugins.git",
+    "sourceSubdir": "plugins/aws-amplify",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/awslabs/agent-plugins",
+    "components": {
+      "skills": [
+        "amplify-workflow"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    }
+  },
+  {
     "id": "aws-serverless",
     "type": "plugin",
     "displayName": "AWS Serverless",
@@ -735,12 +909,12 @@
     "id": "azure-cosmos-db-assistant",
     "type": "plugin",
     "displayName": "Azure Cosmos DB Assistant",
-    "description": "Expert assistant for Azure Cosmos DB â€” data modeling, query optimization, performance tuning, and best practices.",
+    "description": "Expert assistant for Azure Cosmos DB — data modeling, query optimization, performance tuning, and best practices.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-13T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/AzureCosmosDB/cosmosdb-claude-code-plugin.git",
@@ -780,6 +954,7 @@
     "repoUrl": "https://github.com/microsoft/azure-skills",
     "components": {
       "skills": [
+        "airunway-aks-setup",
         "appinsights-instrumentation",
         "azure-ai",
         "azure-aigateway",
@@ -885,12 +1060,12 @@
     "id": "box",
     "type": "plugin",
     "displayName": "Box",
-    "description": "Work with your Box content directly from Claude Code â€” search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
+    "description": "Work with your Box content directly from Claude Code — search files, organize folders, collaborate with your team, and use Box AI to answer questions, summarize documents, and extract data without leaving your workflow.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-10T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/box/box-for-ai.git",
@@ -1169,12 +1344,12 @@
     "id": "cockroachdb",
     "type": "plugin",
     "displayName": "Cockroachdb",
-    "description": "CockroachDB plugin for Claude Code â€” explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
+    "description": "CockroachDB plugin for Claude Code — explore schemas, write optimized SQL, debug queries, and manage distributed database clusters directly from your AI coding agent.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/cockroachdb/claude-plugin.git",
@@ -1250,12 +1425,12 @@
     "id": "coderabbit",
     "type": "plugin",
     "displayName": "Coderabbit",
-    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzersâ€”offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
+    "description": "Your code review partner. CodeRabbit provides external validation using a specialized AI architecture and 40+ integrated static analyzers—offering a different perspective that catches bugs, security vulnerabilities, logic errors, and edge cases. Context-aware analysis via AST parsing and codegraph relationships. Automatically incorporates CLAUDE.md and project coding guidelines into reviews. Useful after writing or modifying code, before commits, when implementing complex or security-sensitive logic, or when a second opinion would increase confidence in the changes. Returns specific findings with suggested fixes that can be applied immediately. Free to use.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/coderabbitai/claude-plugin.git",
@@ -1449,15 +1624,43 @@
     }
   },
   {
-    "id": "dataverse",
+    "id": "databases-on-aws",
     "type": "plugin",
-    "displayName": "Dataverse",
-    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse â€” with Dataverse MCP, PAC CLI, and Python SDK.",
+    "displayName": "Databases On AWS",
+    "description": "Expert database guidance for the AWS database portfolio. Design schemas, execute queries, handle migrations, and choose the right database for your workload.",
     "category": "database",
     "author": "Anthropic",
     "tags": [],
     "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/awslabs/agent-plugins.git",
+    "sourceSubdir": "plugins/databases-on-aws",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/awslabs/agent-plugins",
+    "components": {
+      "skills": [
+        "dsql"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    }
+  },
+  {
+    "id": "dataverse",
+    "type": "plugin",
+    "displayName": "Dataverse",
+    "description": "Agent skills for building on, analyzing, and managing Microsoft Dataverse — with Dataverse MCP, PAC CLI, and Python SDK.",
+    "category": "database",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "git-subdir",
     "sourceRef": "https://github.com/microsoft/Dataverse-skills.git",
@@ -1541,12 +1744,12 @@
     "id": "elixir-ls-lsp",
     "type": "plugin",
     "displayName": "Elixir Ls LSP",
-    "description": "Elixir language server (ElixirLS) for Claude Code â€” provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
+    "description": "Elixir language server (ElixirLS) for Claude Code — provides code intelligence and diagnostics for .ex, .exs, and .heex files.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/MikaelFangel/claude-elixir-ls-lsp.git",
@@ -2089,12 +2292,12 @@
     "id": "helius",
     "type": "plugin",
     "displayName": "Helius",
-    "description": "Build on Solana with Helius â€” live blockchain tools, expert coding patterns, and autonomous account signup",
+    "description": "Build on Solana with Helius — live blockchain tools, expert coding patterns, and autonomous account signup",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "git-subdir",
     "sourceRef": "https://github.com/helius-labs/core-ai.git",
@@ -2202,6 +2405,13 @@
     "sourceType": "local",
     "sourceRef": "./external_plugins/imessage",
     "repoUrl": null,
+    "integrationOnly": true,
+    "tagline": "Read your iMessage threads, send texts from chat.",
+    "longDescription": "Surfaced through the iMessage integration tile rather than the plugins grid. Installs the Anthropic imessage plugin under the hood. macOS only.",
+    "lifeArea": [
+      "personal"
+    ],
+    "audience": "general",
     "components": {
       "skills": [
         "access",
@@ -2213,14 +2423,7 @@
       "mcpServers": [],
       "hasHooksManifest": false,
       "hasMcpConfig": true
-    },
-    "integrationOnly": true,
-    "tagline": "Read your iMessage threads, send texts from chat.",
-    "longDescription": "Surfaced through the iMessage integration tile rather than the plugins grid. Installs the Anthropic imessage plugin under the hood. macOS only.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general"
+    }
   },
   {
     "id": "intercom",
@@ -2403,6 +2606,37 @@
     }
   },
   {
+    "id": "liquid-skills",
+    "type": "plugin",
+    "displayName": "Liquid Skills",
+    "description": "Liquid language fundamentals, CSS/JS/HTML coding standards, and WCAG accessibility patterns for Shopify themes",
+    "category": "development",
+    "author": "Shopify",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/Shopify/liquid-skills.git",
+    "sourceSubdir": "plugins/liquid-skills",
+    "sourceSha": "ae3e4cc3f454923e388bbd841fd931f0c7bf5be4",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/Shopify/liquid-skills/tree/main/plugins/liquid-skills",
+    "components": {
+      "skills": [
+        "liquid-theme-a11y",
+        "liquid-theme-standards",
+        "shopify-liquid-themes"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
+  },
+  {
     "id": "lua-lsp",
     "type": "plugin",
     "displayName": "Lua LSP",
@@ -2509,34 +2743,6 @@
     }
   },
   {
-    "id": "migration-to-aws",
-    "type": "plugin",
-    "displayName": "Migration To AWS",
-    "description": "Assess current cloud provider usage and billing to estimate and compare AWS services and pricing, with recommendations for migration or continued use of current provider.",
-    "category": "migration",
-    "author": "Anthropic",
-    "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
-    "sourceMarketplace": "anthropic",
-    "sourceType": "git-subdir",
-    "sourceRef": "https://github.com/awslabs/agent-plugins.git",
-    "sourceSubdir": "plugins/migration-to-aws",
-    "sourceGitRef": "main",
-    "repoUrl": "https://github.com/awslabs/agent-plugins",
-    "components": {
-      "skills": [
-        "gcp-to-aws"
-      ],
-      "hooks": [],
-      "commands": [],
-      "agents": [],
-      "mcpServers": [],
-      "hasHooksManifest": false,
-      "hasMcpConfig": true
-    }
-  },
-  {
     "id": "mintlify",
     "type": "plugin",
     "displayName": "Mintlify",
@@ -2557,6 +2763,40 @@
       ],
       "hooks": [],
       "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    }
+  },
+  {
+    "id": "miro",
+    "type": "plugin",
+    "displayName": "Miro",
+    "description": "Secure access to Miro boards. Enables AI to read board context, create diagrams, and generate code with enterprise-grade security.",
+    "category": "design",
+    "author": "Miro",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/miroapp/miro-ai.git",
+    "sourceSubdir": "claude-plugins/miro",
+    "sourceGitRef": "main",
+    "repoUrl": "https://miro.com",
+    "components": {
+      "skills": [
+        "miro-mcp"
+      ],
+      "hooks": [],
+      "commands": [
+        "browse",
+        "diagram",
+        "doc",
+        "summarize",
+        "table"
+      ],
       "agents": [],
       "mcpServers": [],
       "hasHooksManifest": false,
@@ -2627,12 +2867,12 @@
     "id": "netlify-skills",
     "type": "plugin",
     "displayName": "Netlify Skills",
-    "description": "Netlify platform skills for Claude Code â€” functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
+    "description": "Netlify platform skills for Claude Code — functions, edge functions, blobs, database, image CDN, forms, config, CLI, frameworks, caching, AI gateway, and deployment.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/netlify/context-and-tools.git",
@@ -2653,6 +2893,33 @@
         "netlify-identity",
         "netlify-image-cdn"
       ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
+  },
+  {
+    "id": "netsuite-suitecloud",
+    "type": "plugin",
+    "displayName": "Netsuite Suitecloud",
+    "description": "NetSuite agent skills from Oracle — authoring guidance for SuiteCloud Development Framework (SDF) objects and UIF single-page-app components, plus runtime guidance for the NetSuite AI Service Connector.",
+    "category": "development",
+    "author": "Oracle NetSuite",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/oracle/netsuite-suitecloud-sdk.git",
+    "sourceSubdir": "packages/agent-skills",
+    "sourceSha": "43bacf43763e1eedd0892b4652be3d45df94f0e7",
+    "sourceGitRef": "master",
+    "repoUrl": "https://github.com/oracle/netsuite-suitecloud-sdk",
+    "components": {
+      "skills": [],
       "hooks": [],
       "commands": [],
       "agents": [],
@@ -2695,12 +2962,12 @@
     "id": "nimble",
     "type": "plugin",
     "displayName": "Nimble",
-    "description": "Nimble web data toolkit â€” search, extract, map, crawl the web and work with structured data agents",
+    "description": "Nimble web data toolkit — search, extract, map, crawl the web and work with structured data agents",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.1",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.2",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/Nimbleway/agent-skills.git",
@@ -2755,12 +3022,12 @@
     "id": "opsera-devsecops",
     "type": "plugin",
     "displayName": "Opsera Devsecops",
-    "description": "Opsera DevSecOps Agent â€” AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
+    "description": "Opsera DevSecOps Agent — AI-powered architecture analysis, security scanning, compliance auditing, and SQL security for your codebase. Free trial included.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/opsera-agents/opsera-devsecops.git",
@@ -2795,12 +3062,12 @@
     "id": "optibot",
     "type": "plugin",
     "displayName": "Optibot",
-    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities â€” directly in Claude Code.",
+    "description": "AI code review that catches production-breaking bugs, business logic issues, and security vulnerabilities — directly in Claude Code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/Optimal-AI/optibot-skill.git",
@@ -2932,12 +3199,12 @@
     "id": "playground",
     "type": "plugin",
     "displayName": "Playground",
-    "description": "Creates interactive HTML playgrounds â€” self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
+    "description": "Creates interactive HTML playgrounds — self-contained single-file explorers with visual controls, live preview, and prompt output with copy button. Includes templates for design playgrounds, data explorers, concept maps, and document critique.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "local",
     "sourceRef": "./plugins/playground",
@@ -3035,6 +3302,7 @@
         "analyzing-experiment-session-replays",
         "auditing-experiments-flags",
         "cleaning-up-stale-feature-flags",
+        "diagnosing-missing-recordings",
         "exploring-autocapture-events",
         "exploring-llm-clusters",
         "exploring-llm-evaluations",
@@ -3045,6 +3313,7 @@
         "instrument-llm-analytics",
         "instrument-logs",
         "instrument-product-analytics",
+        "managing-subscriptions",
         "query-examples",
         "signals",
         "skills-store"
@@ -3205,12 +3474,12 @@
     "id": "product-tracking-skills",
     "type": "plugin",
     "displayName": "Product Tracking Skills",
-    "description": "AI agent skills that make SaaS products data-ready for product analytics â€” from codebase scan to tracking plan to working instrumentation code.",
+    "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/Accoil/product-tracking-skills.git",
@@ -3292,12 +3561,12 @@
     "id": "qodo-skills",
     "type": "plugin",
     "displayName": "Qodo Skills",
-    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLCâ€”from IDE to CI/CDâ€”ensuring consistent standards and catching issues early.",
+    "description": "Qodo Skills provides a curated library of reusable AI agent capabilities that extend Claude's functionality for software development workflows. Each skill is designed to integrate seamlessly into your development process, enabling tasks like code quality checks, automated testing, security scanning, and compliance validation. Skills operate across your entire SDLC—from IDE to CI/CD—ensuring consistent standards and catching issues early.",
     "category": "development",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/qodo-ai/qodo-skills.git",
@@ -3522,6 +3791,45 @@
     }
   },
   {
+    "id": "sagemaker-ai",
+    "type": "plugin",
+    "displayName": "Sagemaker AI",
+    "description": "Build, train, and deploy AI models with deep AWS AI/ML expertise brought directly into your coding assistants, covering the surface area of Amazon SageMaker AI.",
+    "category": "development",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-21T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/awslabs/agent-plugins.git",
+    "sourceSubdir": "plugins/sagemaker-ai",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/awslabs/agent-plugins",
+    "components": {
+      "skills": [
+        "dataset-evaluation",
+        "dataset-transformation",
+        "directory-management",
+        "finetuning",
+        "finetuning-setup",
+        "hyperpod-issue-report",
+        "hyperpod-ssm",
+        "hyperpod-version-checker",
+        "model-deployment",
+        "model-evaluation",
+        "planning",
+        "use-case-specification"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    }
+  },
+  {
     "id": "sanity",
     "type": "plugin",
     "displayName": "Sanity",
@@ -3560,12 +3868,12 @@
     "id": "searchfit-seo",
     "type": "plugin",
     "displayName": "Searchfit Seo",
-    "description": "Free AI-powered SEO toolkit â€” audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
+    "description": "Free AI-powered SEO toolkit — audit websites, plan content strategy, optimize pages, generate schema markup, cluster keywords, and track AI visibility. Works with any website or codebase.",
     "category": "other",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/searchfit/searchfit-seo.git",
@@ -3687,6 +3995,7 @@
         "sentry-pr-code-review",
         "sentry-python-sdk",
         "sentry-react-native-sdk",
+        "sentry-react-router-framework-sdk",
         "sentry-react-sdk",
         "sentry-ruby-sdk",
         "sentry-sdk-setup",
@@ -3694,6 +4003,7 @@
         "sentry-sdk-upgrade",
         "sentry-setup-ai-monitoring",
         "sentry-svelte-sdk",
+        "sentry-tanstack-start-sdk",
         "sentry-workflow"
       ],
       "hooks": [],
@@ -3734,12 +4044,12 @@
     "id": "session-report",
     "type": "plugin",
     "displayName": "Session Report",
-    "description": "Generate an explorable HTML report of Claude Code session usage â€” tokens, cache efficiency, subagents, skills, and the most expensive prompts â€” from local ~/.claude/projects transcripts.",
+    "description": "Generate an explorable HTML report of Claude Code session usage — tokens, cache efficiency, subagents, skills, and the most expensive prompts — from local ~/.claude/projects transcripts.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "local",
     "sourceRef": "./plugins/session-report",
@@ -3760,12 +4070,12 @@
     "id": "shopify",
     "type": "plugin",
     "displayName": "Shopify",
-    "description": "Shopify developer tools for Claude Code â€” search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
+    "description": "Shopify developer tools for Claude Code — search Shopify docs, generate and validate GraphQL, Liquid, and UI extension code",
     "category": "development",
     "author": "Shopify",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/Shopify/shopify-plugins.git",
@@ -3798,6 +4108,7 @@
       "skills": [
         "shopify-admin",
         "shopify-admin-execution",
+        "shopify-app-store-review",
         "shopify-custom-data",
         "shopify-customer",
         "shopify-dev",
@@ -3886,12 +4197,12 @@
     "id": "sonarqube",
     "type": "plugin",
     "displayName": "Sonarqube",
-    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop â€” 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
+    "description": "Automatically enforce SonarQube code quality and security in the agent coding loop — 7,000+ rules, secrets scanning, agentic analysis, and quality gates across 40+ languages. PostToolUse hooks run analysis after every file edit. Pre-tool secrets scanning prevents 450+ patterns from reaching the LLM. Slash commands give on-demand access to quality gate status, coverage, duplication, and dependency risks. Includes SonarQube CLI, MCP Server, skills, hooks, and slash commands.",
     "category": "security",
     "author": "SonarSource",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-14T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
@@ -3977,12 +4288,12 @@
     "id": "spotify-ads-api",
     "type": "plugin",
     "displayName": "Spotify Ads API",
-    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth â€” all through conversation.",
+    "description": "Manage Spotify ad campaigns with natural language. Create campaigns, ad sets, ads, pull reports, and handle OAuth — all through conversation.",
     "category": "productivity",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-13T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
     "sourceType": "url",
     "sourceRef": "https://github.com/spotify/ads-claude-plugin.git",
@@ -4111,14 +4422,17 @@
     "category": "database",
     "author": "Anthropic",
     "tags": [],
-    "version": "1.0.0",
-    "publishedAt": "2026-04-08T00:00:00Z",
+    "version": "1.0.1",
+    "publishedAt": "2026-04-21T00:00:00Z",
     "sourceMarketplace": "anthropic",
-    "sourceType": "local",
-    "sourceRef": "./external_plugins/supabase",
-    "repoUrl": "https://github.com/anthropics/claude-plugins-public/tree/main/external_plugins/supabase",
+    "sourceType": "url",
+    "sourceRef": "https://github.com/supabase-community/supabase-plugin.git",
+    "repoUrl": "https://github.com/supabase-community/supabase-plugin",
     "components": {
-      "skills": [],
+      "skills": [
+        "supabase",
+        "supabase-postgres-best-practices"
+      ],
       "hooks": [],
       "commands": [],
       "agents": [],
@@ -4579,24 +4893,14 @@
     "description": "Process notes and screenshots from Todoist, Drive, Gmail, and more",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "personal",
-      "productivity",
-      "automation"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "check my inbox",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Process captured notes and screenshots.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general",
-    "longDescription": "The single skill at the heart of `youcoded-inbox` â€” checks your configured capture sources (Todoist, Drive, Gmail, Apple Notes/Reminders, iCloud, local staging) for unprocessed items and works through them with you in conversation. Items are normalized into a common shape, classified by intent, then resolved one at a time with your approval (answer the question, file the note, create the task, delete the noise).\n\nUse this skill standalone if you only want the triage logic without the rest of the inbox bundle, or invoke it directly with \"check my inbox\" / \"process my notes\" whenever you've been collecting captures throughout the day. The session-start hook in `youcoded-inbox` calls it automatically when items are waiting."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "encyclopedia-compile",
@@ -4605,24 +4909,14 @@
     "description": "Build the full Encyclopedia from source files",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "reference",
-      "personal",
-      "automation"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "compile my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Rebuild your encyclopedia from source files.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general",
-    "longDescription": "Compiles the eight modular source files of your Encyclopedia into one unified, narratively coherent life-history document â€” designed to be read as a comprehensive biography, both now and decades from now. Run it monthly (or whenever you say \"compile my encyclopedia\") and the skill reads every source file, internalizes the content, then writes a single document with one consistent voice and structure rather than a section-per-file dump.\n\nFour detail levels (Full, Personal, Professional, Public) control how much intimate detail surfaces in the output, so the same encyclopedia can produce a private full-fat version for yourself and a sharable Professional version for a job application. The compiled output saves to `~/.claude/encyclopedia/Encyclopedia.md` and gets versioned so you can compare year-over-year."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "encyclopedia-interviewer",
@@ -4631,23 +4925,14 @@
     "description": "Fill gaps in your encyclopedia through guided questions",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "reference",
-      "personal"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "interview me",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Fill knowledge gaps through conversation.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general",
-    "longDescription": "Turns the Encyclopedia from passive storage into an active conversation. Reads all eight source files, identifies what's missing or stale (gaps in backstory, cross-file contradictions, underdeveloped positions, unconfirmed leads), then runs a structured interview with you to fill them. Unlike the journaling assistant which follows your lead, the interviewer *pushes* â€” it has a prepared agenda and probes for specifics.\n\nProduces both a journal record of the conversation and targeted updates to the modular files (delegated through `encyclopedia-update`). Trigger it with \"interview me\", \"interview me about X\", \"what's missing in my encyclopedia\", or let the monthly gap-audit prompt suggest it for you. The depth and pace are conversational â€” expect 15â€“45 minutes per session depending on how much you have to say."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "encyclopedia-librarian",
@@ -4656,24 +4941,14 @@
     "description": "Get a briefing or deep-search your journal and encyclopedia",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "reference",
-      "research",
-      "personal"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "brief me on",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Search what Claude knows about you.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general",
-    "longDescription": "Produces purpose-built briefings on demand from your Encyclopedia â€” career summaries for job applications, person briefs before meetings, relationship context before family visits, period reviews, political profiles, topic syntheses. Six predefined templates plus a freeform mode, plus an optional Deep Search mode that mines text-message histories, journal entries, and misc documents for material the modular files might have missed.\n\nFour detail levels (Full, Personal, Professional, Public) control privacy in the output â€” same encyclopedia, different surface depending on whether the briefing is for you, a coworker, or a public document. Trigger with \"brief me on [person]\", \"deep search [topic]\", \"prep me for [situation]\", \"pull together everything about X\". Outputs save to `~/.claude/encyclopedia/reports/` and are included in future Deep Search runs."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "encyclopedia-update",
@@ -4682,24 +4957,14 @@
     "description": "Sync journal entries into your encyclopedia source files",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "reference",
-      "personal",
-      "automation"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "update my encyclopedia",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Sync journal entries into the encyclopedia.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general",
-    "longDescription": "The processing layer underneath the Encyclopedia. Reads new journal entries (incremental by default, full-rebuild on request) and routes their contents into the eight modular source files: people, places, beliefs, work, goals, references, etc. Applies file-specific update rules, deduplicates, surfaces conflicts for your approval, and never writes without confirming.\n\nInvoked automatically at the end of every daily journaling session by `journaling-assistant` so the encyclopedia stays current without you thinking about it, but you can also run it directly â€” \"update my encyclopedia\", \"sync the encyclopedia\", \"add a goal\" â€” when you've made changes outside the daily-journaling flow. Safe to re-run; idempotent by design."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "fork-file",
@@ -4708,23 +4973,14 @@
     "description": "Track groceries, pantry inventory, and fast food spending",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "personal"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "check my food inventory",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Food, pantry, and spending â€” logged.",
-    "lifeArea": [
-      "personal",
-      "health"
-    ],
-    "audience": "general",
-    "longDescription": "The single skill at the core of `youcoded-food` â€” the actual food tracker. Manages a grocery/pantry inventory across the storage locations you configure (pantry, fridge, freezer, garage shelves, dorm mini-fridge â€” whatever you've got) and tracks fast food spending broken out by restaurant, item, and size. Handles receipt processing from photos or text, food identification from pictures, manual entry, age/freshness warnings, and spending summaries.\n\nData lives in two CSVs under `~/.claude/fork-file/` â€” `pantry.csv` for inventory, `fastfood.csv` for spending â€” both human-readable and exportable. Install this if you want the food-tracking logic without the full `youcoded-food` bundle's UX wrapping; install `youcoded-food` if you want the snarky-friend nicknames and the rest of the experience on top."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "google-drive",
@@ -4733,23 +4989,14 @@
     "description": "Upload, download, and manage files on Google Drive",
     "category": "work",
     "author": "@destin",
-    "tags": [
-      "data",
-      "automation"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/google-drive",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Files on Drive, one prompt away.",
-    "lifeArea": [
-      "work"
-    ],
-    "audience": "general",
-    "longDescription": "The single skill that powers `youcoded-drive`'s Google Drive integration. Wraps `rclone` with a strict rule: every Drive operation goes through the configured `gdrive:` remote â€” never browser automation, never the web UI, never another path. List, search, upload, download, copy, move, delete, create folders, all in conversation: \"show me my Drive\", \"download the latest report to Desktop\", \"move these into a 2026-Taxes folder\".\n\nFirst-run setup walks you through `rclone config` to authorize Drive once. Install this skill if you want raw Drive access without the rest of `youcoded-drive`'s polish, or install `youcoded-drive` for the full bundle including helper commands and integration with the broader YouCoded toolkit."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "health",
@@ -4758,19 +5005,14 @@
     "description": "Verify all toolkit components are working",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "automation"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/health",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Verify the toolkit is healthy.",
-    "audience": "developer",
-    "longDescription": "A lightweight diagnostic command â€” verifies the YouCoded toolkit is installed, its hooks are reconciled into your Claude Code settings, and the core dependencies are present. Run it after troubleshooting an issue, after upgrading the app, or any time something feels off and you want to confirm the foundation is healthy before going deeper.\n\nUnlike `/diagnose` (which is the full deep-scan), `/health` is a quick yes/no check meant to fit on one screen â€” you'll know in seconds whether everything is in order. Reports specific failures with the exact command to fix each one. Read-only; never modifies your settings."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "journaling-assistant",
@@ -4779,24 +5021,14 @@
     "description": "Write about your day in a guided conversation",
     "category": "personal",
     "author": "@destin",
-    "tags": [
-      "journal",
-      "writing",
-      "personal"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "let's journal",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "A daily check-in, at your pace.",
-    "longDescription": "A guided daily journaling session â€” Claude prompts you through the parts of your day worth remembering rather than asking you to start from a blank page. Two modes: structured daily entries that capture a full breadth of the day, and freeform misc entries for rants, topic deep-dives, beliefs, or anything else worth writing down. The assistant is proactive â€” it surfaces relevant unresolved threads from past entries and asks about them, rather than waiting for you to bring them up.\n\nNot therapy: the assistant draws out detail with questions, but it never interprets, advises, or editorializes. At the end of each daily session it automatically calls `encyclopedia-update` to route what you said into your modular source files, so the encyclopedia stays current as a side effect of journaling. Triggers on \"let's journal\", \"debrief my day\", \"I want to rant about X\", and similar phrases.",
-    "lifeArea": [
-      "personal"
-    ],
-    "audience": "general"
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "remote-setup",
@@ -4805,20 +5037,14 @@
     "description": "Set up remote access -- installs Tailscale, configures your password, and gets your phone connected",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "automation",
-      "plugin"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/remote-setup",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Set up remote access from your phone.",
-    "audience": "general",
-    "longDescription": "Walks you through enabling remote access to YouCoded from your phone (or any other device) in one conversation. Installs Tailscale if you don't have it, runs the auth flow, sets a remote-access password, and confirms everything works â€” explained in plain language for non-technical users, with no \"open a terminal and run this\" handoffs. Claude does the work; you just sign in to Tailscale when the browser pops up.\n\nBy the end you'll have YouCoded reachable at a stable Tailscale URL on any device on your tailnet, which means full chat + terminal access from your phone over an encrypted WireGuard tunnel. Idempotent â€” safe to re-run if you want to change the password or move to a new device."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "setup-wizard",
@@ -4827,20 +5053,14 @@
     "description": "Install dependencies and configure the toolkit",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "automation",
-      "plugin"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/setup-wizard",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "First-time setup, guided.",
-    "audience": "general",
-    "longDescription": "A pure-CLI fallback first-run wizard for people using the YouCoded toolkit directly in Claude Code without the YouCoded app. Walks you through three short questions â€” name, comfort level, sync backend â€” and writes the result to `~/.claude/toolkit-state/config.json`. That config then drives the rest of the toolkit's behavior.\n\nMost people don't need this because the YouCoded app runs its own onboarding (with curated package selection, plugin registration, and hooks reconciliation built in). This skill exists for the users who installed the toolkit standalone via `git clone` and need a graceful first-run experience. Additive and non-destructive â€” never overwrites existing config without permission."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "sync",
@@ -4849,20 +5069,14 @@
     "description": "Check project sync status and onboard new projects",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "automation",
-      "git"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/sync",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Keep your projects in sync across devices.",
-    "audience": "developer",
-    "longDescription": "Keeps your YouCoded toolkit state â€” config, journal entries, encyclopedia, inbox, themes, captured notes â€” in sync across every device you use Claude on. Three pluggable backends (Google Drive via rclone, GitHub via a private repo, iCloud via the native folder) â€” pick the one you already trust and the skill handles upload/download/conflict resolution on every session start and end.\n\nDistinguishes portable state (`config.json`, encyclopedia, journal â€” synced) from machine-local state (`config.local.json`, caches, OS-specific paths â€” never synced) so devices don't fight each other over who-runs-where settings. Works invisibly via the SessionStart and SessionEnd hooks once configured; you can also trigger a manual sync any time with \"sync now\"."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "toolkit",
@@ -4871,20 +5085,14 @@
     "description": "See all features, commands, and useful phrases",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "docs",
-      "reference"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/toolkit",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "What Claude can do, at a glance.",
-    "audience": "general",
-    "longDescription": "The discovery surface for everything YouCoded can do â€” a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation â€” read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
+    "deprecatedAt": "2026-04-14"
   },
   {
     "id": "update",
@@ -4893,20 +5101,44 @@
     "description": "Check for toolkit updates and install the latest version",
     "category": "admin",
     "author": "@destin",
-    "tags": [
-      "automation",
-      "plugin"
-    ],
+    "tags": [],
     "version": "1.0.0",
     "publishedAt": "2026-04-08T00:00:00Z",
     "sourceMarketplace": "youcoded",
     "prompt": "/update",
     "authorGithub": "destinationunknown",
     "deprecated": true,
-    "deprecatedAt": "2026-04-14",
-    "tagline": "Keep the toolkit up to date.",
-    "audience": "general",
-    "longDescription": "Fetches the latest YouCoded toolkit release from GitHub and installs it in place â€” bumps the `VERSION` file, pulls new skills/hooks/commands, runs migrations, reconciles your settings.json hooks against the new manifest, and reports exactly what changed. Run it whenever you remember (no auto-update; you're in control), or when `/health` warns that you're behind.\n\nSafe to re-run; idempotent by design. Verifies the working tree is clean before touching anything, never overwrites local edits, and tells you exactly which commands to run if it can't auto-resolve a conflict. Offline-safe: gracefully tells you it can't check when there's no network rather than failing partway through."
+    "deprecatedAt": "2026-04-14"
+  },
+  {
+    "id": "migration-to-aws",
+    "type": "plugin",
+    "displayName": "Migration To AWS",
+    "description": "Assess current cloud provider usage and billing to estimate and compare AWS services and pricing, with recommendations for migration or continued use of current provider.",
+    "category": "migration",
+    "author": "Anthropic",
+    "tags": [],
+    "version": "1.0.0",
+    "publishedAt": "2026-04-08T00:00:00Z",
+    "sourceMarketplace": "anthropic",
+    "sourceType": "git-subdir",
+    "sourceRef": "https://github.com/awslabs/agent-plugins.git",
+    "sourceSubdir": "plugins/migration-to-aws",
+    "sourceGitRef": "main",
+    "repoUrl": "https://github.com/awslabs/agent-plugins",
+    "components": {
+      "skills": [
+        "gcp-to-aws"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    },
+    "deprecated": true,
+    "deprecatedAt": "2026-04-21"
   },
   {
     "id": "sanity-plugin",
@@ -4942,120 +5174,5 @@
     "repoUrl": "https://github.com/SonarSource/sonarqube-agent-plugins",
     "deprecated": true,
     "deprecatedAt": "2026-04-14"
-  },
-  {
-    "id": "google-services",
-    "type": "plugin",
-    "displayName": "Google Services",
-    "description": "Connect Gmail, Drive, Docs, Sheets, Slides, and Calendar with one setup. Works on personal Google accounts.",
-    "category": "integrations",
-    "author": "YouCoded",
-    "tags": [
-      "google",
-      "gmail",
-      "drive",
-      "docs",
-      "sheets",
-      "slides",
-      "calendar",
-      "workspace"
-    ],
-    "version": "0.1.0",
-    "publishedAt": "2026-04-16T00:00:00Z",
-    "sourceMarketplace": "youcoded",
-    "sourceType": "local",
-    "sourceRef": "google-services",
-    "repoUrl": null,
-    "components": {
-      "skills": [
-        "gws-calendar",
-        "gws-calendar-agenda",
-        "gws-calendar-insert",
-        "gws-docs",
-        "gws-docs-write",
-        "gws-drive",
-        "gws-drive-upload",
-        "gws-gmail",
-        "gws-gmail-forward",
-        "gws-gmail-read",
-        "gws-gmail-reply",
-        "gws-gmail-reply-all",
-        "gws-gmail-send",
-        "gws-gmail-triage",
-        "gws-gmail-watch",
-        "gws-shared",
-        "gws-sheets",
-        "gws-sheets-append",
-        "gws-sheets-read",
-        "gws-slides",
-        "youcoded-gws-reauth"
-      ],
-      "hooks": [],
-      "commands": [
-        "google-services-setup"
-      ],
-      "agents": [],
-      "mcpServers": [],
-      "hasHooksManifest": false,
-      "hasMcpConfig": false
-    },
-    "longDescription": "Google Services gives YouCoded access to your Gmail, Drive, Docs, Sheets, Slides, and Calendar in a single install. Run /google-services-setup once and YouCoded will walk you through connecting your account â€” no technical setup required. Your account stays yours: every credential is stored in your OS keyring, and the connection is made through a private Google Cloud project that only you can access.\n\nAfter setup, ask Claude things like \"send an email to Mom,\" \"find my budget spreadsheet from last week,\" or \"what's on my calendar tomorrow\" â€” Claude picks the right Google app automatically.",
-    "integrationOnly": true
-  },
-  {
-    "id": "apple-services",
-    "type": "plugin",
-    "displayName": "Apple Services",
-    "description": "Calendar, Reminders, Contacts, Notes, Mail, and iCloud Drive in one setup. macOS only.",
-    "category": "integrations",
-    "author": "YouCoded",
-    "tags": [
-      "apple",
-      "macos",
-      "calendar",
-      "reminders",
-      "contacts",
-      "notes",
-      "mail",
-      "icloud"
-    ],
-    "version": "0.1.0",
-    "publishedAt": "2026-04-20T00:00:00Z",
-    "sourceMarketplace": "youcoded",
-    "sourceType": "local",
-    "sourceRef": "apple-services",
-    "repoUrl": null,
-    "platforms": [
-      "macos"
-    ],
-    "components": {
-      "skills": [
-        "apple-calendar",
-        "apple-calendar-agenda",
-        "apple-calendar-create",
-        "apple-contacts",
-        "apple-contacts-find",
-        "apple-mail",
-        "apple-mail-search",
-        "apple-mail-send",
-        "apple-notes",
-        "apple-notes-search",
-        "apple-notes-write",
-        "apple-reminders",
-        "apple-reminders-add",
-        "apple-reminders-list",
-        "icloud-drive"
-      ],
-      "hooks": [],
-      "commands": [
-        "apple-services-setup"
-      ],
-      "agents": [],
-      "mcpServers": [],
-      "hasHooksManifest": false,
-      "hasMcpConfig": false
-    },
-    "longDescription": "Apple Services gives YouCoded access to your Calendar, Reminders, Contacts, Notes, Mail, and iCloud Drive on macOS. Run /apple-services-setup once and YouCoded will walk you through granting permissions for each Apple app — no technical setup required. Everything runs locally on your Mac; no data leaves your machine and no account passwords are needed.\n\nAfter setup, ask Claude things like \"what's on my calendar this week,\" \"remind me at 5pm to call mom,\" \"find Jenny's phone number,\" or \"search my email for the lease renewal\" — Claude picks the right Apple app automatically. Requires macOS 14 (Sonoma) or newer.",
-    "integrationOnly": true
   }
 ]
