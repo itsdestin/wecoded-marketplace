@@ -1,5 +1,5 @@
 {
-  "version": "2026-04-21T18:52:01.743Z",
+  "version": "2026-04-22T22:47:53.137Z",
   "generatedBy": "build-integrations.js",
   "integrations": [
     {
@@ -23,6 +23,13 @@
       "lifeArea": [
         "personal",
         "work"
+      ],
+      "tags": [
+        "calendar",
+        "email",
+        "contacts",
+        "notes",
+        "files"
       ]
     },
     {
@@ -44,6 +51,13 @@
       "lifeArea": [
         "work",
         "personal"
+      ],
+      "tags": [
+        "email",
+        "calendar",
+        "drive",
+        "docs",
+        "oauth"
       ]
     },
     {
@@ -64,6 +78,10 @@
       ],
       "lifeArea": [
         "personal"
+      ],
+      "tags": [
+        "messaging",
+        "social"
       ]
     },
     {
@@ -83,6 +101,10 @@
       "lifeArea": [
         "personal",
         "work"
+      ],
+      "tags": [
+        "tasks",
+        "productivity"
       ]
     },
     {
@@ -103,6 +125,10 @@
       "lifeArea": [
         "creative",
         "personal"
+      ],
+      "tags": [
+        "automation",
+        "scripting"
       ]
     },
     {
@@ -122,6 +148,11 @@
       "lifeArea": [
         "creative",
         "work"
+      ],
+      "tags": [
+        "design",
+        "creative",
+        "oauth"
       ]
     },
     {
@@ -140,6 +171,11 @@
       "iconUrl": "icons/github.svg",
       "lifeArea": [
         "work"
+      ],
+      "tags": [
+        "code",
+        "development",
+        "oauth"
       ]
     },
     {
@@ -162,6 +198,10 @@
         "work",
         "personal",
         "creative"
+      ],
+      "tags": [
+        "automation",
+        "accessibility"
       ]
     },
     {
@@ -183,6 +223,10 @@
       "lifeArea": [
         "work",
         "personal"
+      ],
+      "tags": [
+        "automation",
+        "accessibility"
       ]
     }
   ]
