@@ -12,6 +12,10 @@ migrations_dir = "migrations"
 [ai]
 binding = "AI"
 
+[[analytics_engine_datasets]]
+binding = "APP_ANALYTICS"
+dataset = "youcoded_app_events"
+
 [env.test]
 # Test environment inherits config but omits AI binding — vitest-pool-workers /
 # miniflare in this toolchain version can't resolve the wrapped AI worker.
