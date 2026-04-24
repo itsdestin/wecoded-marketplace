@@ -1,6 +1,9 @@
 export interface Env {
   DB: D1Database;
   AI: Ai;
+  // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
+  // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
+  APP_ANALYTICS?: AnalyticsEngineDataset;
   GH_CLIENT_ID: string;
   GH_CLIENT_SECRET: string;
   ADMIN_USER_IDS: string;  // comma-separated user ids
