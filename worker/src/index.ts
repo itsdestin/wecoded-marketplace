@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
 import type { Env, HonoEnv } from "./types";
 import { authRoutes } from "./auth/routes";
@@ -29,6 +30,17 @@ app.use("*", cors({
   allowHeaders: ["Content-Type", "Authorization"],
   credentials: false,
 }));
+
+// Error handler: HTTPException responses (badRequest, forbidden, tooMany, etc.)
+// keep their own status+body. Any other thrown Error becomes JSON 500 instead
+// of Hono's default plain-text so admin-skill + dashboard callers can parse the
+// message — and so the admin analytics SQL-API errors are debuggable in prod.
+app.onError((err, c) => {
+  if (err instanceof HTTPException) return err.getResponse();
+  const message = err instanceof Error ? err.message : "internal error";
+  console.error("worker onError:", message);
+  return c.json({ ok: false, error: message }, 500);
+});
 
 app.get("/health", (c) => c.json({ ok: true }));
 app.route("/", authRoutes);
