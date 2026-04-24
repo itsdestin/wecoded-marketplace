@@ -1,9 +1,9 @@
 {
-  "tagline": "What Claude can do, at a glance.",
+  "tagline": "Deprecated — discover features from the marketplace instead.",
   "tags": [
     "docs",
     "reference"
   ],
   "audience": "general",
-  "longDescription": "The discovery surface for everything YouCoded can do — a single command (`/toolkit`) that prints the full inventory of installed skills, hooks, commands, and integrations grouped by what they're for, with one-line descriptions and example invocation phrases. Use it when you forget what's available, when you're showing the toolkit to a friend, or when you want to remember the exact phrase that triggers a particular skill.\n\nPure documentation — read-only, fast, never modifies anything. Drops to a clean printable list rather than a wall of prose. Pairs naturally with `/health` (\"is everything working?\") and `/update` (\"is there a new version?\") as the three commands you'll use most often after install."
+  "longDescription": "The legacy `/toolkit` inventory command no longer exists. Feature discovery has moved to the YouCoded marketplace in the app — browse, search, and install plugins visually rather than reading a printed list. This registry entry is kept for historical clients and will be removed in a future cleanup.\n\nIf you installed this in the past: uninstall it from the app's marketplace. The commands it used to index (`/health`, `/update`, `/diagnose`) still exist inside the `youcoded-core` plugin."
 }

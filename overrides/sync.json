@@ -1,9 +1,9 @@
 {
-  "tagline": "Keep your projects in sync across devices.",
+  "tagline": "Cross-device sync — now built into the YouCoded app.",
   "tags": [
     "automation",
     "git"
   ],
   "audience": "developer",
-  "longDescription": "Keeps your YouCoded toolkit state — config, journal entries, encyclopedia, inbox, themes, captured notes — in sync across every device you use Claude on. Three pluggable backends (Google Drive via rclone, GitHub via a private repo, iCloud via the native folder) — pick the one you already trust and the skill handles upload/download/conflict resolution on every session start and end.\n\nDistinguishes portable state (`config.json`, encyclopedia, journal — synced) from machine-local state (`config.local.json`, caches, OS-specific paths — never synced) so devices don't fight each other over who-runs-where settings. Works invisibly via the SessionStart and SessionEnd hooks once configured; you can also trigger a manual sync any time with \"sync now\"."
+  "longDescription": "Cross-device sync used to be a standalone skill but is now built directly into the YouCoded app — no plugin to install. Open the app, go to Settings → Sync, and pick one of the built-in backends (Google Drive via rclone, GitHub via a private repo, or iCloud via the native folder). The app handles upload/download/conflict resolution automatically on every session start and end.\n\nIf you're using Claude Code standalone without the YouCoded app and need sync, the legacy skill lived inside `youcoded-core` before being folded into the app; that repo is being deprecated. Use the app for the best experience."
 }
