@@ -7,6 +7,7 @@ import { ratingRoutes } from "./ratings/routes";
 import { themeRoutes } from "./themes/routes";
 import { statsRoutes } from "./stats/routes";
 import { reportRoutes } from "./reports/routes";
+import { appRoutes } from "./app/routes";
 
 const app = new Hono<HonoEnv>();
 
@@ -34,6 +35,7 @@ app.route("/", ratingRoutes);
 app.route("/", themeRoutes);
 app.route("/", statsRoutes);
 app.route("/", reportRoutes);
+app.route("/", appRoutes);
 
 export default app;
 export type { Env };
