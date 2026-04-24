@@ -64,8 +64,9 @@ describe("GET /admin/analytics/dau", () => {
     });
     expect(res.status).toBe(200);
     const sqlBody = (globalThis.fetch as any).mock.calls[0][1].body as string;
-    // SQL is built server-side — clamped to at most 90.
-    expect(sqlBody).toMatch(/INTERVAL '90' DAY/);
+    // SQL is built server-side — clamped to at most 90 (ClickHouse takes an
+    // unquoted integer literal for INTERVAL).
+    expect(sqlBody).toMatch(/INTERVAL 90 DAY/);
   });
 });
 
