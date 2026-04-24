@@ -29,6 +29,8 @@ migrations_dir = "migrations"
 GH_CLIENT_ID = "test"
 GH_CLIENT_SECRET = "test"
 ADMIN_USER_IDS = "github:admin"
+CF_ACCOUNT_ID = "test-account"
+CF_ANALYTICS_TOKEN = "test-token"
 
 # Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
 # are injected as secrets by CI (see .github/workflows/worker-deploy.yml).

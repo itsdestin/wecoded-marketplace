@@ -7,6 +7,11 @@ export interface Env {
   GH_CLIENT_ID: string;
   GH_CLIENT_SECRET: string;
   ADMIN_USER_IDS: string;  // comma-separated user ids
+  // Cloudflare Analytics Engine SQL API credentials used ONLY by admin analytics
+  // routes. CF_ANALYTICS_TOKEN is a narrow-scope token (Analytics Engine: Read)
+  // distinct from the broader CF_API_TOKEN used by CI for `wrangler deploy`.
+  CF_ACCOUNT_ID: string;
+  CF_ANALYTICS_TOKEN: string;
 }
 
 export interface UserRow {
