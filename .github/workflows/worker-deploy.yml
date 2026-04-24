@@ -39,6 +39,11 @@ jobs:
           echo "${{ secrets.MARKETPLACE_GH_CLIENT_ID }}" | npx wrangler secret put GH_CLIENT_ID
           echo "${{ secrets.MARKETPLACE_GH_CLIENT_SECRET }}" | npx wrangler secret put GH_CLIENT_SECRET
           echo "${{ secrets.MARKETPLACE_ADMIN_USER_IDS }}" | npx wrangler secret put ADMIN_USER_IDS
+          # Analytics Engine SQL-API credentials used by admin /admin/analytics/*
+          # routes. CF_ANALYTICS_TOKEN is a narrow Analytics-Engine-Read scoped
+          # token distinct from the broader CF_API_TOKEN used for deploy above.
+          echo "${{ secrets.CF_ACCOUNT_ID }}" | npx wrangler secret put CF_ACCOUNT_ID
+          echo "${{ secrets.MARKETPLACE_CF_ANALYTICS_TOKEN }}" | npx wrangler secret put CF_ANALYTICS_TOKEN
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
