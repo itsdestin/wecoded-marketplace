@@ -25,9 +25,12 @@ export async function runAnalyticsQuery<T = Record<string, unknown>>(
     body: sql,
   });
   if (!res.ok) {
-    // Don't echo raw response body (may contain SQL text); CF observability
-    // logs the full error. Keep the thrown message short on purpose.
-    throw new Error(`analytics query failed: ${res.status}`);
+    // Include the response body (typically a small JSON error from CF) so the
+    // admin-only caller can see what the dialect is complaining about. OK to
+    // surface to admin responses — the onError handler in index.ts guards it
+    // from public exposure via 500-JSON only on authenticated routes.
+    const body = await res.text().catch(() => "");
+    throw new Error(`analytics query failed: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}`);
   }
   const body = (await res.json()) as AEResponse<T>;
   return body.data;
