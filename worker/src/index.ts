@@ -9,6 +9,7 @@ import { statsRoutes } from "./stats/routes";
 import { reportRoutes } from "./reports/routes";
 import { appRoutes } from "./app/routes";
 import { adminAnalyticsRoutes } from "./admin/analytics";
+import { adminDashboardRoute } from "./admin/dashboard-route";
 
 const app = new Hono<HonoEnv>();
 
@@ -38,6 +39,7 @@ app.route("/", statsRoutes);
 app.route("/", reportRoutes);
 app.route("/", appRoutes);
 app.route("/", adminAnalyticsRoutes);
+app.route("/", adminDashboardRoute);
 
 export default app;
 export type { Env };
