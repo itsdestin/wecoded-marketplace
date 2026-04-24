@@ -37,7 +37,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
     c.env,
     `SELECT toDate(timestamp) AS day, uniq(blob2) AS dau
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL ${days} DAY
+     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL '${days}' DAY
      GROUP BY day ORDER BY day`
   );
   return c.json(rows);
@@ -50,7 +50,7 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => 
     c.env,
     `SELECT uniq(blob2) AS mau
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL 30 DAY`
+     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL '30' DAY`
   );
   return c.json({ mau: rows[0]?.mau ?? 0 });
 });
@@ -63,7 +63,7 @@ adminAnalyticsRoutes.get("/admin/analytics/installs", requireAdminAuth, async (c
     c.env,
     `SELECT toDate(timestamp) AS day, count() AS installs
      FROM youcoded_app_events
-     WHERE blob1 = 'install' AND timestamp > NOW() - INTERVAL ${days} DAY
+     WHERE blob1 = 'install' AND timestamp > NOW() - INTERVAL '${days}' DAY
      GROUP BY day ORDER BY day`
   );
   return c.json(rows);
@@ -76,7 +76,7 @@ adminAnalyticsRoutes.get("/admin/analytics/versions", requireAdminAuth, async (c
     c.env,
     `SELECT blob3 AS version, uniq(blob2) AS users
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL 1 DAY
+     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL '1' DAY
      GROUP BY version ORDER BY users DESC`
   );
   return c.json(rows);
@@ -89,7 +89,7 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (
     c.env,
     `SELECT blob4 AS platform, uniq(blob2) AS users
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL 30 DAY
+     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL '30' DAY
      GROUP BY platform ORDER BY users DESC`
   );
   return c.json(rows);
@@ -102,7 +102,7 @@ adminAnalyticsRoutes.get("/admin/analytics/countries", requireAdminAuth, async (
     c.env,
     `SELECT blob6 AS country, uniq(blob2) AS users
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL 30 DAY
+     WHERE blob1 = 'heartbeat' AND timestamp > NOW() - INTERVAL '30' DAY
      GROUP BY country ORDER BY users DESC LIMIT 20`
   );
   return c.json(rows);
