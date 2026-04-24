@@ -48,3 +48,30 @@ describe("POST /app/install", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("POST /app/heartbeat", () => {
+  it("accepts a valid Android payload (empty os)", async () => {
+    const res = await app.request("/app/heartbeat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        installId: "c4b2a8f0-0000-4000-8000-000000000001",
+        appVersion: "1.2.1",
+        platform: "android",
+        os: "",
+      }),
+    }, env);
+    expect(res.status).toBe(200);
+    const body = await res.json<{ ok: boolean }>();
+    expect(body.ok).toBe(true);
+  });
+
+  it("rejects malformed JSON body (parse fails → missing fields)", async () => {
+    const res = await app.request("/app/heartbeat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not json",
+    }, env);
+    expect(res.status).toBe(400);
+  });
+});
