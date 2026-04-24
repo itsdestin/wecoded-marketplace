@@ -4,7 +4,7 @@
 // that returns them, even for debugging.
 import { Hono } from "hono";
 import type { HonoEnv } from "../types";
-import { requireAuth } from "../auth/middleware";
+import { requireAdminAuth } from "../auth/admin-middleware";
 import { forbidden } from "../lib/errors";
 import { runAnalyticsQuery } from "../lib/analytics-query";
 
@@ -23,7 +23,7 @@ function clampDays(raw: string | undefined, fallback: number): number {
 export const adminAnalyticsRoutes = new Hono<HonoEnv>();
 
 // GET /admin/analytics/dau?days=30 — DAU by day for the last N days.
-adminAnalyticsRoutes.get("/admin/analytics/dau", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ day: string; dau: number }>(
@@ -37,7 +37,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAuth, async (c) => {
 });
 
 // GET /admin/analytics/mau — rolling 30-day unique active users.
-adminAnalyticsRoutes.get("/admin/analytics/mau", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const rows = await runAnalyticsQuery<{ mau: number }>(
     c.env,
@@ -49,7 +49,7 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAuth, async (c) => {
 });
 
 // GET /admin/analytics/installs?days=90 — new installs per day.
-adminAnalyticsRoutes.get("/admin/analytics/installs", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/installs", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const days = clampDays(c.req.query("days"), 90);
   const rows = await runAnalyticsQuery<{ day: string; installs: number }>(
@@ -63,7 +63,7 @@ adminAnalyticsRoutes.get("/admin/analytics/installs", requireAuth, async (c) => 
 });
 
 // GET /admin/analytics/versions — active-user count by version, today only.
-adminAnalyticsRoutes.get("/admin/analytics/versions", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/versions", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const rows = await runAnalyticsQuery<{ version: string; users: number }>(
     c.env,
@@ -76,7 +76,7 @@ adminAnalyticsRoutes.get("/admin/analytics/versions", requireAuth, async (c) => 
 });
 
 // GET /admin/analytics/platforms — rolling 30-day split by platform.
-adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const rows = await runAnalyticsQuery<{ platform: string; users: number }>(
     c.env,
@@ -89,7 +89,7 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAuth, async (c) =>
 });
 
 // GET /admin/analytics/countries — rolling 30-day top 20 countries.
-adminAnalyticsRoutes.get("/admin/analytics/countries", requireAuth, async (c) => {
+adminAnalyticsRoutes.get("/admin/analytics/countries", requireAdminAuth, async (c) => {
   if (!isAdmin(c.env, c.get("userId"))) throw forbidden("admin only");
   const rows = await runAnalyticsQuery<{ country: string; users: number }>(
     c.env,
