@@ -270,4 +270,5 @@ After the pack is written, refinements go directly to manifest or asset files; a
 - [ ] Bubble blur/opacity are manifest fields, NOT hardcoded in `custom_css`
 - [ ] Wallpaper + pattern come from `background.value` / `background.pattern` — NOT from `body::before`/`body::after` in `custom_css`
 - [ ] `check-contrast.cjs` passes with no HARD or SURFACE failures
+- [ ] `preview.png` generated via `wecoded-themes/scripts/generate-previews.js <slug>` (Step 7.5) — fallback OK if Playwright unavailable
 - [ ] `_preview/` deleted after successful pack creation
