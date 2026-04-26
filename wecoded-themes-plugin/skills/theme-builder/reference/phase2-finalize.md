@@ -94,6 +94,21 @@ node core/skills/theme-builder/scripts/check-contrast.cjs ~/.claude/wecoded-them
 
 If any HARD or SURFACE rules fail, fix the tokens and re-run. Soft warnings can be noted to the user but don't need fixing.
 
+## Step 7.5: Generate preview card image
+
+Run the canonical preview generator from the workspace's wecoded-themes clone — this produces the `preview.png` that the app's Library uses for the local theme card AND that the publisher uploads to the marketplace PR (replacing the publisher's BrowserWindow-based fallback).
+
+```bash
+cd ~/youcoded-dev/wecoded-themes
+[ -d node_modules ] || npm ci
+[ -d node_modules/playwright ] && npx playwright install chromium --with-deps 2>&1 | tail -5 || true
+node scripts/generate-previews.js <slug>
+```
+
+Output: `~/.claude/wecoded-themes/<slug>/preview.png` (~150-300 KB at 800×500). The script prints `done: <slug> -> preview.png (<size> KB)` on success.
+
+If the script fails (Playwright dependency error, missing wecoded-themes clone, etc.), don't block finalization — the publisher's fallback `theme-preview-generator.ts` will produce one at publish time, and the app's Library card will fall back to the wallpaper image. Tell the user the failure was non-fatal.
+
 ## Step 8: Confirm to User
 
 Tell the user: "**[Theme Name]** is live in the app. What would you like to change?"
