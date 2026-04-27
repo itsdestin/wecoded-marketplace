@@ -12,12 +12,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Phase 0.4 spike confirmed: winrt-Windows.Foundation must be installed
-# explicitly alongside winrt-Windows.Media.Control — the latter does not
-# pull the foundation bindings in transitively.
+# pywinrt ships each WinRT namespace as its own PyPI package and does NOT
+# transitively pull namespaces it depends on at runtime. We've now found
+# three siblings the SMTC backend reaches into:
+#  - Windows.Media.Control          → GlobalSystemMediaTransportControlsSessionManager
+#  - Windows.Foundation             → IAsyncOperation primitives (so request_async works)
+#  - Windows.Foundation.Collections → IVectorView, returned by sessions.get_sessions();
+#                                     enumerating the manager's session list raises
+#                                     "Foundation.Collections not loaded" without it.
+# The Phase 0.4 spike caught the first two but didn't exercise iteration —
+# the empirical test that surfaces the third one is the smoke-test on a
+# real Windows box. See commit log near 0.1.0 release for context.
 windows = [
     "winrt-Windows.Media.Control>=3.2.0",
     "winrt-Windows.Foundation>=3.2.0",
+    "winrt-Windows.Foundation.Collections>=3.2.0",
 ]
 dev = ["pytest>=8.0", "pytest-mock>=3.12", "pytest-asyncio>=0.23"]
 
