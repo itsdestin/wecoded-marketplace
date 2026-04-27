@@ -41,6 +41,7 @@ from spotify_mcp.tools.local_tools import (
     local_now_playing, local_is_running,
     local_seek_to, local_set_volume, local_launch, local_quit,
 )
+from spotify_mcp.tools.smart_tools import now_playing, play_pause_smart
 
 
 class _SpotifyMcpServer:
@@ -115,6 +116,8 @@ def build_server() -> _SpotifyMcpServer:
     s.register("local.set_volume", local_set_volume)
     s.register("local.launch", local_launch)
     s.register("local.quit", local_quit)
+    s.register("now_playing", now_playing)
+    s.register("play_pause_smart", play_pause_smart)
     return s
 
 
