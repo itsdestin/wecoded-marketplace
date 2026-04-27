@@ -124,29 +124,44 @@ def build_server() -> _SpotifyMcpServer:
 
 
 async def run_stdio() -> None:
-    """Run the MCP server over stdio. Production entrypoint."""
+    """Run the MCP server over stdio. Production entrypoint.
+
+    Bridges our internal _SpotifyMcpServer (which uses plain dicts) to the
+    mcp.Server protocol (which since SDK v1.x requires Pydantic Tool /
+    TextContent objects). Earlier versions of this function returned dicts
+    directly — that worked under SDK 0.x, but SDK 1.x reads fields via
+    attribute access (`tool.name`) and crashes 'tools/list' with
+    "'dict' object has no attribute 'name'". Verified live with mcp 1.27.0
+    on 2026-04-26."""
+    import json as _json
+    from mcp.server import Server as _Server
+    from mcp.types import Tool as _Tool, TextContent as _TextContent
+
     s = build_server()
     async with stdio_server() as (read, write):
-        # Bridge our internal _SpotifyMcpServer to the mcp.Server protocol.
-        # For Phase 2 we only need to handle list_tools and call_tool;
-        # the full mcp.Server adaptor lands when the first real tool is
-        # added in Phase 4.
-        from mcp.server import Server as _Server
         proto = _Server("spotify-services")
 
         @proto.list_tools()
-        async def _list():
+        async def _list() -> list[_Tool]:
             return [
-                {
-                    "name": t.name,
-                    "description": f"{t.name} (v{__version__})",
-                    "inputSchema": {"type": "object", "properties": {}, "additionalProperties": True},
-                }
+                _Tool(
+                    name=t.name,
+                    description=f"{t.name} (v{__version__})",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": True,
+                    },
+                )
                 for t in s.list_tools()
             ]
 
         @proto.call_tool()
-        async def _call(name: str, arguments: dict[str, Any] | None):
-            return await s.call_tool(name, arguments or {})
+        async def _call(name: str, arguments: dict[str, Any] | None) -> list[_TextContent]:
+            result = await s.call_tool(name, arguments or {})
+            # All our tools return JSON-able dicts. Wrap in a single
+            # TextContent block — clients that want structured output can
+            # parse the .text as JSON.
+            return [_TextContent(type="text", text=_json.dumps(result, ensure_ascii=False))]
 
         await proto.run(read, write, proto.create_initialization_options())

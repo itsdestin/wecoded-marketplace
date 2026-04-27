@@ -6,7 +6,11 @@ requires-python = ">=3.12"
 authors = [{ name = "YouCoded" }]
 license = { text = "MIT" }
 dependencies = [
-    "mcp>=0.9.0",
+    # Pin SDK to 1.x. Earlier `>=0.9.0` was unbounded and silently pulled
+    # 1.27.0 into the venv, which is incompatible with the 0.x dict-based
+    # tool API the original code was written against. Verified working
+    # against 1.27.0; bumping to 2.x will need a deliberate API audit.
+    "mcp>=1.0.0,<2.0.0",
     "spotipy>=2.24.0",
     "httpx>=0.27.0",
 ]
