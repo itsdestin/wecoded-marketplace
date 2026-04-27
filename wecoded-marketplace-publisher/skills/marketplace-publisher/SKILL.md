@@ -240,6 +240,8 @@ Parse the JSON output. For each `check` entry:
 
 Only proceed to Step 10 when `pass: true`.
 
+**If `hasMCP` is true**, also walk the user through the MCP cross-platform checklist in **Appendix A** below before continuing. The preflight script can't catch protocol-layer or Windows-spawn issues; those are real-world fixes that any MCP server author needs to verify by hand.
+
 ## Step 10 — Show finished plugin
 
 Give the user a human summary of what's ready to publish. Translate the metadata and component list into prose:
@@ -360,3 +362,50 @@ On success, give a warm, concrete summary:
 > *Thanks for publishing — your plugin is on its way to the marketplace."*
 
 End the session. Do not poll PR status. GitHub will notify the user directly when there's activity.
+
+## Appendix A — MCP Server Cross-Platform Checklist
+
+**Walk this with the user any time `hasMCP` is true and the plugin ships its own MCP server.** It does NOT apply to plugins that only consume external MCPs (e.g. a plugin whose only MCP integration is Gmail). The checklist captures real-world breakages from prior plugin submissions; for the canonical engineering reference and code citations, see `youcoded-dev/docs/PITFALLS.md` → "MCP Plugin Authoring (Cross-Platform)".
+
+Frame this conversationally. Don't quiz the user on every item — pick the ones their plugin actually exposes and ask focused questions.
+
+### A.1 — Cross-platform spawn
+
+Their MCP server's `command` in `mcp-manifest.json` MUST work when Claude Code spawns it via Node `child_process.spawn` on Windows.
+
+Ask: *"On Windows, what command does your MCP server start with?"* Map their answer:
+
+- **A real `.exe` on the system PATH** (`node`, `python`, `uvx`, custom-compiled binary): ✓ safe.
+- **`bash` or `sh`**: ✗ Git Bash's `bash.exe` is NOT on the Windows system PATH (only `git.exe` is). Tell the user to either (a) avoid bash entirely (write the launcher in Python/Node), or (b) use the 8.3 short path `C:\PROGRA~1\Git\usr\bin\bash.exe` in the Windows entry of `mcp-manifest.json`. NEVER use `C:\Program Files\Git\usr\bin\bash.exe` — Claude Code's spawn appears to wrap with `cmd.exe shell:true` and word-splits at the space.
+- **A `.sh` file path directly**: ✗ Windows can't execute `.sh` via CreateProcess. Wrap with the bash short path as above, OR ship a `.cmd` Windows wrapper alongside the `.sh`.
+- **An absolute path containing spaces**: ✗ same word-split problem. Use the 8.3 short name (verify with `powershell -Command "(New-Object -ComObject Scripting.FileSystemObject).GetFile('<path>').ShortPath"`).
+
+If the manifest currently uses `${PACKAGE_DIR}` placeholders: warn the user that `${PACKAGE_DIR}` is only expanded by the YouCoded desktop app's MCP reconciler. Users who run Claude Code from the CLI outside of YouCoded will see the literal placeholder reach `spawn()` and the server will fail with `Missing environment variables: PACKAGE_DIR`. Either accept that limitation (it's the precedent set by other community plugins like `imessages`) or bake an absolute path / on-PATH command into the manifest instead.
+
+### A.2 — Python SDK pinning
+
+If the MCP server is written in Python and uses the official `mcp` SDK, the user's `pyproject.toml` MUST pin a major version: `mcp>=1.0.0,<2.0.0`. The 0.x → 1.x transition broke the dict-based tool API in favor of Pydantic `Tool` / `TextContent` objects, and a loose `mcp>=0.9.0` floor will silently pull 1.x with no version audit. Symptom: `tools/list` returns `{"error":"'dict' object has no attribute 'name'"}`.
+
+Ask: *"Open your `pyproject.toml`. What does the line for `mcp` say?"* If it has no upper bound, walk them through tightening it. The same logic applies to other rapidly-evolving SDK deps with major-version Pydantic migrations.
+
+### A.3 — Real-world handshake test (not just `claude mcp list`)
+
+The `claude mcp list` CLI lies about MCP server health: it only verifies the `initialize` step and reports `✓ Connected` even when `tools/list` is broken. The in-session `/mcp` host runs the full handshake and shows the truth. Two consequences:
+
+- Tell the user to verify with `/mcp` (in a Claude Code session), NOT with `claude mcp list`. If `/mcp` shows `✗ Failed`, run `claude --debug` to see the actual error.
+- For a deeper test, offer to walk them through a Node spawn-probe that sends `initialize` + `notifications/initialized` + `tools/list` and confirms all three succeed. Reference: the pattern in `wecoded-marketplace/spotify-services/docs/plan.md` Phase 2 (look for `spawn-tools-list.js`).
+
+### A.4 — Setup script portability (only if the plugin ships shell setup scripts)
+
+If the user ships `setup/*.sh` scripts:
+
+- **`PYTHONIOENCODING=utf-8`** on any line that invokes Python and prints non-ASCII (✓, ✗, em-dash, etc.). Without it, Git Bash + Python 3.13 crashes on cp1252 stdout before any work happens.
+- **No `rsync`** — it's not on Git Bash's PATH by default. Use `tar | tar` pipe or `cp -r` with manual excludes.
+- **No `python3` prereq check** — it resolves to a Microsoft Store stub on Windows and false-fails. Either drop the check (`uv venv --python X.Y` self-manages) or also try `py` and `python` as fallbacks.
+- **`chmod +x` on shell scripts**, then `git update-index --chmod=+x` so the executable bit survives the Windows commit.
+
+### A.5 — Real Windows test before submission
+
+The single highest-leverage thing a user can do is run their plugin's full setup flow (server install + OAuth/auth + first `/mcp` connect + first tool call) on a real Windows machine before submitting. Every item above was caught by exactly that pass for prior plugins. If the user is on macOS and doesn't have Windows access, flag this in the PR description so the marketplace reviewer can run the Windows pass on their behalf.
+
+End of Appendix A. After walking the items that apply, return to Step 10.
