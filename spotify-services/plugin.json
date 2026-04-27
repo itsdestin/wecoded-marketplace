@@ -1,0 +1,15 @@
+{
+  "name": "spotify-services",
+  "description": "Spotify Web API + native local desktop control for any Claude Code project. Search, library, playlists, queue, playback. Premium account required.",
+  "version": "0.1.0",
+  "author": { "name": "YouCoded" },
+  "license": "MIT",
+  "homepage": "https://github.com/itsdestin/wecoded-marketplace/tree/master/spotify-services",
+  "recommends": ["youcoded-core"],
+  "provides": {
+    "spotify-control": {
+      "description": "Spotify Web API + macOS/Windows local desktop control",
+      "mcp": ["spotify-services"]
+    }
+  }
+}

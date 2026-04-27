@@ -1,0 +1,48 @@
+[project]
+name = "spotify-mcp"
+version = "0.1.0"
+description = "MCP server for Spotify Web API and native local desktop control."
+requires-python = ">=3.12"
+authors = [{ name = "YouCoded" }]
+license = { text = "MIT" }
+dependencies = [
+    # Pin SDK to 1.x. Earlier `>=0.9.0` was unbounded and silently pulled
+    # 1.27.0 into the venv, which is incompatible with the 0.x dict-based
+    # tool API the original code was written against. Verified working
+    # against 1.27.0; bumping to 2.x will need a deliberate API audit.
+    "mcp>=1.0.0,<2.0.0",
+    "spotipy>=2.24.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+# pywinrt ships each WinRT namespace as its own PyPI package and does NOT
+# transitively pull namespaces it depends on at runtime. We've now found
+# three siblings the SMTC backend reaches into:
+#  - Windows.Media.Control          → GlobalSystemMediaTransportControlsSessionManager
+#  - Windows.Foundation             → IAsyncOperation primitives (so request_async works)
+#  - Windows.Foundation.Collections → IVectorView, returned by sessions.get_sessions();
+#                                     enumerating the manager's session list raises
+#                                     "Foundation.Collections not loaded" without it.
+# The Phase 0.4 spike caught the first two but didn't exercise iteration —
+# the empirical test that surfaces the third one is the smoke-test on a
+# real Windows box. See commit log near 0.1.0 release for context.
+windows = [
+    "winrt-Windows.Media.Control>=3.2.0",
+    "winrt-Windows.Foundation>=3.2.0",
+    "winrt-Windows.Foundation.Collections>=3.2.0",
+]
+dev = ["pytest>=8.0", "pytest-mock>=3.12", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+spotify-mcp = "spotify_mcp.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spotify_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
