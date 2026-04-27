@@ -8,6 +8,7 @@ from mcp.server import Server  # noqa: F401  # interface-stable since 0.9
 from mcp.server.stdio import stdio_server
 
 from spotify_mcp import __version__
+from spotify_mcp.tools.webapi_tools import search_query
 
 
 class _SpotifyMcpServer:
@@ -46,6 +47,7 @@ def build_server() -> _SpotifyMcpServer:
     `s.register("namespace.action", handler)` here."""
     s = _SpotifyMcpServer()
     s.register("server.health", _health)
+    s.register("search.query", search_query)
     return s
 
 
