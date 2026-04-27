@@ -469,7 +469,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-windows = ["winrt-Windows.Media.Control>=2.0.0"]
+# Phase 0.4 spike confirmed: winrt-Windows.Foundation must be installed
+# explicitly alongside winrt-Windows.Media.Control — the latter does not
+# pull the foundation bindings in transitively.
+windows = [
+    "winrt-Windows.Media.Control>=3.2.0",
+    "winrt-Windows.Foundation>=3.2.0",
+]
 dev = ["pytest>=8.0", "pytest-mock>=3.12", "pytest-asyncio>=0.23"]
 
 [project.scripts]
