@@ -1,0 +1,12 @@
+{
+  "servers": [
+    {
+      "name": "spotify-services",
+      "auto": true,
+      "platforms": ["darwin", "win32"],
+      "command": "${PACKAGE_DIR}/mcp-servers/spotify-services/launcher.sh",
+      "args": [],
+      "env": {}
+    }
+  ]
+}
