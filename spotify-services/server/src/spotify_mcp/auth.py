@@ -131,8 +131,9 @@ def refresh_access_token(client_id: str, refresh_token: str) -> Tokens:
         body = resp.json()
     return Tokens(
         access_token=body["access_token"],
-        # Spotify may or may not rotate the refresh token. If absent, keep old.
-        refresh_token=body.get("refresh_token", refresh_token),
+        # Spotify may rotate the refresh token. dict.get's default fires only when
+        # the key is absent — `or` also handles an explicit null in the response.
+        refresh_token=body.get("refresh_token") or refresh_token,
         expires_at=time.time() + int(body["expires_in"]),
         token_type=body.get("token_type", "Bearer"),
     )
@@ -160,11 +161,17 @@ class TokenStore:
             pass
 
     def load(self) -> Optional[Tokens]:
+        """Returns None if the file is missing OR corrupted. A corrupt file
+        triggers re-auth via the same code path as a missing file — better
+        UX than a JSONDecodeError or KeyError percolating up to MCP."""
         from spotify_mcp import config as _cfg
         if not _cfg.TOKENS_FILE.exists():
             return None
-        with open(_cfg.TOKENS_FILE) as f:
-            return Tokens.from_json(json.load(f))
+        try:
+            with open(_cfg.TOKENS_FILE) as f:
+                return Tokens.from_json(json.load(f))
+        except (json.JSONDecodeError, TypeError, KeyError, OSError):
+            return None
 
 
 def with_access_token(*, client_id: str, store: TokenStore, refresh_fn=refresh_access_token) -> str:

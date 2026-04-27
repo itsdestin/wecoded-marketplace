@@ -124,3 +124,19 @@ def test_token_store_load_missing_returns_none(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("spotify_mcp.config.TOKENS_FILE", tmp_path / "missing.json")
     from spotify_mcp.auth import TokenStore
     assert TokenStore().load() is None
+
+
+def test_token_store_load_returns_none_on_corrupt_file(tmp_path: Path, monkeypatch):
+    """Corrupted tokens.json triggers re-auth via the same path as missing."""
+    monkeypatch.setattr("spotify_mcp.config.TOKENS_FILE", tmp_path / "t.json")
+    (tmp_path / "t.json").write_text("not json {{{")
+    from spotify_mcp.auth import TokenStore
+    assert TokenStore().load() is None
+
+
+def test_token_store_load_returns_none_on_missing_field(tmp_path: Path, monkeypatch):
+    """Token file with missing required field triggers re-auth."""
+    monkeypatch.setattr("spotify_mcp.config.TOKENS_FILE", tmp_path / "t.json")
+    (tmp_path / "t.json").write_text('{"access_token": "A"}')  # missing refresh_token, expires_at
+    from spotify_mcp.auth import TokenStore
+    assert TokenStore().load() is None
