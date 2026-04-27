@@ -8,7 +8,15 @@ from mcp.server import Server  # noqa: F401  # interface-stable since 0.9
 from mcp.server.stdio import stdio_server
 
 from spotify_mcp import __version__
-from spotify_mcp.tools.webapi_tools import search_query
+from spotify_mcp.tools.webapi_tools import (
+    search_query,
+    library_saved_tracks,
+    library_top_tracks,
+    library_top_artists,
+    library_recently_played,
+    library_save,
+    library_remove,
+)
 
 
 class _SpotifyMcpServer:
@@ -48,6 +56,12 @@ def build_server() -> _SpotifyMcpServer:
     s = _SpotifyMcpServer()
     s.register("server.health", _health)
     s.register("search.query", search_query)
+    s.register("library.saved_tracks", library_saved_tracks)
+    s.register("library.top_tracks", library_top_tracks)
+    s.register("library.top_artists", library_top_artists)
+    s.register("library.recently_played", library_recently_played)
+    s.register("library.save", library_save)
+    s.register("library.remove", library_remove)
     return s
 
 
