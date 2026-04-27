@@ -13,7 +13,7 @@ Spotify Web API + native local desktop control for any Claude Code project.
 ## Requirements
 
 - **Spotify Premium account.** Required for the entire plugin under Spotify's current developer-app rules (Feb 2026 platform-security update).
-- **Python 3.12+** and `uv` on PATH. Setup will tell you if either is missing.
+- **`uv` on PATH** (https://github.com/astral-sh/uv). uv self-manages Python — you do NOT need Python 3.12 installed system-wide. Setup will tell you if `uv` is missing.
 - **macOS or Windows.** Linux (MPRIS) and Android (vendored Python deps) are deferred to v2.
 
 ## First-time setup
