@@ -128,6 +128,41 @@
     }
   },
   {
+    "id": "spotify-services",
+    "type": "plugin",
+    "displayName": "Spotify Services",
+    "description": "Spotify Web API + native local desktop control. Search, library, playlists, queue, playback, smart-routed transport. Premium account required.",
+    "category": "integrations",
+    "author": "YouCoded",
+    "tags": ["music", "spotify", "integrations"],
+    "version": "0.1.0",
+    "publishedAt": "2026-04-26T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "spotify-services",
+    "repoUrl": null,
+    "components": {
+      "skills": [
+        "spotify-shared",
+        "spotify-export-all-playlists",
+        "spotify-search",
+        "spotify-now-playing",
+        "spotify-playback",
+        "spotify-queue",
+        "spotify-library",
+        "spotify-playlists",
+        "spotify-devices",
+        "spotify-user-profile"
+      ],
+      "hooks": [],
+      "commands": ["spotify-services-setup", "spotify-services-reauth"],
+      "agents": [],
+      "mcpServers": ["spotify-services"],
+      "hasHooksManifest": false,
+      "hasMcpConfig": true
+    }
+  },
+  {
     "id": "wecoded-marketplace-publisher",
     "type": "plugin",
     "displayName": "WeCoded Marketplace Publisher",

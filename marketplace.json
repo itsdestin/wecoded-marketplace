@@ -121,6 +121,15 @@
       }
     },
     {
+      "name": "spotify-services",
+      "displayName": "Spotify Services",
+      "description": "Spotify Web API + native local desktop control. Premium required.",
+      "author": { "name": "YouCoded" },
+      "category": "integrations",
+      "source": { "source": "local", "path": "spotify-services" },
+      "prompt": "/spotify-services-setup"
+    },
+    {
       "name": "youcoded-messaging",
       "displayName": "Messaging",
       "description": "Send and read SMS/iMessage via MCP servers",
