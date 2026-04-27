@@ -42,6 +42,7 @@ from spotify_mcp.tools.local_tools import (
     local_seek_to, local_set_volume, local_launch, local_quit,
 )
 from spotify_mcp.tools.smart_tools import now_playing, play_pause_smart
+from spotify_mcp.tools.export import export_all_playlists
 
 
 class _SpotifyMcpServer:
@@ -118,6 +119,7 @@ def build_server() -> _SpotifyMcpServer:
     s.register("local.quit", local_quit)
     s.register("now_playing", now_playing)
     s.register("play_pause_smart", play_pause_smart)
+    s.register("export_all_playlists", export_all_playlists)
     return s
 
 
