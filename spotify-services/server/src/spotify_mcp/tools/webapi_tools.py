@@ -17,6 +17,7 @@ from spotify_mcp.webapi import library as _library
 from spotify_mcp.webapi import playlists as _playlists
 from spotify_mcp.webapi import playback as _playback
 from spotify_mcp.webapi import queue as _queue
+from spotify_mcp.webapi import user as _user
 
 
 def _client() -> spotipy.Spotify:
@@ -302,3 +303,13 @@ async def queue_add(args: dict[str, Any]) -> dict[str, Any]:
 async def queue_list(args: dict[str, Any]) -> dict[str, Any]:
     sp = _client()
     return _queue.list_queue(sp)
+
+
+# ---------------------------------------------------------------------------
+# User tools
+# ---------------------------------------------------------------------------
+
+@_safe
+async def user_profile(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _user.profile(sp)
