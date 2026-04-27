@@ -14,6 +14,7 @@ from spotify_mcp.auth import AuthError, TokenStore, with_access_token
 from spotify_mcp.errors import StructuredError
 from spotify_mcp.webapi.search import search as _search
 from spotify_mcp.webapi import library as _library
+from spotify_mcp.webapi import playlists as _playlists
 
 
 def _client() -> spotipy.Spotify:
@@ -114,3 +115,77 @@ async def library_save(args: dict[str, Any]) -> dict[str, Any]:
 async def library_remove(args: dict[str, Any]) -> dict[str, Any]:
     sp = _client()
     return _library.library_remove(sp, uris=args["uris"])
+
+
+# ---------------------------------------------------------------------------
+# Playlists tools
+# ---------------------------------------------------------------------------
+
+@_safe
+async def playlists_list_mine(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _playlists.list_mine(
+        sp,
+        limit=int(args.get("limit") or 50),
+        offset=int(args.get("offset") or 0),
+    )
+
+
+@_safe
+async def playlists_get_items(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _playlists.get_items(
+        sp,
+        playlist_id=args["playlist_id"],
+        limit=int(args.get("limit") or 100),
+        offset=int(args.get("offset") or 0),
+        fields=args.get("fields"),
+        market=args.get("market"),
+    )
+
+
+@_safe
+async def playlists_add_items(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    position = int(args["position"]) if args.get("position") is not None else None
+    return _playlists.add_items(
+        sp,
+        playlist_id=args["playlist_id"],
+        uris=args["uris"],
+        position=position,
+    )
+
+
+@_safe
+async def playlists_remove_items(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _playlists.remove_items(
+        sp,
+        playlist_id=args["playlist_id"],
+        uris=args["uris"],
+    )
+
+
+@_safe
+async def playlists_reorder(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _playlists.reorder(
+        sp,
+        playlist_id=args["playlist_id"],
+        range_start=int(args["range_start"]),
+        insert_before=int(args["insert_before"]),
+        range_length=int(args.get("range_length") or 1),
+    )
+
+
+@_safe
+async def playlists_update_details(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _playlists.update_details(
+        sp,
+        playlist_id=args["playlist_id"],
+        name=args.get("name"),
+        public=args.get("public"),
+        collaborative=args.get("collaborative"),
+        description=args.get("description"),
+    )

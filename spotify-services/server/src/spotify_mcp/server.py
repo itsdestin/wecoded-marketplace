@@ -16,6 +16,12 @@ from spotify_mcp.tools.webapi_tools import (
     library_recently_played,
     library_save,
     library_remove,
+    playlists_list_mine,
+    playlists_get_items,
+    playlists_add_items,
+    playlists_remove_items,
+    playlists_reorder,
+    playlists_update_details,
 )
 
 
@@ -62,6 +68,12 @@ def build_server() -> _SpotifyMcpServer:
     s.register("library.recently_played", library_recently_played)
     s.register("library.save", library_save)
     s.register("library.remove", library_remove)
+    s.register("playlists.list_mine", playlists_list_mine)
+    s.register("playlists.get_items", playlists_get_items)
+    s.register("playlists.add_items", playlists_add_items)
+    s.register("playlists.remove_items", playlists_remove_items)
+    s.register("playlists.reorder", playlists_reorder)
+    s.register("playlists.update_details", playlists_update_details)
     return s
 
 
