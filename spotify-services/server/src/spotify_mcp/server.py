@@ -22,6 +22,16 @@ from spotify_mcp.tools.webapi_tools import (
     playlists_remove_items,
     playlists_reorder,
     playlists_update_details,
+    playback_devices,
+    playback_transfer_to_device,
+    playback_play,
+    playback_pause,
+    playback_next,
+    playback_previous,
+    playback_seek,
+    playback_set_volume,
+    playback_set_repeat,
+    playback_set_shuffle,
 )
 
 
@@ -74,6 +84,16 @@ def build_server() -> _SpotifyMcpServer:
     s.register("playlists.remove_items", playlists_remove_items)
     s.register("playlists.reorder", playlists_reorder)
     s.register("playlists.update_details", playlists_update_details)
+    s.register("playback.devices", playback_devices)
+    s.register("playback.transfer_to_device", playback_transfer_to_device)
+    s.register("playback.play", playback_play)
+    s.register("playback.pause", playback_pause)
+    s.register("playback.next", playback_next)
+    s.register("playback.previous", playback_previous)
+    s.register("playback.seek", playback_seek)
+    s.register("playback.set_volume", playback_set_volume)
+    s.register("playback.set_repeat", playback_set_repeat)
+    s.register("playback.set_shuffle", playback_set_shuffle)
     return s
 
 
