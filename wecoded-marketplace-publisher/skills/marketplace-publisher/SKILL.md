@@ -403,6 +403,7 @@ If the user ships `setup/*.sh` scripts:
 - **No `rsync`** — it's not on Git Bash's PATH by default. Use `tar | tar` pipe or `cp -r` with manual excludes.
 - **No `python3` prereq check** — it resolves to a Microsoft Store stub on Windows and false-fails. Either drop the check (`uv venv --python X.Y` self-manages) or also try `py` and `python` as fallbacks.
 - **`chmod +x` on shell scripts**, then `git update-index --chmod=+x` so the executable bit survives the Windows commit.
+- **Don't source the venv `activate` script in launchers.** Activate calls `basename` / `dirname` from `/usr/bin/`, which Claude Code's MCP spawn doesn't put on PATH. The launcher fails with `basename: command not found` and never reaches python. Skip activate entirely — call the venv python by absolute path (`$VENV/Scripts/python.exe` on Windows, `$VENV/bin/python` on Unix) and set `VIRTUAL_ENV` manually. Symptom: `/mcp` shows ✗ Failed but the same launcher works fine from a Git Bash terminal.
 
 ### A.5 — Real Windows test before submission
 
