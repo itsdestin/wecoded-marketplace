@@ -16,6 +16,7 @@ from spotify_mcp.webapi.search import search as _search
 from spotify_mcp.webapi import library as _library
 from spotify_mcp.webapi import playlists as _playlists
 from spotify_mcp.webapi import playback as _playback
+from spotify_mcp.webapi import queue as _queue
 
 
 def _client() -> spotipy.Spotify:
@@ -281,3 +282,23 @@ async def playback_set_shuffle(args: dict[str, Any]) -> dict[str, Any]:
         state=bool(args["state"]),
         device_id=args.get("device_id"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Queue tools
+# ---------------------------------------------------------------------------
+
+@_safe
+async def queue_add(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _queue.add(
+        sp,
+        uri=args["uri"],
+        device_id=args.get("device_id"),
+    )
+
+
+@_safe
+async def queue_list(args: dict[str, Any]) -> dict[str, Any]:
+    sp = _client()
+    return _queue.list_queue(sp)

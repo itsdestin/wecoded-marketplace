@@ -32,6 +32,8 @@ from spotify_mcp.tools.webapi_tools import (
     playback_set_volume,
     playback_set_repeat,
     playback_set_shuffle,
+    queue_add,
+    queue_list,
 )
 
 
@@ -94,6 +96,8 @@ def build_server() -> _SpotifyMcpServer:
     s.register("playback.set_volume", playback_set_volume)
     s.register("playback.set_repeat", playback_set_repeat)
     s.register("playback.set_shuffle", playback_set_shuffle)
+    s.register("queue.add", queue_add)
+    s.register("queue.list", queue_list)
     return s
 
 
