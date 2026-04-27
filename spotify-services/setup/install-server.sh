@@ -10,14 +10,16 @@ if ! command -v uv >/dev/null 2>&1; then
   echo "ERROR: uv not on PATH. Install with: pipx install uv" >&2
   exit 1
 fi
-if ! command -v python3.12 >/dev/null 2>&1 && ! python3 -c 'import sys; sys.exit(0 if sys.version_info>=(3,12) else 1)'; then
-  echo "ERROR: Python 3.12+ required." >&2
-  exit 1
-fi
 
+# Python is provided via uv ('uv venv --python 3.12' fetches it if needed),
+# so we do NOT require python3.12 / python3 / python on PATH. On Windows, the
+# 'python3' command often resolves to a Microsoft Store stub that prints an
+# install hint and exits non-zero — checking for it would falsely fail.
+
+# Copy server source. Avoid rsync (not on PATH in Git-Bash by default).
+# tar | tar gives us preserved perms across platforms without the dep.
 mkdir -p "$TARGET"
-# Copy server source into the target.
-rsync -a --delete "$PLUGIN_DIR/server/" "$TARGET/"
+( cd "$PLUGIN_DIR/server" && tar cf - --exclude='.venv' --exclude='__pycache__' --exclude='*.egg-info' --exclude='.pytest_cache' . ) | ( cd "$TARGET" && tar xf - )
 
 cd "$TARGET"
 uv venv .venv --python 3.12
