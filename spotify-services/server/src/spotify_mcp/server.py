@@ -36,6 +36,11 @@ from spotify_mcp.tools.webapi_tools import (
     queue_list,
     user_profile,
 )
+from spotify_mcp.tools.local_tools import (
+    local_play, local_pause, local_next, local_previous,
+    local_now_playing, local_is_running,
+    local_seek_to, local_set_volume, local_launch, local_quit,
+)
 
 
 class _SpotifyMcpServer:
@@ -100,6 +105,16 @@ def build_server() -> _SpotifyMcpServer:
     s.register("queue.add", queue_add)
     s.register("queue.list", queue_list)
     s.register("user.profile", user_profile)
+    s.register("local.play", local_play)
+    s.register("local.pause", local_pause)
+    s.register("local.next", local_next)
+    s.register("local.previous", local_previous)
+    s.register("local.now_playing", local_now_playing)
+    s.register("local.is_running", local_is_running)
+    s.register("local.seek_to", local_seek_to)
+    s.register("local.set_volume", local_set_volume)
+    s.register("local.launch", local_launch)
+    s.register("local.quit", local_quit)
     return s
 
 
