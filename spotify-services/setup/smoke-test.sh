@@ -13,7 +13,9 @@ export SPOTIFY_CLIENT_ID
 # shellcheck disable=SC1091
 . "$VENV/bin/activate" 2>/dev/null || . "$VENV/Scripts/activate"
 
-python - << 'PY'
+# PYTHONIOENCODING=utf-8 forces UTF-8 stdout/stderr — Git-Bash on Windows
+# defaults Python's stdout to cp1252, which crashes on the ✓ / ✗ glyphs below.
+PYTHONIOENCODING=utf-8 python - << 'PY'
 import asyncio, json, sys
 from spotify_mcp.tools.webapi_tools import _client
 from spotify_mcp.local import select_backend

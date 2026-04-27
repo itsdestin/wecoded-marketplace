@@ -29,7 +29,9 @@ fi
 mkdir -p "$HOME/.youcoded/spotify-services"
 
 # Drive the flow via a one-shot Python helper.
-python - "$CLIENT_ID" << 'PY'
+# PYTHONIOENCODING=utf-8 forces UTF-8 stdout/stderr — Git-Bash on Windows
+# defaults Python's stdout to cp1252, which crashes on the ✓ glyph below.
+PYTHONIOENCODING=utf-8 python - "$CLIENT_ID" << 'PY'
 import sys, secrets, threading, webbrowser, http.server, urllib.parse
 from spotify_mcp.auth import PkcePair, build_authorize_url, exchange_code_for_tokens, TokenStore
 from spotify_mcp.config import REDIRECT_URI, SECRETS_DIR
