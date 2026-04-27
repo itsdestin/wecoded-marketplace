@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
-# spotify-services launcher — invoked by Claude Code's MCP reconciler.
-# Activates the user's installed venv at ~/.spotify-services/server/ and
-# runs the MCP server in stdio mode. If the venv is missing, prints a
-# structured error and exits 2 — Claude surfaces this to the user with a
-# "run /spotify-services-setup" hint.
+# spotify-services launcher — sourced by Claude Code's MCP reconciler.
 set -euo pipefail
 
 VENV="$HOME/.spotify-services/server/.venv"
+CLIENT_ENV="$HOME/.youcoded/spotify-services/client.env"
+
 if [ ! -d "$VENV" ]; then
-  echo '{"error": "server_not_installed", "hint": "Run /spotify-services-setup to install the Spotify MCP server."}' >&2
+  echo '{"error":"server_not_installed","hint":"Run /spotify-services-setup."}' >&2
+  exit 2
+fi
+if [ ! -f "$CLIENT_ENV" ]; then
+  echo '{"error":"oauth_not_complete","hint":"Run /spotify-services-setup."}' >&2
   exit 2
 fi
 
 # shellcheck disable=SC1091
-. "$VENV/bin/activate"
+. "$CLIENT_ENV"
+export SPOTIFY_CLIENT_ID
+
+# shellcheck disable=SC1091
+. "$VENV/bin/activate" 2>/dev/null || . "$VENV/Scripts/activate"
 exec python -m spotify_mcp "$@"
