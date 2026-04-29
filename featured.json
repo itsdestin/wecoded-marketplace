@@ -7,13 +7,13 @@
     },
     {
       "id": "youcoded-encyclopedia",
-      "blurb": "Your personal knowledge graph \u00e2\u20ac\u201d facts, notes, and memories that persist across sessions.",
+      "blurb": "Your personal knowledge graph — facts, notes, and memories that persist across sessions.",
       "accentColor": "#6b8ecf"
     },
     {
-      "id": "code-review",
-      "blurb": "Multi-agent PR review with confidence-based filtering to cut false positives.",
-      "accentColor": "#9b6cd4"
+      "id": "superpowers",
+      "blurb": "Teach Claude brainstorming, planning, TDD, and subagent-driven development — built-in.",
+      "accentColor": "#7bc56b"
     }
   ],
   "rails": [
@@ -24,8 +24,8 @@
         "civic-report",
         "youcoded-encyclopedia",
         "youcoded-inbox",
-        "code-review",
-        "wecoded-themes-plugin"
+        "wecoded-themes-plugin",
+        "superpowers"
       ]
     },
     {
@@ -34,7 +34,8 @@
       "slugs": [
         "youcoded-encyclopedia",
         "youcoded-inbox",
-        "youcoded-food"
+        "remember",
+        "notion"
       ]
     },
     {
@@ -42,8 +43,38 @@
       "description": "Not just for coders.",
       "slugs": [
         "civic-report",
-        "youcoded-messaging",
-        "youcoded-food"
+        "youcoded-messaging"
+      ]
+    },
+    {
+      "title": "Build your own",
+      "description": "Build with conversation, not code.",
+      "slugs": [
+        "skill-creator",
+        "plugin-dev",
+        "mcp-server-dev",
+        "wecoded-marketplace-publisher",
+        "wecoded-themes-plugin"
+      ]
+    },
+    {
+      "title": "Make Claude better",
+      "description": "Meta-skills that level up every workflow.",
+      "slugs": [
+        "superpowers",
+        "remember",
+        "claude-md-management",
+        "hookify",
+        "youcoded-output-styles"
+      ]
+    },
+    {
+      "title": "For fun",
+      "description": "Quirkier picks worth a try.",
+      "slugs": [
+        "math-olympiad",
+        "session-report",
+        "ralph-loop"
       ]
     }
   ],
@@ -56,7 +87,7 @@
   "themes": [
     {
       "slug": "golden-sunbreak",
-      "tagline": "Weathering With You \u2014 Tokyo bathed in god-ray light"
+      "tagline": "Weathering With You — Tokyo bathed in god-ray light"
     }
   ]
 }
