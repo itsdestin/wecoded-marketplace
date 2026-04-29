@@ -219,7 +219,39 @@ Ask with `AskUserQuestion`:
   - label: "Done, continue" — description: "I'll open the last page."
   - label: "I hit a problem" — description: "Tell me what happened and I'll help sort it out."
 
-Handle "I hit a problem" the same way as 3B. Otherwise continue to 3D.
+Handle "I hit a problem" the same way as 3B.
+
+Otherwise, before moving on, send this in chat:
+
+> While you've got the Test Users page open — do you plan to use any other Google accounts with YouCoded later (work, school, secondary)? If so, list them now and I'll have you add them to Test Users in this same trip. Or say "just this one."
+
+Wait for the user's reply. If they list emails:
+
+1. Confirm what you heard back: "Got it — I'll have you add: work@acme.com, school@uni.edu."
+2. Send this:
+
+> Add each one to the Test Users list now (same blue **+ Add users** button), then come back and let me know when they're all there.
+
+3. Save the emails into the registry's `knownTestUsers` field. Source the registry helpers and call:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+registry_init
+for email in <space-separated emails the user listed>; do
+  registry_add_known_test_user "$email"
+done
+```
+
+4. Ask with `AskUserQuestion`:
+   - **question:** "Are all the additional emails added?"
+   - **header:** "Test users"
+   - **options:**
+     - label: "All added" — description: "I'll continue to the next page."
+     - label: "I hit a problem" — description: "Tell me what happened."
+
+If the user says "just this one" or "no," skip the registry step and continue.
+
+Continue to 3D.
 
 ### Step 3D — Create the connection key
 
