@@ -87,9 +87,9 @@ Same as #2 but with a deliberately-locked-down Workspace account that rejects th
 
 When KEYRING_BACKEND=file is first applied to an existing single-account install whose AES key is currently in Windows Credential Manager / macOS Keychain / Linux Secret Service, what happens on the first gws call?
 
-- [ ] **Outcome A** (silent migration): `gws auth status` succeeds; gws transparently fell back to the OS keyring for the AES key, with the file getting written on the next `auth login`.
+- [x] **Outcome A** (silent migration): `gws auth status` succeeds; gws transparently fell back to the OS keyring for the AES key, with the file getting written on the next `auth login`.
 - [ ] **Outcome B** (forced reauth on upgrade): `gws auth status` reports a decryption failure or empty state; the user reauths once and the file is populated.
 
-Date verified: ____________
-Outcome: ______
-Notes: ____________
+Date verified: 2026-04-29
+Outcome: **A** — verified on Windows / Git Bash with gws v0.22.5 against an existing single-account install at `~/.config/gws/` whose AES key was in Windows Credential Manager. Setting both `GOOGLE_WORKSPACE_CLI_CONFIG_DIR` + `KEYRING_BACKEND=file` produced normal output (prefixed with `Using keyring backend: file`) with valid token state. No reauth was forced. The next `gws auth login` will write `.encryption_key` to the file backend.
+Notes: also confirmed `gws auth status` in v0.22.5 does NOT accept `--format json` — output is JSON by default with one `Using keyring backend: …` prefix line. Pipe through `sed -n '/^{/,$p'` to strip the prefix before piping to jq.

@@ -18,7 +18,7 @@ Any gws command fails with stderr or stdout containing one of:
 - `AuthenticationError`
 - `authorization is required`
 - `"code": 401`
-- `"token_valid": false` (when checking `gws auth status`)
+- `"token_valid": false` (in the JSON output of `gws auth status`)
 
 ## Recovery procedure
 
@@ -55,9 +55,12 @@ Any gws command fails with stderr or stdout containing one of:
    ```bash
    while IFS=$'\t' read -r name email config_dir; do
      [ "$name" = "$FAILED_NAME" ] && continue  # skip the one we just refreshed
+     # `gws auth status` emits JSON by default but prefixes with one
+     # "Using keyring backend: …" line — strip it with sed before piping to jq.
      valid="$(GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$config_dir" \
               GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file \
-              gws auth status --format json 2>/dev/null | \
+              gws auth status 2>/dev/null | \
+              sed -n '/^{/,$p' | \
               jq -r '.token_valid // false')"
      if [ "$valid" = "false" ]; then
        echo "$name"
