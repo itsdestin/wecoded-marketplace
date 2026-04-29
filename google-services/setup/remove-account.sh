@@ -16,6 +16,9 @@
 #   0 — removed (or already gone)
 #   1 — bad arguments / unknown account name
 
+# set -u only — set -e would abort the best-effort `gws auth logout` fallthrough.
+# The logout step is intentionally allowed to fail (network down, token already
+# revoked at Google's end) without aborting the local cleanup that follows.
 set -u
 
 # shellcheck source=../lib/registry.sh
