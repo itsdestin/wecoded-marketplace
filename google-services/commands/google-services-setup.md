@@ -80,6 +80,46 @@ export PATH="$HOME/.youcoded/bin:$PATH"
 export YOUCODED_OUTPUT_DIR="$HOME/.youcoded/google-services"
 ```
 
+## Step 0.5 — Detect existing setup
+
+Source the registry helper:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+```
+
+Two cases:
+
+**Case A: Registry exists with at least one account.** This is a returning user. Skip first-time setup; open the management menu.
+
+```bash
+registry_exists && [ "$(registry_account_count)" -gt 0 ]
+```
+
+If true, list current accounts in chat:
+
+> You have [N] account(s) connected: [name1] (default), [name2]. What do you want to do?
+
+Ask with `AskUserQuestion`:
+
+- **question:** "What do you want to do?"
+- **header:** "Manage accounts"
+- **options:**
+  - label: "Add another account" — description: "Connect another Google account."
+  - label: "Remove an account" — description: "Sign out and remove a connection."
+  - label: "Change default" — description: "Pick which account is used by default in new conversations."
+  - label: "Refresh / fix something broken" — description: "Re-run full setup against an account."
+  - label: "Cancel" — description: "Close this menu."
+
+Routing:
+- **Add another account** → jump to Step 8 (the add-another flow). It's idempotent and works whether or not knownTestUsers is empty.
+- **Remove an account** → run the remove flow described in this command's Appendix A below.
+- **Change default** → ask with `AskUserQuestion` listing each account name; run `registry_set_default "<name>"` on selection.
+- **Refresh / fix** → ask which account, then re-run Steps 1-6 against that account's config dir (set `GWS_CONFIG_DIR=<configDir>` for the smoke test).
+- **Cancel** → stop silently.
+
+**Case B: Registry doesn't exist OR exists with zero accounts.** First-time setup. Continue to Step 1 normally.
+
 ## Step 1 — Get the helpers ready
 
 Run:
@@ -532,3 +572,37 @@ GWS_CONFIG_DIR="$NEW_CONFIG_DIR" bash $CLAUDE_PLUGIN_ROOT/setup/smoke-test.sh
 ```
 
 Continue back at Step 8 step 5 (default-picking and loop for any remaining pending emails).
+
+---
+
+## Appendix A — Remove an account
+
+Used by the menu in Step 0.5 ("Remove an account").
+
+List current accounts via `registry_list_accounts | cut -f1`. If only one account exists, the warning copy is sterner (see below).
+
+Ask with `AskUserQuestion`:
+
+- **question:** "Which account do you want to remove?"
+- **header:** "Remove"
+- **options:** one per registered account; label = name, description = email.
+
+After selection, ask for confirmation:
+
+> I'll sign out of [email] and remove its YouCoded connection. Your data in Google itself stays untouched — emails, Drive files, calendars all remain in the account. Confirm?
+
+If only one account remains:
+
+> This is your only Google account. Removing it means you'll need to run /google-services-setup before YouCoded can do anything Google-related again. Confirm?
+
+If user confirms:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/remove-account.sh --name "<name>"
+```
+
+Capture exit. On success:
+
+- If account was the default and others remain, ask which to make new default and call `registry_set_default`.
+- If account had `ownsGcpProject=true`, mention the leftover project: "This account had its own Google Cloud project (`<projectId>`). The local connection is gone, but the project still exists in console.cloud.google.com if you want to delete it there."
+- Send: "Removed [name]."
