@@ -7,6 +7,12 @@
 
 set -u  # not -e: we want to test all six and report outcomes, not abort on first fail
 
+# Multi-account: each gws call routes via the active config dir + file keyring.
+# Single-account fallback: defaults to ~/.config/gws/, identical to pre-multi-account behavior.
+CONFIG_DIR="${GWS_CONFIG_DIR:-$HOME/.config/gws}"
+export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$CONFIG_DIR"
+export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file
+
 declare -A RESULTS
 
 probe() {

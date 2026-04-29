@@ -20,18 +20,33 @@ APIS=(gmail.googleapis.com drive.googleapis.com docs.googleapis.com
 
 : "${YOUCODED_OUTPUT_DIR:?must be set}"
 
+# --account-name lets the slow-path add-account flow create a per-account GCP
+# project ("YouCoded Work" instead of "YouCoded Personal"). Default preserves
+# the existing first-time-setup project name.
+ACCOUNT_NAME="Personal"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --account-name) ACCOUNT_NAME="$2"; shift 2 ;;
+    *) echo "Unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+# Title-case the name for the human-readable project name. Bash 4+ ${var^}.
+PROJECT_NAME_LABEL="YouCoded ${ACCOUNT_NAME^}"
+PROJECT_ID_PREFIX="youcoded-$(echo "$ACCOUNT_NAME" | tr '[:upper:]' '[:lower:]')"
+
 # ------- Idempotency: detect existing YouCoded project -------
 # MSYS/Git-Bash note: avoid `| head` and `| grep -q` pipelines here. Under
 # `set -o pipefail`, when the downstream tool closes its stdin after reading
 # enough, the upstream gcloud/tr writer receives SIGPIPE and the pipeline
 # reports exit 141 — which `set -e` then turns into a silent abort before
 # any `  ✓` line prints. Use command substitution + bash string ops instead.
-_projects=$(gcloud projects list --filter="name:YouCoded Personal" --format="value(projectId)" 2>/dev/null || true)
+_projects=$(gcloud projects list --filter="name:$PROJECT_NAME_LABEL" --format="value(projectId)" 2>/dev/null || true)
 EXISTING_PROJECT="${_projects%%$'\n'*}"  # first line, if any, via pure-bash splitting
 
 if [ -n "$EXISTING_PROJECT" ]; then
   PROJECT_ID="$EXISTING_PROJECT"
-  echo "  ✓ Found existing YouCoded connection ($PROJECT_ID)"
+  echo "  ✓ Found existing YouCoded $ACCOUNT_NAME connection ($PROJECT_ID)"
 else
   # 6-char [a-z0-9] suffix via pure-bash string slicing — no subprocess, no
   # pipe, no SIGPIPE. $RANDOM is 15-bit but that's plenty of entropy for a
@@ -41,9 +56,9 @@ else
   for _ in 1 2 3 4 5 6; do
     SUFFIX="${SUFFIX}${_CHARS:$((RANDOM % 36)):1}"
   done
-  PROJECT_ID="youcoded-personal-$SUFFIX"
-  gcloud projects create "$PROJECT_ID" --name="YouCoded Personal" --quiet >/dev/null
-  echo "  ✓ Created your private YouCoded connection"
+  PROJECT_ID="$PROJECT_ID_PREFIX-$SUFFIX"
+  gcloud projects create "$PROJECT_ID" --name="$PROJECT_NAME_LABEL" --quiet >/dev/null
+  echo "  ✓ Created your private YouCoded $ACCOUNT_NAME connection"
 fi
 
 gcloud config set project "$PROJECT_ID" --quiet >/dev/null

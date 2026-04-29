@@ -21,6 +21,21 @@ set -euo pipefail
 
 : "${YOUCODED_OUTPUT_DIR:?must be set}"
 
+# Default to the primary account's location; --config-dir overrides for
+# secondary-account add-flows.
+GWS_CONFIG_DIR_OVERRIDE="$HOME/.config/gws"
+
+# Strip --config-dir out of $@ before the existing $1 file-path read happens.
+NEW_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --config-dir) GWS_CONFIG_DIR_OVERRIDE="$2"; shift 2 ;;
+    --) shift; while [ $# -gt 0 ]; do NEW_ARGS+=("$1"); shift; done ;;
+    *) NEW_ARGS+=("$1"); shift ;;
+  esac
+done
+set -- "${NEW_ARGS[@]+"${NEW_ARGS[@]}"}"
+
 # Python 3 locator. Bare `python` is not reliable: modern macOS ships only
 # `python3`, Debian/Ubuntu default to `python3`, and Windows installs may
 # expose `py` instead. Try all three in that order.
@@ -82,7 +97,7 @@ ENV_DST="$YOUCODED_OUTPUT_DIR/client.env"
 # override the client identity). So we also write the normalized credentials
 # to gws's expected location — env-var-only auth leaks a stale project_id
 # into API calls and breaks quota routing.
-GWS_DST="$HOME/.config/gws/client_secret.json"
+GWS_DST="$GWS_CONFIG_DIR_OVERRIDE/client_secret.json"
 "$PYTHON" - "$TARGET_PATH" "$DST" "$ENV_DST" "$GWS_DST" <<'PY'
 import json, os, sys
 src, dst, env_dst, gws_dst = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]

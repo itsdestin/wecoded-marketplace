@@ -1,24 +1,41 @@
 #!/usr/bin/env bash
 # reauth.sh
 # Invoked by Claude (not by the user) when a skill signals AUTH_EXPIRED.
-# Re-runs the browser OAuth flow using the credentials ingest-oauth-json.sh
-# wrote to gws's expected path. Exit 0 on success, 1 on failure (user closed
-# browser, network error, no credentials saved, etc).
+# Re-runs the browser OAuth flow against a specified config dir, or against
+# the default ~/.config/gws/ when --config-dir is omitted.
+#
+# Usage:
+#   reauth.sh                              # default account at ~/.config/gws/
+#   reauth.sh --config-dir <path>          # named account
+#
+# Exit 0 on success, 1 on failure (user closed browser, network error, no
+# credentials saved).
 
 set -u
 
-GWS_CREDS="$HOME/.config/gws/client_secret.json"
+CONFIG_DIR="$HOME/.config/gws"
 
-if [ ! -f "$GWS_CREDS" ]; then
-  echo "No saved Google setup found. Run /google-services-setup first." >&2
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --config-dir) CONFIG_DIR="$2"; shift 2 ;;
+    --) shift; break ;;
+    *) echo "Unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+CREDS="$CONFIG_DIR/client_secret.json"
+if [ ! -f "$CREDS" ]; then
+  echo "No saved Google setup found at $CONFIG_DIR. Run /google-services-setup first." >&2
   exit 1
 fi
 
-# `gws auth login` reads the OAuth client from $HOME/.config/gws/client_secret.json
-# by default (0.22.5). No --client-id/--client-secret flags exist on this
-# subcommand — earlier drafts of reauth.sh used `gws auth setup --client-id`,
-# which is wrong: `gws auth setup` is for creating the GCP project + OAuth
-# client from scratch (requires gcloud) and doesn't take those flags.
-gws auth login || exit 1
+# Both env vars are required for safe per-account isolation. CONFIG_DIR alone
+# leaves the AES key in the OS keyring under a fixed service name, where a
+# second account's auth login would clobber the first. KEYRING_BACKEND=file
+# moves the key into <CONFIG_DIR>/.encryption_key so each account's state is
+# fully isolated. See spec section "Foundation" for full reasoning.
+export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$CONFIG_DIR"
+export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file
 
+gws auth login || exit 1
 exit 0

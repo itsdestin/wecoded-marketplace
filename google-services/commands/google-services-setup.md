@@ -80,6 +80,46 @@ export PATH="$HOME/.youcoded/bin:$PATH"
 export YOUCODED_OUTPUT_DIR="$HOME/.youcoded/google-services"
 ```
 
+## Step 0.5 — Detect existing setup
+
+Source the registry helper:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+```
+
+Two cases:
+
+**Case A: Registry exists with at least one account.** This is a returning user. Skip first-time setup; open the management menu.
+
+```bash
+registry_exists && [ "$(registry_account_count)" -gt 0 ]
+```
+
+If true, list current accounts in chat:
+
+> You have [N] account(s) connected: [name1] (default), [name2]. What do you want to do?
+
+Ask with `AskUserQuestion`:
+
+- **question:** "What do you want to do?"
+- **header:** "Manage accounts"
+- **options:**
+  - label: "Add another account" — description: "Connect another Google account."
+  - label: "Remove an account" — description: "Sign out and remove a connection."
+  - label: "Change default" — description: "Pick which account is used by default in new conversations."
+  - label: "Refresh / fix something broken" — description: "Re-run full setup against an account."
+  - label: "Cancel" — description: "Close this menu."
+
+Routing:
+- **Add another account** → jump to Step 8 (the add-another flow). It's idempotent and works whether or not knownTestUsers is empty.
+- **Remove an account** → run the remove flow described in this command's Appendix A below.
+- **Change default** → ask with `AskUserQuestion` listing each account name; run `registry_set_default "<name>"` on selection.
+- **Refresh / fix** → ask which account, then re-run Steps 1-6 against that account's config dir (set `GWS_CONFIG_DIR=<configDir>` for the smoke test).
+- **Cancel** → stop silently.
+
+**Case B: Registry doesn't exist OR exists with zero accounts.** First-time setup. Continue to Step 1 normally.
+
 ## Step 1 — Get the helpers ready
 
 Run:
@@ -219,7 +259,39 @@ Ask with `AskUserQuestion`:
   - label: "Done, continue" — description: "I'll open the last page."
   - label: "I hit a problem" — description: "Tell me what happened and I'll help sort it out."
 
-Handle "I hit a problem" the same way as 3B. Otherwise continue to 3D.
+Handle "I hit a problem" the same way as 3B.
+
+Otherwise, before moving on, send this in chat:
+
+> While you've got the Test Users page open — do you plan to use any other Google accounts with YouCoded later (work, school, secondary)? If so, list them now and I'll have you add them to Test Users in this same trip. Or say "just this one."
+
+Wait for the user's reply. If they list emails:
+
+1. Confirm what you heard back: "Got it — I'll have you add: work@acme.com, school@uni.edu."
+2. Send this:
+
+> Add each one to the Test Users list now (same blue **+ Add users** button), then come back and let me know when they're all there.
+
+3. Save the emails into the registry's `knownTestUsers` field. Source the registry helpers and call:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+registry_init
+for email in <space-separated emails the user listed>; do
+  registry_add_known_test_user "$email"
+done
+```
+
+4. Ask with `AskUserQuestion`:
+   - **question:** "Are all the additional emails added?"
+   - **header:** "Test users"
+   - **options:**
+     - label: "All added" — description: "I'll continue to the next page."
+     - label: "I hit a problem" — description: "Tell me what happened."
+
+If the user says "just this one" or "no," skip the registry step and continue.
+
+Continue to 3D.
 
 ### Step 3D — Create the connection key
 
@@ -363,3 +435,174 @@ bash $CLAUDE_PLUGIN_ROOT/setup/migrate-legacy.sh
 If it finds anything to clean up, say so in one plain sentence: "Cleared out the old Google connection." If it finds nothing, say nothing.
 
 If this helper has trouble, use the failure flow: say "The setup ran into a bug on my end." Setup itself is already done at this point, so the failure is cosmetic — but still let the user decide how to handle it.
+
+## Step 8 — Want to add another account now?
+
+This step runs only if Step 6 reported every app responding.
+
+Source the registry and check if any `knownTestUsers` were collected during Step 3C:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+PENDING="$(registry_list_known_test_users 2>/dev/null)"
+```
+
+If `$PENDING` is empty, ask the user generally:
+
+> Want to connect another Google account too? You can also do this anytime by running /google-services-setup again.
+
+Otherwise, name the pending emails:
+
+> Want to connect [work@acme.com] now? You added it to Test Users earlier, so signing in is quick.
+
+Ask with `AskUserQuestion`:
+
+- **question:** "Connect another account?"
+- **header:** "Another account"
+- **options:**
+  - label: "Yes, add one" — description: "I'll walk you through signing in to the next account."
+  - label: "Not now" — description: "All set. You can run /google-services-setup again to add accounts later."
+
+If the user picks "Not now," send "All set" and stop.
+
+If "Yes, add one":
+
+1. If multiple `knownTestUsers` exist, ask which to connect first via `AskUserQuestion`. Otherwise use the single pending email.
+2. Ask the user for a name for this account in chat (suggest one based on the email's domain — e.g. "work" for non-gmail.com domains, or use the part before @):
+
+   > What should I call this account? (Suggestion: "work")
+
+3. Run:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/add-account.sh \
+  --name "<name>" --email "<email>" --fast-path
+```
+
+   Capture exit code. On exit 0, send: "Connected [email] as [name]."
+
+4. **On exit 2 (fast-path consent rejected):** the workspace blocked the connection. Tell the user in plain words:
+
+   > That account's organization needs YouCoded to set up a separate connection. It's an extra ~10 minutes — want to do that now?
+
+   Ask with `AskUserQuestion`:
+   - label: "Yes, set it up" → run slow-path (see Step 8.1 below)
+   - label: "Skip this one" → loop back to step 1 with the next pending email, or end if none
+
+5. After a successful add, ask if the user wants to add another (loop back to step 1 with the remaining pending emails). When all are done OR the user picks "Not now," ask which account is the default if more than one exists:
+
+   - Use `AskUserQuestion` with options for each account name + the current default highlighted.
+   - If user picks a different default, run `registry_set_default "<name>"`.
+
+### Step 8.1 — Slow-path fallback (per-account GCP project)
+
+This sub-step runs only when Step 8's fast-path returned exit 2.
+
+Hold the user's selected name and email in shell variables `$NEW_NAME` and `$NEW_EMAIL` from Step 8.
+
+Run the project bootstrap:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/add-account.sh \
+  --name "$NEW_NAME" --email "$NEW_EMAIL" --slow-path
+source "$YOUCODED_OUTPUT_DIR/project.env"   # exports PROJECT_ID
+```
+
+Walk the user through the **same three Cloud Console pages from Step 3** but for the new project. Re-use the existing chat copy verbatim from Steps 3B/3C/3D (consent screen → test users → credentials), but:
+
+1. Open each page against the **new** project ID:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/open-browser.sh \
+  "https://console.cloud.google.com/auth/overview?project=$PROJECT_ID"
+# … and for 3C and 3D, with /auth/audience and /apis/credentials respectively, same project.
+```
+
+2. Use `AskUserQuestion` after each page exactly as in Steps 3B/3C/3D.
+
+3. Once the user has downloaded the key, ingest into the **new account's config dir**:
+
+```bash
+NEW_CONFIG_DIR="$HOME/.config/gws-$NEW_NAME"
+mkdir -p "$NEW_CONFIG_DIR"
+bash $CLAUDE_PLUGIN_ROOT/setup/ingest-oauth-json.sh --config-dir "$NEW_CONFIG_DIR"
+```
+
+(If the ingest helper can't find the download in the usual location, fall back to asking the user for the path, identical to Step 3E's fallback flow but with the `--config-dir` flag preserved.)
+
+4. Run the consent + first sign-in against the new account's config dir:
+
+```bash
+GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$NEW_CONFIG_DIR" \
+GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file \
+gws auth login > "$YOUCODED_OUTPUT_DIR/gws-auth-$NEW_NAME.log" 2>&1 &
+GWS_PID=$!
+for _ in $(seq 1 100); do
+  URL=$(grep -m1 "^  https://accounts.google.com" "$YOUCODED_OUTPUT_DIR/gws-auth-$NEW_NAME.log" 2>/dev/null | sed 's/^  //')
+  [ -n "$URL" ] && break
+  sleep 0.1
+done
+if [ -z "$URL" ]; then
+  kill "$GWS_PID" 2>/dev/null
+  exit 1
+fi
+bash "$CLAUDE_PLUGIN_ROOT/setup/open-browser.sh" "$URL"
+wait "$GWS_PID"
+```
+
+(This mirrors the Step 5 pattern from first-time setup, with the env-vars set for the new account.)
+
+5. On success, register with `ownsGcpProject=true`:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+registry_init
+registry_add_account "$NEW_NAME" "$NEW_EMAIL" "$NEW_CONFIG_DIR" true "$PROJECT_ID"
+# If this is the first secondary, also register the primary at ~/.config/gws/.
+if [ "$(registry_account_count)" = "1" ]; then
+  registry_add_account "personal" "" "$HOME/.config/gws" true ""
+  registry_set_default "personal"
+fi
+```
+
+Run the smoke test against the new account:
+
+```bash
+GWS_CONFIG_DIR="$NEW_CONFIG_DIR" bash $CLAUDE_PLUGIN_ROOT/setup/smoke-test.sh
+```
+
+Continue back at Step 8 step 5 (default-picking and loop for any remaining pending emails).
+
+---
+
+## Appendix A — Remove an account
+
+Used by the menu in Step 0.5 ("Remove an account").
+
+List current accounts via `registry_list_accounts | cut -f1`. If only one account exists, the warning copy is sterner (see below).
+
+Ask with `AskUserQuestion`:
+
+- **question:** "Which account do you want to remove?"
+- **header:** "Remove"
+- **options:** one per registered account; label = name, description = email.
+
+After selection, ask for confirmation:
+
+> I'll sign out of [email] and remove its YouCoded connection. Your data in Google itself stays untouched — emails, Drive files, calendars all remain in the account. Confirm?
+
+If only one account remains:
+
+> This is your only Google account. Removing it means you'll need to run /google-services-setup before YouCoded can do anything Google-related again. Confirm?
+
+If user confirms:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/remove-account.sh --name "<name>"
+```
+
+Capture exit. On success:
+
+- If account was the default and others remain, ask which to make new default and call `registry_set_default`.
+- If account had `ownsGcpProject=true`, mention the leftover project: "This account had its own Google Cloud project (`<projectId>`). The local connection is gone, but the project still exists in console.cloud.google.com if you want to delete it there."
+- Send: "Removed [name]."
