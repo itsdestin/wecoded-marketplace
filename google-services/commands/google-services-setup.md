@@ -395,3 +395,140 @@ bash $CLAUDE_PLUGIN_ROOT/setup/migrate-legacy.sh
 If it finds anything to clean up, say so in one plain sentence: "Cleared out the old Google connection." If it finds nothing, say nothing.
 
 If this helper has trouble, use the failure flow: say "The setup ran into a bug on my end." Setup itself is already done at this point, so the failure is cosmetic — but still let the user decide how to handle it.
+
+## Step 8 — Want to add another account now?
+
+This step runs only if Step 6 reported every app responding.
+
+Source the registry and check if any `knownTestUsers` were collected during Step 3C:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+PENDING="$(registry_list_known_test_users 2>/dev/null)"
+```
+
+If `$PENDING` is empty, ask the user generally:
+
+> Want to connect another Google account too? You can also do this anytime by running /google-services-setup again.
+
+Otherwise, name the pending emails:
+
+> Want to connect [work@acme.com] now? You added it to Test Users earlier, so signing in is quick.
+
+Ask with `AskUserQuestion`:
+
+- **question:** "Connect another account?"
+- **header:** "Another account"
+- **options:**
+  - label: "Yes, add one" — description: "I'll walk you through signing in to the next account."
+  - label: "Not now" — description: "All set. You can run /google-services-setup again to add accounts later."
+
+If the user picks "Not now," send "All set" and stop.
+
+If "Yes, add one":
+
+1. If multiple `knownTestUsers` exist, ask which to connect first via `AskUserQuestion`. Otherwise use the single pending email.
+2. Ask the user for a name for this account in chat (suggest one based on the email's domain — e.g. "work" for non-gmail.com domains, or use the part before @):
+
+   > What should I call this account? (Suggestion: "work")
+
+3. Run:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/add-account.sh \
+  --name "<name>" --email "<email>" --fast-path
+```
+
+   Capture exit code. On exit 0, send: "Connected [email] as [name]."
+
+4. **On exit 2 (fast-path consent rejected):** the workspace blocked the connection. Tell the user in plain words:
+
+   > That account's organization needs YouCoded to set up a separate connection. It's an extra ~10 minutes — want to do that now?
+
+   Ask with `AskUserQuestion`:
+   - label: "Yes, set it up" → run slow-path (see Step 8.1 below)
+   - label: "Skip this one" → loop back to step 1 with the next pending email, or end if none
+
+5. After a successful add, ask if the user wants to add another (loop back to step 1 with the remaining pending emails). When all are done OR the user picks "Not now," ask which account is the default if more than one exists:
+
+   - Use `AskUserQuestion` with options for each account name + the current default highlighted.
+   - If user picks a different default, run `registry_set_default "<name>"`.
+
+### Step 8.1 — Slow-path fallback (per-account GCP project)
+
+This sub-step runs only when Step 8's fast-path returned exit 2.
+
+Hold the user's selected name and email in shell variables `$NEW_NAME` and `$NEW_EMAIL` from Step 8.
+
+Run the project bootstrap:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/add-account.sh \
+  --name "$NEW_NAME" --email "$NEW_EMAIL" --slow-path
+source "$YOUCODED_OUTPUT_DIR/project.env"   # exports PROJECT_ID
+```
+
+Walk the user through the **same three Cloud Console pages from Step 3** but for the new project. Re-use the existing chat copy verbatim from Steps 3B/3C/3D (consent screen → test users → credentials), but:
+
+1. Open each page against the **new** project ID:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/setup/open-browser.sh \
+  "https://console.cloud.google.com/auth/overview?project=$PROJECT_ID"
+# … and for 3C and 3D, with /auth/audience and /apis/credentials respectively, same project.
+```
+
+2. Use `AskUserQuestion` after each page exactly as in Steps 3B/3C/3D.
+
+3. Once the user has downloaded the key, ingest into the **new account's config dir**:
+
+```bash
+NEW_CONFIG_DIR="$HOME/.config/gws-$NEW_NAME"
+mkdir -p "$NEW_CONFIG_DIR"
+bash $CLAUDE_PLUGIN_ROOT/setup/ingest-oauth-json.sh --config-dir "$NEW_CONFIG_DIR"
+```
+
+(If the ingest helper can't find the download in the usual location, fall back to asking the user for the path, identical to Step 3E's fallback flow but with the `--config-dir` flag preserved.)
+
+4. Run the consent + first sign-in against the new account's config dir:
+
+```bash
+GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$NEW_CONFIG_DIR" \
+GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file \
+gws auth login > "$YOUCODED_OUTPUT_DIR/gws-auth-$NEW_NAME.log" 2>&1 &
+GWS_PID=$!
+for _ in $(seq 1 100); do
+  URL=$(grep -m1 "^  https://accounts.google.com" "$YOUCODED_OUTPUT_DIR/gws-auth-$NEW_NAME.log" 2>/dev/null | sed 's/^  //')
+  [ -n "$URL" ] && break
+  sleep 0.1
+done
+if [ -z "$URL" ]; then
+  kill "$GWS_PID" 2>/dev/null
+  exit 1
+fi
+bash "$CLAUDE_PLUGIN_ROOT/setup/open-browser.sh" "$URL"
+wait "$GWS_PID"
+```
+
+(This mirrors the Step 5 pattern from first-time setup, with the env-vars set for the new account.)
+
+5. On success, register with `ownsGcpProject=true`:
+
+```bash
+source "$CLAUDE_PLUGIN_ROOT/lib/registry.sh"
+registry_init
+registry_add_account "$NEW_NAME" "$NEW_EMAIL" "$NEW_CONFIG_DIR" true "$PROJECT_ID"
+# If this is the first secondary, also register the primary at ~/.config/gws/.
+if [ "$(registry_account_count)" = "1" ]; then
+  registry_add_account "personal" "" "$HOME/.config/gws" true ""
+  registry_set_default "personal"
+fi
+```
+
+Run the smoke test against the new account:
+
+```bash
+GWS_CONFIG_DIR="$NEW_CONFIG_DIR" bash $CLAUDE_PLUGIN_ROOT/setup/smoke-test.sh
+```
+
+Continue back at Step 8 step 5 (default-picking and loop for any remaining pending emails).
