@@ -14,8 +14,10 @@ import { adminDashboardRoute } from "./admin/dashboard-route";
 
 const app = new Hono<HonoEnv>();
 
-// Allowlist of origins permitted to call the worker. Keep this tight — these
-// are the only surfaces that should legitimately talk to the marketplace API.
+// Allowlist of origins permitted to call the worker for AUTHENTICATED routes
+// (writes — installs, ratings POST/DELETE, theme likes, reports, admin).
+// Keep this tight — these are the only surfaces that should legitimately make
+// authenticated calls to the marketplace API.
 const ALLOWED_ORIGINS = [
   "https://youcoded.com",
   "app://youcoded",          // Electron packaged app
@@ -24,12 +26,54 @@ const ALLOWED_ORIGINS = [
   "http://localhost:9901",     // Android LocalBridgeServer
 ];
 
-app.use("*", cors({
+// CORS strategy:
+//   PUBLIC READ endpoints (GET /stats, GET /ratings/:plugin_id) accept any
+//   origin because the data is already public — Android's WebView loads React
+//   from `file:///android_asset/web/index.html`, which sends `Origin: null`,
+//   and that's not in (and shouldn't be in) the strict allowlist below.
+//   Allowing `*` for these specific public-read endpoints fixes the "Couldn't
+//   load reviews" error on Android without broadening write-endpoint CORS.
+//
+//   EVERYTHING ELSE keeps the strict origin allowlist. Writes are gated by
+//   `requireAuth` (Bearer token) regardless of CORS, but the allowlist is a
+//   defense-in-depth layer that prevents `null`-origin contexts (sandboxed
+//   iframes, file:// pages, data: URLs) from even attempting writes.
+const publicReadCors = cors({
+  origin: "*",
+  allowMethods: ["GET"],
+  allowHeaders: ["Content-Type"],
+  credentials: false,
+});
+
+const strictCors = cors({
   origin: (origin) => (ALLOWED_ORIGINS.includes(origin ?? "") ? origin! : null),
   allowMethods: ["GET", "POST", "DELETE"],
   allowHeaders: ["Content-Type", "Authorization"],
   credentials: false,
-}));
+});
+
+// Path matcher for public-read endpoints. Tight: GET /stats exact, GET
+// /ratings/<single-segment plugin_id>. Anything else falls through to strict.
+function isPublicReadPath(path: string): boolean {
+  if (path === "/stats") return true;
+  if (path.startsWith("/ratings/")) {
+    const rest = path.slice("/ratings/".length);
+    return rest.length > 0 && !rest.includes("/");
+  }
+  return false;
+}
+
+app.use("*", async (c, next) => {
+  // For OPTIONS preflight, the browser sets `Access-Control-Request-Method`
+  // to the actual upcoming method. Honor that to dispatch correctly — without
+  // it, a preflight for `GET /stats` arrives as `OPTIONS /stats` and the
+  // method check below would route it to strictCors instead of publicReadCors.
+  const requestedMethod = c.req.header("Access-Control-Request-Method") ?? c.req.method;
+  if (requestedMethod === "GET" && isPublicReadPath(c.req.path)) {
+    return publicReadCors(c, next);
+  }
+  return strictCors(c, next);
+});
 
 // Error handler: HTTPException responses (badRequest, forbidden, tooMany, etc.)
 // keep their own status+body. Any other thrown Error becomes JSON 500 instead
