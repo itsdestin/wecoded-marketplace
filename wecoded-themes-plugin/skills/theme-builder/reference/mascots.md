@@ -61,6 +61,12 @@ node ${SKILL}/scripts/build-mascot.mjs --out <theme>/assets --from-rig <theme>/a
 eyes and no expression on that character was readable for months. If a signature component
 sits over the eyes, ship it as an opt-in component instead of pre-filling the slot.
 
+## Art palette and readability
+
+Mascot art is **not button inversion**: UI `accent`/`on-accent` contrast does not choose a friendly face. Choose body, face and catchlights independently. Pale or warm bodies with dark eyes and bright catches work; dark bodies with readable mid-tone eyes or a restrained light rim work too. There is no pastel-only mandate: keep the theme's identity.
+
+Use restrained lighting and one or two signature details, not extra face geometry. Check **face against body** separately from **silhouette against background**; a legible face can still disappear into the sky. A thin rim can help a small pale character. Preserve the generator's shapes and all eight expressions.
+
 ## Colour rules (each of these has already gone wrong)
 
 1. **Flat variants are hardcoded hex. Never `currentColor`, never CSS variables.** The app
@@ -131,8 +137,7 @@ version of this file said to. (`dizzy` is a rig FACE — it just has no flat cou
    every group id, the pivots, all eight faces, the pupil groups, the mittens and the slots.
    A generated rig passes it with zero warnings; if yours doesn't, you changed something you
    shouldn't have.
-2. **Preview every face at 24 / 48 / 80 px** on canvas, panel and inset backgrounds. At 24 px
-   the character must read; at 48 px the expressions must be tellable apart.
+2. **Preview all eight expressions at actual 24 / 48 / 80 / 112 px**, not zoomed-up previews, on canvas, panel, inset and representative wallpaper/game backgrounds. At 24 px the silhouette must read; at 48 px expressions must be tellable apart. Check face/body and silhouette/background readability independently.
 3. Confirm the flat variants render on a page whose text colour is something loud like red —
    if any part of the mascot comes out red or black, a `currentColor` slipped in.
 
