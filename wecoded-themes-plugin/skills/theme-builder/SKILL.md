@@ -22,7 +22,7 @@ Stay out of context until needed:
 
 - `reference/concept-card.md` — concept card HTML structure, app-mockup data attributes, glassmorphism vars. **Read before generating Phase 1 concepts.**
 - `reference/tokens.md` — contrast rules, palette temperature, effect intensity, layout preset notes. **Read before designing a palette from scratch or writing a palette override.** Skip if applying a Kit preset unmodified.
-- `reference/mascots.md` — non-negotiable mascot rendering rules. **Read before generating any mascot SVG.**
+- `reference/mascots.md` — mascot art palette (not button inversion), restrained lighting, face/body and silhouette/background checks at 24/48/80/112 px across all eight expressions. **Read before generating or recolouring any mascot SVG.**
 - `reference/phase2-finalize.md` — full Phase 2 build steps (folder promote, terminal-bg bake, manifest, custom CSS, contrast validation). **Read when processing a `kit-build` event.**
 
 ---
