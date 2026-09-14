@@ -62,14 +62,17 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
-  // WHY N+1 days: buckets are LOCAL days but the window is measured back from
-  // UTC NOW(). One extra day of margin keeps the oldest requested local day
-  // fully covered for any offset; the client trims the result to N days.
+  // WHY N+1 days only with tz_offset: buckets are then LOCAL days but the window
+  // is measured back from UTC NOW(), so one extra day keeps the oldest local day
+  // fully covered (the client trims to N). Without an offset the window stays
+  // exactly N days, so older callers (dashboard-html.ts, the /analytics skill)
+  // get the same rows as before.
+  const windowDays = local === "timestamp" ? days : days + 1;
   const rows = await runAnalyticsQuery<{ day: string; devices: number }>(
     c.env,
     `SELECT toDate(${local}) AS day, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${days + 1}' DAY ${filter} ${platform} ${version} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${version} ${hideTest}
      GROUP BY day ORDER BY day`
   );
   return c.json(rows);
@@ -195,7 +198,7 @@ adminAnalyticsRoutes.get("/admin/analytics/regions", requireAdminAuth, async (c)
 
 // GET /admin/analytics/active-by-version?days=30 — devices per LOCAL day per
 // version (for a stacked adoption chart). Params: tz_offset, platform, hide_test.
-// Window is N+1 days for the same local-day coverage reason as /dau.
+// Window is N+1 days only with tz_offset, for the same reason as /dau.
 adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const days = clampDays(c.req.query("days"), 30);
@@ -204,11 +207,12 @@ adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth,
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
   const platform = platformClause(c.req.query("platform"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
+  const windowDays = local === "timestamp" ? days : days + 1;
   const rows = await runAnalyticsQuery<{ day: string; version: string; devices: number }>(
     c.env,
     `SELECT toDate(${local}) AS day, blob3 AS version, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${days + 1}' DAY ${filter} ${platform} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${hideTest}
      GROUP BY day, version ORDER BY day`
   );
   return c.json(rows);

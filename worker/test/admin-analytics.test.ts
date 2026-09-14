@@ -100,11 +100,11 @@ describe("GET /admin/analytics/dau", () => {
     expect(sql).not.toContain("NOT IN");
   });
 
-  it("without params buckets UTC days over an N+1 day window", async () => {
+  it("without params keeps the original N-day UTC window (older callers unchanged)", async () => {
     const token = await seedAdmin();
     const sql = await sqlFor(token, "/admin/analytics/dau");
     expect(sql).toContain("toDate(timestamp) AS day");
-    expect(sql).toContain("INTERVAL '31' DAY");
+    expect(sql).toContain("INTERVAL '30' DAY");
     expectNoRowFilters(sql);
   });
 
@@ -125,7 +125,7 @@ describe("GET /admin/analytics/dau", () => {
     const token = await seedAdmin();
     const sql = await sqlFor(token, `/admin/analytics/dau?days=999&${INVALID_FILTERS}`);
     expect(sql).toContain("toDate(timestamp) AS day");
-    expect(sql).toContain("INTERVAL '91' DAY");
+    expect(sql).toContain("INTERVAL '90' DAY");
     expectNoRowFilters(sql);
   });
 });
@@ -372,7 +372,7 @@ describe("GET /admin/analytics/active-by-version", () => {
     expect(sql).toContain(
       "SELECT toDate(timestamp) AS day, blob3 AS version, count(DISTINCT blob2) AS devices"
     );
-    expect(sql).toContain("INTERVAL '31' DAY");
+    expect(sql).toContain("INTERVAL '30' DAY");
     expect(sql).toContain("GROUP BY day, version ORDER BY day");
     expect(sql).toContain("toDateTime('2026-05-15T00:00:00Z')");
     expect(sql).toContain(`AND blob2 NOT IN ('${"a".repeat(64)}')`);
@@ -398,7 +398,7 @@ describe("GET /admin/analytics/active-by-version", () => {
       token,
       `/admin/analytics/active-by-version?days=999&${INVALID_FILTERS}`
     );
-    expect(sql).toContain("INTERVAL '91' DAY");
+    expect(sql).toContain("INTERVAL '90' DAY");
     expectNoRowFilters(sql);
   });
 });
