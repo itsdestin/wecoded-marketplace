@@ -219,7 +219,8 @@ adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth,
 });
 
 // GET /admin/analytics/weekly?weeks=12 — distinct devices per LOCAL week
-// (weeks start Monday). Params: tz_offset, platform, version, hide_test.
+// (weeks start SUNDAY: Analytics Engine's toStartOfWeek returns Sundays, measured
+// live 2026-09-13, although its docs say Monday). Params: tz_offset, platform, version, hide_test.
 // WHY W*7+7 capped at 90: the extra week lets the oldest requested week be
 // complete even though the current week is still in progress; 90 days is the
 // AE retention ceiling, so asking for more would only return nothing extra.
