@@ -18,6 +18,7 @@ import { syncRoutes } from "./sync/routes";
 import { adminAnalyticsRoutes } from "./admin/analytics";
 import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
+import { siteAnalyticsRoutes } from "./site-analytics/routes";
 
 const app = new Hono<HonoEnv>();
 
@@ -96,6 +97,19 @@ function isPublicReadPath(path: string): boolean {
 }
 
 app.use("*", async (c, next) => {
+  // Website ingestion has an intentionally separate, exact-origin CORS policy.
+  // WHY it must run before strictCors: its public POSTs are not authenticated API writes.
+  if (c.req.path === "/site-analytics/start" || c.req.path === "/site-analytics/update") {
+    const origin = c.req.header("Origin");
+    if (c.req.method === "OPTIONS") {
+      const method = c.req.header("Access-Control-Request-Method");
+      const requested = (c.req.header("Access-Control-Request-Headers") ?? "").toLowerCase().split(",").map((v) => v.trim()).filter(Boolean);
+      if (origin !== "https://youcoded.ai" || method !== "POST" || requested.some((v) => v !== "content-type")) return c.text("", 403);
+      return c.body(null, 204, { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers" });
+    }
+    if (origin === "https://youcoded.ai") c.header("Access-Control-Allow-Origin", origin);
+    return next();
+  }
   // For OPTIONS preflight, the browser sets `Access-Control-Request-Method`
   // to the actual upcoming method. Honor that to dispatch correctly — without
   // it, a preflight for `GET /stats` arrives as `OPTIONS /stats` and the
@@ -112,7 +126,12 @@ app.use("*", async (c, next) => {
 // of Hono's default plain-text so admin-skill + dashboard callers can parse the
 // message — and so the admin analytics SQL-API errors are debuggable in prod.
 app.onError((err, c) => {
-  if (err instanceof HTTPException) return err.getResponse();
+  // Website POST errors must be readable by the exact allowed browser origin too.
+  const siteCors = (response: Response) => {
+    if ((c.req.path === "/site-analytics/start" || c.req.path === "/site-analytics/update") && c.req.header("Origin") === "https://youcoded.ai") response.headers.set("Access-Control-Allow-Origin", "https://youcoded.ai");
+    return response;
+  };
+  if (err instanceof HTTPException) return siteCors(err.getResponse());
   const message = err instanceof Error ? err.message : "internal error";
   console.error("worker onError:", message);
   return c.json({ ok: false, error: message }, 500);
@@ -134,6 +153,7 @@ app.route("/", gameRoutes);
 app.route("/", syncRoutes);
 app.route("/", adminAnalyticsRoutes);
 app.route("/", adminDashboardRoute);
+app.route("/", siteAnalyticsRoutes);
 
 // Export the fetch handler plus a scheduled() handler for the daily maintenance
 // cron. The export shape changes from `app` to `{ fetch, scheduled }`, but
