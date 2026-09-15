@@ -24,6 +24,20 @@ const update = (windows = 0, macos = 0, instructions = 0, updateDay = day) => ru
 );
 
 describe("site analytics storage invariants (real D1)", () => {
+  it("keeps trigger CASE expressions parenthesized for the remote D1 statement splitter", async () => {
+    // WHY local SQLite is insufficient: D1 /query mistakes a bare CASE END for a trigger END.
+    // Regression for workers-sdk#4727, observed by the production migration on 2026-09-15.
+    const triggers = await env.DB.prepare("SELECT sql FROM sqlite_master WHERE type='trigger' AND name LIKE 'site_%'").all<{ sql: string }>();
+    expect(triggers.results).toHaveLength(6);
+    for (const { sql } of triggers.results) {
+      let depth = 0;
+      for (const [token] of sql.matchAll(/--[^\n]*|'(?:''|[^'])*'|"(?:""|[^"])*"|\bCASE\b|[()]/gi)) {
+        if (token === '(') depth++;
+        if (token === ')') depth--;
+        if (token.toUpperCase() === 'CASE') expect(depth, sql).toBeGreaterThan(0);
+      }
+    }
+  });
   it("concurrent duplicate starts reserve one start, cell and visit", async () => {
     await Promise.all(Array.from({ length: 8 }, () => start()));
     expect(await budget()).toEqual({ starts: 1, changes: 0, registrations: 0, cells: 1 });
