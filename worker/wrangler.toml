@@ -62,6 +62,10 @@ CUTOVER_TIMESTAMP = ""
 # handle by falling back to index.json — the way to stop a bad ingest run from
 # reaching every device without writing and deploying code under pressure.
 CATALOG_ENABLED = "1"
+# WHY: owner authorized activation after enabling the edge rate-limit rule.
+# Signing remains a CI-provisioned secret, never a public [vars] placeholder.
+SITE_ANALYTICS_ENABLED = "1"
+SITE_CAMPAIGN_CAPACITY = "1000"
 
 # Where GET /catalog serves from: one pre-built object written at the end of an
 # ingest run that changed something (src/catalog/publish.ts), instead of
@@ -135,6 +139,9 @@ GAME_RESULT_TIMEOUT_MS = "600"
 # is off in tests.
 CATALOG_INGEST_TOKEN = "test-ingest-token"
 CATALOG_ENABLED = "1"
+SITE_ANALYTICS_ENABLED = "1"
+SITE_ANALYTICS_SECRET = "test-site-analytics-secret"
+SITE_CAMPAIGN_CAPACITY = "1000"
 
 # Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
 # are injected as secrets by CI (see .github/workflows/worker-deploy.yml).

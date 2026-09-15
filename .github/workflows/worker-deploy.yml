@@ -58,3 +58,12 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      # WHY: page capabilities must be signed with a secret, never a public [vars] value.
+      - name: Push website analytics signing secret
+        run: |
+          test -n "$SITE_ANALYTICS_SECRET"
+          printf '%s' "$SITE_ANALYTICS_SECRET" | npx wrangler secret put SITE_ANALYTICS_SECRET
+        env:
+          SITE_ANALYTICS_SECRET: ${{ secrets.MARKETPLACE_SITE_ANALYTICS_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
