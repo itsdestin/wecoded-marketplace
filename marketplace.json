@@ -124,9 +124,14 @@
       "name": "spotify-services",
       "displayName": "Spotify Services",
       "description": "Spotify Web API + native local desktop control. Premium required.",
-      "author": { "name": "YouCoded" },
+      "author": {
+        "name": "YouCoded"
+      },
       "category": "integrations",
-      "source": { "source": "local", "path": "spotify-services" },
+      "source": {
+        "source": "local",
+        "path": "spotify-services"
+      },
       "prompt": "/spotify-services-setup"
     },
     {
@@ -185,6 +190,20 @@
       "source": {
         "source": "local",
         "path": "youcoded-chatsearch"
+      }
+    },
+    {
+      "name": "wecoded-pages-plugin",
+      "displayName": "Page Builder",
+      "description": "Build and edit YouCoded Pages — small apps inside the app, made by describing them",
+      "author": {
+        "name": "@destin",
+        "github": "destinationunknown"
+      },
+      "category": "productivity",
+      "source": {
+        "source": "local",
+        "path": "wecoded-pages-plugin"
       }
     }
   ]

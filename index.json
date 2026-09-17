@@ -11731,5 +11731,41 @@
     },
     "deprecated": true,
     "deprecatedAt": "2026-08-06"
+  },
+  {
+    "id": "wecoded-pages-plugin",
+    "type": "plugin",
+    "displayName": "Page Builder",
+    "description": "Build and edit YouCoded Pages — small apps inside the app, made by describing them",
+    "category": "productivity",
+    "author": "@destin",
+    "tags": [
+      "productivity",
+      "design"
+    ],
+    "version": "0.1.0",
+    "publishedAt": "2026-09-17T00:00:00Z",
+    "sourceMarketplace": "youcoded",
+    "sourceType": "local",
+    "sourceRef": "wecoded-pages-plugin",
+    "repoUrl": null,
+    "tagline": "Describe a page. Get an app inside YouCoded.",
+    "longDescription": "The `/page-builder` skill — say what you want (a timer, a week planner, a notes board, a checklist, a game) and Claude builds a YouCoded Page: a small app that lives in your Pages library, opens in its own frame, follows whatever theme you use, and saves its own data so it is the same on every device. Personal pages sync with your Personal space; project pages travel with the project.\n\nEdit a page by describing the change, pin favourites to the top bar, and ask for an earlier version back — every page lives in a synced folder with history. Bundled with YouCoded.",
+    "lifeArea": [
+      "productivity",
+      "creative"
+    ],
+    "audience": "general",
+    "components": {
+      "skills": [
+        "page-builder"
+      ],
+      "hooks": [],
+      "commands": [],
+      "agents": [],
+      "mcpServers": [],
+      "hasHooksManifest": false,
+      "hasMcpConfig": false
+    }
   }
 ]
