@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PAGE NAME</title>
+  <!-- No stylesheet link and no <script src>: the host injects the theme and the style kit
+       (every .yc-* class) before this document is framed, and a page must work with nothing
+       but itself. Page-specific styles go in this one <style>. -->
+  <style>
+    /* Page-specific rules only. Use var(--canvas), var(--panel), var(--accent)… for anything
+       that should follow the theme. */
+  </style>
+</head>
+<body>
+  <div class="yc-page yc-stack">
+    <div class="yc-row yc-row--between">
+      <div>
+        <div class="yc-eyebrow">EYEBROW</div>
+        <h1>PAGE NAME</h1>
+      </div>
+      <button class="yc-button yc-button--primary" id="primary">THE ONE MAIN ACTION</button>
+    </div>
+
+    <div class="yc-card">
+      <!-- content -->
+    </div>
+  </div>
+
+  <script>
+    // Saved data: the host hands the last saved value to the page before this script runs.
+    // window.youcoded.data is that value (or null the first time). Save with
+    // window.youcoded.save(value); the host writes it beside the page and syncs it. Keep it
+    // small (well under 1 MB) and JSON-only. Never use localStorage: it does not survive.
+    var state = (window.youcoded && window.youcoded.data) || { /* defaults */ };
+    function persist() { if (window.youcoded) window.youcoded.save(state); }
+
+    // ... the page's behaviour ...
+  </script>
+</body>
+</html>
