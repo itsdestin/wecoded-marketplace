@@ -37,6 +37,28 @@ export function adminFilterClause(env: Env, includeAdmins: boolean): string {
   return `AND blob2 NOT IN (${hashes.join(",")})`;
 }
 
+// Historical packaged smoke tests reported ordinary beta versions before the
+// client learned to suppress analytics. Keep this user-approved list exact:
+// broad prerelease patterns would erase other real beta users too.
+const HISTORICAL_CI_VERSIONS = [
+  "1.2.4-releasetest",
+  "1.3.0-beta",
+  "1.3.0-beta.71",
+  "1.3.0-beta.73",
+  "1.3.0-beta.74",
+  "1.3.0-beta.77",
+  "1.3.0-beta.78",
+  "1.3.0-beta.79",
+  "1.3.0-beta.81",
+  "1.3.0-beta.84",
+  "1.3.0-beta.85",
+  "1.3.0-beta.86",
+] as const;
+
+export function historicalCiVersionClause(): string {
+  return `AND blob3 NOT IN (${HISTORICAL_CI_VERSIONS.map((version) => `'${version}'`).join(",")})`;
+}
+
 // Returns "AND timestamp > toDateTime('<iso>')" or "" if cutover disabled.
 // Extracts the first ISO-8601 date/datetime from the raw value — injection
 // characters surrounding or appended to a valid date are non-ISO and thus

@@ -3,6 +3,7 @@ import {
   adminFilterClause,
   cutoverClause,
   hideTestClause,
+  historicalCiVersionClause,
   localTimestampExpr,
   platformClause,
   versionClause,
@@ -132,6 +133,27 @@ describe("versionClause", () => {
       "1.0;--", "1.0' OR '1'='1", "1.0\n", "1.0%",
     ]) {
       expect(versionClause(bad)).toBe("");
+    }
+  });
+});
+
+describe("historicalCiVersionClause", () => {
+  it("excludes exactly the user-approved historical versions", () => {
+    expect(historicalCiVersionClause()).toBe(
+      "AND blob3 NOT IN ('1.2.4-releasetest','1.3.0-beta','1.3.0-beta.71','1.3.0-beta.73','1.3.0-beta.74','1.3.0-beta.77','1.3.0-beta.78','1.3.0-beta.79','1.3.0-beta.81','1.3.0-beta.84','1.3.0-beta.85','1.3.0-beta.86')"
+    );
+  });
+
+  it("preserves the published prereleases that were not selected for removal", () => {
+    const clause = historicalCiVersionClause();
+    for (const version of [
+      "1.3.0-beta.72",
+      "1.3.0-beta.75",
+      "1.3.0-beta.76",
+      "1.3.0-beta.80",
+      "1.3.1-beta.87",
+    ]) {
+      expect(clause).not.toContain(`'${version}'`);
     }
   });
 });
