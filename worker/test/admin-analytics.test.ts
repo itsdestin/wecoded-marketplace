@@ -49,6 +49,42 @@ function expectNoRowFilters(sql: string) {
   expect(sql).not.toContain("DROP");
 }
 
+describe("historical CI-version exclusion", () => {
+  beforeEach(async () => { await clearAuth(); mockCfSql([]); });
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  it("applies to row-count metrics and is not bypassed by include_admins", async () => {
+    const token = await seedAdmin();
+    const endpoints = [
+      "/admin/analytics/dau?include_admins=1",
+      "/admin/analytics/mau?include_admins=1",
+      "/admin/analytics/versions?include_admins=1",
+      "/admin/analytics/platforms?include_admins=1",
+      "/admin/analytics/countries?include_admins=1",
+      "/admin/analytics/regions?include_admins=1",
+      "/admin/analytics/active-by-version?include_admins=1",
+      "/admin/analytics/weekly?include_admins=1",
+    ];
+
+    for (const endpoint of endpoints) {
+      const sql = await sqlFor(token, endpoint);
+      expect(sql, endpoint).toContain("blob3 NOT IN");
+      expect(sql, endpoint).toContain("'1.3.0-beta.86'");
+      expect(sql, endpoint).not.toContain("'1.3.0-beta.80'");
+    }
+  });
+
+  it("does not rewrite install or retention history by filtering version rows", async () => {
+    const token = await seedAdmin();
+    for (const endpoint of [
+      "/admin/analytics/installs?include_admins=1",
+      "/admin/analytics/retention?include_admins=1",
+    ]) {
+      expect(await sqlFor(token, endpoint), endpoint).not.toContain("blob3 NOT IN");
+    }
+  });
+});
+
 describe("GET /admin/analytics/dau", () => {
   beforeEach(async () => { await clearAuth(); mockCfSql([{ day: "2026-05-15", devices: 5 }]); });
   afterEach(() => { globalThis.fetch = origFetch; });
@@ -97,7 +133,8 @@ describe("GET /admin/analytics/dau", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const sql = (globalThis.fetch as any).mock.calls[0][1].body as string;
-    expect(sql).not.toContain("NOT IN");
+    expect(sql).not.toContain("blob2 NOT IN");
+    expect(sql).toContain("blob3 NOT IN");
   });
 
   it("without params keeps the original N-day UTC window (older callers unchanged)", async () => {
@@ -254,7 +291,7 @@ describe("GET /admin/analytics/countries", () => {
   });
 
   // Privacy policy (2026-09-13): geography is never combined with other dimensions.
-  it("ignores every filter param", async () => {
+  it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/countries");
     const filtered = await sqlFor(
@@ -297,7 +334,7 @@ describe("GET /admin/analytics/regions", () => {
   });
 
   // Privacy policy (2026-09-13): geography is never combined with other dimensions.
-  it("ignores every filter param", async () => {
+  it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/regions");
     const filtered = await sqlFor(
@@ -329,7 +366,7 @@ describe("GET /admin/analytics/installs (derived from first-seen)", () => {
     expectNoRowFilters(sql);
   });
 
-  it("applies tz_offset, platform and hide_test but not version", async () => {
+  it("applies tz_offset and platform but no version-based filters", async () => {
     const token = await seedAdmin();
     const sql = await sqlFor(
       token,
@@ -338,8 +375,8 @@ describe("GET /admin/analytics/installs (derived from first-seen)", () => {
     expect(sql).toContain("MIN((timestamp + INTERVAL '60' MINUTE)) AS first_seen");
     expect(sql).toContain("toDate(toStartOfDay(first_seen)) AS day");
     expect(sql).toContain("AND blob4 = 'desktop'");
-    expect(sql).toContain("NOT LIKE '%-releasetest'");
-    expect(sql).not.toContain("blob3 =");
+    expect(sql).not.toContain("blob3");
+    expect(sql).not.toContain("NOT LIKE");
   });
 
   it("drops invalid params", async () => {
