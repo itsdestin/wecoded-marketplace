@@ -49,6 +49,21 @@ Preserves all YouCoded entries, imports upstream alphabetically, applies `overri
 
 Or create a skill inside YouCoded and share it via the app's share feature.
 
+**Changing an existing plugin? Raise its `plugin.json` version in the same PR.** YouCoded
+upgrades an installed plugin only when the version rises, so a content change at the same
+version reaches nobody who already has it. CI enforces this; see CONTRIBUTING.md.
+
+### Maintainer note: branch protection
+
+`bundled-version-bump` is a **required status check that nothing requires**. `master` has no
+branch protection (verified 2026-09-20), so a red check does not block a merge — it only
+annotates one. This is not hypothetical: PR #87 (2026-09-09) changed theme-builder's
+`reference/mascots.md` without a version bump, the check failed, and the PR merged. The
+guidance reached no existing install and the failure was invisible after the fact.
+
+Until branch protection requires it, treat a red `bundled-version-bump` as a merge blocker by
+convention, and consider adding `master` protection with that job required.
+
 ## Registry Entry Format
 
 ```json
