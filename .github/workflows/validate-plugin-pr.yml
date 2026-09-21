@@ -320,7 +320,14 @@ jobs:
             OLD=$(git show "$BASE:$d/plugin.json" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("version",""))' 2>/dev/null || echo "")
             NEW=$(python3 -c 'import json; print(json.load(open("'"$d"'/plugin.json")).get("version",""))')
             if [ "$OLD" = "$NEW" ]; then
-              echo "::error file=$d/plugin.json::$d changed but its version is still '$NEW'. Installed copies upgrade only when the version rises, so this change would reach nobody who already has it. Bump it, e.g.:  \"version\": \"$(python3 -c 'import json;print(json.load(open("'"$d"'/plugin.json")).get("version","0.0.0"))')+1-patch\""
+              # WHY the suggestion is a COMPUTED patch bump and not just "bump it":
+              # the obvious shorthand "1.0.1+1-patch" is semver BUILD METADATA and
+              # sorts EQUAL to 1.0.1, so it would pass this check while still not
+              # satisfying the app's isNewerVersion() — the check's own advice
+              # would reproduce the bug the check exists to catch. Compute a real
+              # next patch instead.
+              SUGGESTED=$(python3 -c 'import json;v=json.load(open("'"$d"'/plugin.json")).get("version","0.0.0").split(".");v=(v+["0","0"])[:3];v[2]=str(int(v[2])+1);print(".".join(v))')
+              echo "::error file=$d/plugin.json::$d changed but its version is still '$NEW'. Installed copies upgrade only when the version rises, so this change would reach nobody who already has it. Bump it — e.g. \"version\": \"$SUGGESTED\""
               FAIL=1
             else
               echo "$d: $OLD -> $NEW"
