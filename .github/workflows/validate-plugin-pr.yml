@@ -12,26 +12,22 @@
 name: Validate Plugin PR
 
 on:
+  # NO `paths:` filter on pull_request, DELIBERATELY. A PR that changes none of
+  # the listed paths produces NO check run at all, and a required check that is
+  # never reported blocks the merge forever — GitHub treats "not reported" as
+  # "not passing", not as "not applicable". Verified 2026-09-20: GitHub's own
+  # guidance is to make required checks report `skipped`/`neutral` rather than
+  # rely on path filters, and a skipped job DOES satisfy a required check.
+  #
+  # The old filter excluded worker/**, scripts/**, docs/**, .github/**, so a
+  # Worker-only PR would have hit exactly that deadlock. The filters stay on
+  # `push:` below, where they are a harmless optimisation (nothing is required
+  # to report on a push to master).
+  #
+  # The cost of no filter: this workflow now starts on every PR, including
+  # Worker-only and docs-only ones. Each job below re-checks the changed paths
+  # against its own condition and skips in seconds when it does not apply.
   pull_request:
-    # WHY '**' + exclusions instead of a list of plugin dirs: GitHub path
-    # filters can't express "any top-level dir containing plugin.json", and a
-    # hardcoded dir list would silently skip the NEXT plugin someone adds.
-    # So we fire on everything except the known non-plugin areas, and the
-    # "Find changed plugin directories" step below does the precise
-    # "does this top-level dir contain plugin.json?" check. A PR touching
-    # only root files (README.md etc.) still triggers, finds no plugin
-    # dirs, and passes in seconds — cheap and safe.
-    # (marketplace.json and overrides/ stay INCLUDED on purpose: the enum
-    # validation step checks them.)
-    paths:
-      - '**'
-      - '!worker/**'
-      - '!scripts/**'
-      - '!docs/**'
-      - '!skills/**'
-      - '!themes/**'
-      - '!integrations/**'
-      - '!.github/**'
   push:
     branches: [master]  # the repo's default branch is master, not main
     paths:
@@ -286,20 +282,34 @@ jobs:
             fi
           done
 
-  # ── Bundled plugin version bump (runs on PRs) ──────────────────────────────
+  # ── Plugin version bump (runs on PRs) ──────────────────────────────────────
   bundled-version-bump:
-    # WHY: the app upgrades bundled skills only when plugin.json's version rises.
-    # A file change without a bump would ship to nobody who already has the skill.
+    # WHY: an installed copy upgrades only when plugin.json's version RISES.
+    # A content change without a bump therefore ships to nobody who already has
+    # the plugin — the commit is live in the repo and inert on every machine.
+    # This check caught exactly that on PR #87 (2026-09-09: theme-builder's
+    # mascots.md changed, version stayed 1.0.1) and the PR was merged with the
+    # check red because master has no branch protection. So the check was right
+    # and unenforced. Two things follow from that, and both are here:
+    #   1. The scope is now EVERY top-level plugin dir, not three hardcoded ids.
+    #      A new bundled plugin added to BundledPlugins.kt / bundled-plugins.ts
+    #      would otherwise be silently exempt, which is the same class of bug.
+    #   2. The failure message names the exact fix, since the check is only
+    #      useful if the person reading it knows what to type.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - name: Require a version bump when a bundled plugin's files change
+      - name: Require a version bump when any plugin's files change
         run: |
           BASE=${{ github.event.pull_request.base.sha }}
           FAIL=0
-          for d in youcoded-chatsearch wecoded-themes-plugin wecoded-marketplace-publisher; do
+          # Discover plugin dirs from the tree instead of hardcoding ids. A dir
+          # is a plugin iff it holds plugin.json (the same rule the "Find
+          # changed plugin directories" step above uses).
+          for d in $(ls -d */ 2>/dev/null | tr -d '/'); do
+            [ -f "$d/plugin.json" ] || continue
             if git diff --quiet "$BASE" HEAD -- "$d/"; then continue; fi
             # WHY: when the plugin didn't exist at BASE, `git show` prints nothing and the
             # python3 parse of empty stdin throws — silence that expected-empty case so a
@@ -307,7 +317,7 @@ jobs:
             OLD=$(git show "$BASE:$d/plugin.json" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("version",""))' 2>/dev/null || echo "")
             NEW=$(python3 -c 'import json; print(json.load(open("'"$d"'/plugin.json")).get("version",""))')
             if [ "$OLD" = "$NEW" ]; then
-              echo "::error file=$d/plugin.json::$d changed but its version is still '$NEW' — bump it so installed copies upgrade"
+              echo "::error file=$d/plugin.json::$d changed but its version is still '$NEW'. Installed copies upgrade only when the version rises, so this change would reach nobody who already has it. Bump it, e.g.:  \"version\": \"$(python3 -c 'import json;print(json.load(open("'"$d"'/plugin.json")).get("version","0.0.0"))')+1-patch\""
               FAIL=1
             else
               echo "$d: $OLD -> $NEW"

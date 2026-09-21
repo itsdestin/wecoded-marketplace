@@ -23,6 +23,27 @@ Or, manually:
 
 CI (`.github/workflows/validate-plugin-pr.yml`) validates community plugin PRs automatically.
 
+### Every content change needs a version bump
+
+**If you change any file inside your plugin directory, raise `version` in that directory's
+`plugin.json`.** Not just the files users see — any file, including a skill's `SKILL.md` or a
+reference doc it reads.
+
+This is not a formality. YouCoded upgrades an installed plugin **only when `plugin.json`'s
+version rises**. A content change at the same version is live in this repo and inert on every
+machine that already has the plugin: nobody receives it, and nothing tells them. The
+`bundled-version-bump` CI job fails a PR that changes a plugin's files without a bump, for
+exactly this reason. Its message names the fix.
+
+This bit a real change here: `wecoded-themes-plugin`'s `reference/mascots.md` was rewritten on
+2026-09-09 with the version left at `1.0.1`. The check ran, failed, and the PR merged anyway
+because `master` has no branch protection — so the guidance reached no existing install. That is
+also why this section exists.
+
+> For maintainers: the check is only as good as the branch protection behind it. A required
+> status check that nobody must satisfy is a comment. See the branch-protection note in
+> `README.md`.
+
 ## License & Submission Terms
 
 This repository is licensed under the **Apache License, Version 2.0** — see [LICENSE](./LICENSE).
