@@ -48,6 +48,22 @@ jobs:
           # POST /admin/catalog/*. Repo secret MARKETPLACE_CATALOG_INGEST_TOKEN
           # must exist before this runs — `wrangler secret put` fails on empty input.
           echo "${{ secrets.MARKETPLACE_CATALOG_INGEST_TOKEN }}" | npx wrangler secret put CATALOG_INGEST_TOKEN
+          # Comma-separated device hashes of Destin's own devices, excluded from
+          # /admin/analytics/* unless ?include_admins=1. WHY this line exists: the
+          # filter shipped with only a test value in wrangler.toml and nothing
+          # pushed it to production, so admin counts silently included his devices.
+          # Repo secret MARKETPLACE_KNOWN_DEV_DEVICES must exist before this runs.
+          # Compute a device's hash with youcoded-admin skills/analytics/scripts/device-hash.mjs.
+          echo "${{ secrets.MARKETPLACE_KNOWN_DEV_DEVICES }}" | npx wrangler secret put KNOWN_DEV_DEVICES
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      # WHY: page capabilities must be signed with a secret, never a public [vars] value.
+      - name: Push website analytics signing secret
+        run: |
+          test -n "$SITE_ANALYTICS_SECRET"
+          printf '%s' "$SITE_ANALYTICS_SECRET" | npx wrangler secret put SITE_ANALYTICS_SECRET
+        env:
+          SITE_ANALYTICS_SECRET: ${{ secrets.MARKETPLACE_SITE_ANALYTICS_SECRET }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

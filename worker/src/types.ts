@@ -47,6 +47,10 @@ export interface Env {
   // inside a test run; production omits it and uses the in-code default
   // (presence-room.ts RESULT_TIMEOUT_MS).
   GAME_RESULT_TIMEOUT_MS?: string;
+  // OFF by default; a server-only secret derives irreversible page keys and signs capabilities.
+  SITE_ANALYTICS_ENABLED?: string;
+  SITE_ANALYTICS_SECRET?: string;
+  SITE_CAMPAIGN_CAPACITY?: string;
 }
 
 // NOTE: full-row interfaces (UserRow/IdentityRow/SessionRow/RatingRow) used to
