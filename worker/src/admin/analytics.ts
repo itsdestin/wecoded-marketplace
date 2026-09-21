@@ -6,7 +6,8 @@
 // Dimension policy (Destin, 2026-09-13): time, app version (blob3) and
 // platform (blob4) may be combined as filters/groupings. Country (blob6) and
 // region (blob7) stay single-dimension — /countries and /regions ignore every
-// filter param, and no other route filters or groups by them.
+// user dimension filter (include_admins remains a device-debug override), and
+// no other route filters or groups by them.
 //
 // SQL dialect: Cloudflare Analytics Engine uses a narrow SQL subset — NOT
 // full ClickHouse. Quirks learned the hard way (422 responses):
@@ -24,6 +25,7 @@ import {
   adminFilterClause,
   cutoverClause,
   hideTestClause,
+  historicalCiVersionClause,
   localTimestampExpr,
   platformClause,
   versionClause,
@@ -51,6 +53,12 @@ function includeAdmins(query: string | undefined): boolean {
 
 export const adminAnalyticsRoutes = new Hono<HonoEnv>();
 
+// WHY this is unconditional on row-count metrics: these exact versions are
+// historical CI smoke-test traffic, not a user-selectable test-build category.
+// Installs/retention deliberately omit it because version row filters redefine
+// first_seen/last_seen and would turn a later real launch into a new install.
+const historicalCi = historicalCiVersionClause();
+
 // GET /admin/analytics/dau?days=30 — devices active per LOCAL day.
 // Params: tz_offset, platform, version, hide_test.
 adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => {
@@ -72,7 +80,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
     c.env,
     `SELECT toDate(${local}) AS day, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${version} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${version} ${hideTest}
      GROUP BY day ORDER BY day`
   );
   return c.json(rows);
@@ -91,16 +99,16 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => 
     c.env,
     `SELECT count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${platform} ${version} ${hideTest}`
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${platform} ${version} ${hideTest}`
   );
   return c.json({ mau: rows[0]?.devices ?? 0 });
 });
 
 // GET /admin/analytics/installs?days=N — derived from first-seen device per LOCAL day.
-// Params: tz_offset, platform, hide_test.
+// Params: tz_offset, platform. `version` and `hide_test` are both ignored.
 //
-// WHY no `version` filter: a row filter on blob3 would redefine first-seen as
-// "first heartbeat on that version", so every upgrade would count as an install.
+// WHY no version-based filter: a row filter on blob3 would redefine first-seen
+// as "first heartbeat outside that filter", so upgrades can count as installs.
 // Platform is safe to filter — the device hash is per-platform.
 //
 // AE SQL subquery support: subqueries in FROM work in production.
@@ -111,14 +119,13 @@ adminAnalyticsRoutes.get("/admin/analytics/installs", requireAdminAuth, async (c
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
   const platform = platformClause(c.req.query("platform"));
-  const hideTest = hideTestClause(c.req.query("hide_test"));
   const rows = await runAnalyticsQuery<{ day: string; installs: number }>(
     c.env,
     `SELECT toDate(toStartOfDay(first_seen)) AS day, count() AS installs
      FROM (
        SELECT blob2, MIN(${local}) AS first_seen
        FROM youcoded_app_events
-       WHERE blob1 = 'heartbeat' ${cutover} ${filter} ${platform} ${hideTest}
+       WHERE blob1 = 'heartbeat' ${cutover} ${filter} ${platform}
        GROUP BY blob2
      )
      WHERE first_seen > NOW() - INTERVAL '${days}' DAY
@@ -140,7 +147,7 @@ adminAnalyticsRoutes.get("/admin/analytics/versions", requireAdminAuth, async (c
     c.env,
     `SELECT blob3 AS version, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform} ${hideTest}
      GROUP BY version ORDER BY devices DESC`
   );
   return c.json(rows);
@@ -157,7 +164,7 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (
     c.env,
     `SELECT blob4 AS platform, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${version} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${version} ${hideTest}
      GROUP BY platform ORDER BY devices DESC`
   );
   return c.json(rows);
@@ -174,14 +181,14 @@ adminAnalyticsRoutes.get("/admin/analytics/countries", requireAdminAuth, async (
     c.env,
     `SELECT blob6 AS country, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
      GROUP BY country ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
 });
 
 // GET /admin/analytics/regions — rolling 30-day top 20 ISO 3166-2 regions.
-// Deliberately ignores every filter param — see /countries.
+// Deliberately ignores every user dimension filter — see /countries.
 adminAnalyticsRoutes.get("/admin/analytics/regions", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
@@ -190,7 +197,7 @@ adminAnalyticsRoutes.get("/admin/analytics/regions", requireAdminAuth, async (c)
     c.env,
     `SELECT blob7 AS region, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
      GROUP BY region ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
@@ -212,7 +219,7 @@ adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth,
     c.env,
     `SELECT toDate(${local}) AS day, blob3 AS version, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${hideTest}
      GROUP BY day, version ORDER BY day`
   );
   return c.json(rows);
@@ -238,7 +245,7 @@ adminAnalyticsRoutes.get("/admin/analytics/weekly", requireAdminAuth, async (c) 
     c.env,
     `SELECT toStartOfWeek(${local}) AS week, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${version} ${hideTest}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${windowDays}' DAY ${filter} ${platform} ${version} ${hideTest}
      GROUP BY week ORDER BY week`
   );
   return c.json(rows);
