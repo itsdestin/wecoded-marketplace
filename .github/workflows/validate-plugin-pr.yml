@@ -25,8 +25,11 @@ on:
   # to report on a push to master).
   #
   # The cost of no filter: this workflow now starts on every PR, including
-  # Worker-only and docs-only ones. Each job below re-checks the changed paths
-  # against its own condition and skips in seconds when it does not apply.
+  # Worker-only and docs-only ones. That is a few seconds of runner time, and
+  # it is the price of the required check being able to report at all.
+  # `bundled-version-bump` has no path condition, so on a PR that changes no
+  # plugin directory it still RUNS and succeeds — its loop finds nothing to
+  # check and exits 0. Running-and-passing is what keeps it unblocking.
   pull_request:
   push:
     branches: [master]  # the repo's default branch is master, not main
