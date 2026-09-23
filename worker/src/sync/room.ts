@@ -181,6 +181,20 @@ export class SyncGroupRoom {
     if (typeof op !== "string") return;
     if (typeof sessionId !== "string" || !sessionId || sessionId.length > 100) return;
     if (typeof deviceId !== "string" || !deviceId || deviceId.length > 100) return;
+    // WHY: the new force op names a path-keyed lease and an install identity;
+    // unlike legacy ops it never accepts permissive path-like IDs.
+    if (op === 'force-acquire-if-holder' && (!/^[A-Za-z0-9._-]{1,100}$/.test(sessionId) ||
+        sessionId === '.' || sessionId === '..' || !/^[A-Za-z0-9._-]{1,100}$/.test(deviceId) ||
+        deviceId === '.' || deviceId === '..')) return;
+    const noncePresent = Object.prototype.hasOwnProperty.call(data, 'transferNonce');
+    // WHY: this account-authenticated lease frame carries the per-install lease
+    // identity. Sync recency's attachment.deviceId is a DIFFERENT machine identity;
+    // unrelated frame claims never override requester or stored holder identities.
+    if (noncePresent && (op !== 'takeover' || !/^[A-Za-z0-9._-]{1,100}$/.test(sessionId) ||
+        sessionId === '.' || sessionId === '..' || !/^[A-Za-z0-9._-]{1,100}$/.test(deviceId) ||
+        deviceId === '.' || deviceId === '..' ||
+        typeof data.transferNonce !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.transferNonce))) return;
 
     const key = `lease:${sessionId}`;
     // Server time — spec §18 clock-skew rule: clients never compute expiry, so a
@@ -239,7 +253,25 @@ export class SyncGroupRoom {
       // Relay a takeover REQUEST to the account's other devices; the holder
       // answers by releasing (spec §3 step 4). The DO doesn't move the lease.
       ok = true;
-      this.broadcastLeaseEvent(ws, { kind: "takeover-request", sessionId, from: { deviceId, device: att.device } });
+      this.broadcastLeaseEvent(ws, {
+        kind: "takeover-request", sessionId,
+        from: { deviceId, device: att.device },
+        ...(noncePresent ? { transferNonce: data.transferNonce, senderDeviceId: rec?.deviceId ?? null } : {}),
+      });
+    } else if (op === "force-acquire-if-holder") {
+      // WHY: the newer attempt-scoped consent must compare AND swap inside this
+      // DO input gate; a separate get followed by legacy force can steal from a
+      // different holder that acquired during the round trip. Legacy force stays
+      // unchanged for older callers, but this op never degrades to that path.
+      const expected = data.expectedHolderId;
+      if (typeof expected === 'string' && /^[A-Za-z0-9._-]{1,100}$/.test(expected) &&
+          expected !== '.' && expected !== '..' && expected !== deviceId &&
+          rec?.deviceId === expected) {
+        rec = { deviceId, device: att.device, expiresAt: now + LEASE_TTL_MS };
+        await this.state.storage.put(key, rec);
+        ok = true;
+        this.broadcastLeaseEvent(ws, { kind: "taken", sessionId, device: att.device });
+      }
     } else if (op === "force-acquire") {
       // Spec §3 step 5: holder is unresponsive and the user confirmed a steal.
       // Overwrite unconditionally and notify the (possibly dead) prior holder.
