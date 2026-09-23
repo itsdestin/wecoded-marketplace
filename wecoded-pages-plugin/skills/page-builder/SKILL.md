@@ -152,7 +152,7 @@ load();
 - Show the last saved numbers first (`window.youcoded.data`), then refresh. Say plainly when a
   request fails, using the message the app gave; never invent a reason.
 - Refresh on open, from `onRefresh`, and — only if the person wants live numbers — on a timer
-  of **at least one minute**. The app refuses more than 60 requests a minute from one page, and
+  of **at least one minute**. The app refuses more than 120 requests a minute from one page (requests past four at once simply wait their turn), and
   a paid key should not be spent faster than the person can read.
 - The app shows how long ago the page last updated, beside its name. Do not draw your own
   "last updated" line.
