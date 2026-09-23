@@ -97,7 +97,7 @@ page never sees them.
 
 | kind | reaches | credential |
 |---|---|---|
-| `youcoded` | `api.youcoded.ai` only | the person's YouCoded sign-in |
+| `youcoded` | `api.youcoded.ai` only; look-ups anywhere there, changes only at `writePaths` | the person's YouCoded sign-in |
 | `public` | exactly `address` | none |
 | `key` | exactly `address` | a key the person pastes into the app, once |
 | `github` | `api.github.com` only | the GitHub sign-in the app already holds |
@@ -111,6 +111,12 @@ Rules the app enforces — a manifest that breaks one is dropped, and the page r
 - `access`: `"lookup"` (the default) lets the page send look-ups only (GET). Use `"full"` only
   when the page must create, change or delete things at that service; the approval card then
   says so bluntly. Choose the narrowest one that works.
+- A `youcoded` connection is look-up only unless it lists `writePaths` — the exact places on
+  the service the page must change something, e.g.
+  `{ "id": "yc", "kind": "youcoded", "writePaths": ["/admin/analytics/website-campaigns"] }`.
+  List only what the page actually posts to; the approval card names each one and tells the
+  person nothing else on their account can be changed. Plain paths only (letters, digits,
+  `-`, `_`, `/`), at most four.
 - **`open` alone.** A page that needs the whole internet (a feed reader following any link, a
   link previewer) gets `open` and no keys or sign-ins. If a request needs both, build two pages.
 - A `key` service's key goes as `Authorization: Bearer <key>` unless you say otherwise:
