@@ -119,28 +119,59 @@ export async function fetchFiles(entry, sha, deps = {}) {
   }
 }
 
-/** GitHub repo facts, cached per run. */
-export function repoFacts() {
+/** The branch or tag an entry's files actually live on, or undefined for "the repo's
+ *  default branch".
+ *
+ *  WHY: sync.js records `sourceGitRef` for git-subdir plugins, and five live entries
+ *  name something other than the default branch (three netsuite-* on `ai-plugins-dist`,
+ *  42crunch on tag `v1.5.5`, greptile on tag `greptile--v1.2.3`). Their folders are
+ *  missing — or different — on the default branch, so pinning to the default tip
+ *  scanned the wrong code (or nothing: the netsuite rows read "Not checked" forever)
+ *  and the app then installed from a commit that does not contain the plugin.
+ *  Anthropic `local` rows carry sync's own upstream ref ("main") for the official
+ *  repo; that is honoured the same way. */
+export function sourceGitRef(entry) {
+  const ref = typeof entry?.sourceGitRef === "string" ? entry.sourceGitRef.trim() : "";
+  return ref || undefined;
+}
+
+/** GitHub repo facts, cached per run. Call as `facts(url, ref?)`.
+ *
+ *  `gh` is injectable so the tests can drive this without a token or a network. */
+export function repoFacts(gh = github) {
   const cache = new Map();
-  return async (url) => {
-    const gh = parseRepo(url);
-    if (!gh) return null;
-    const key = `${gh.owner}/${gh.repo}`;
+  const heads = new Map();
+  return async (url, ref) => {
+    const repo = parseRepo(url);
+    if (!repo) return null;
+    const key = `${repo.owner}/${repo.repo}`;
     if (!cache.has(key)) {
       // Two calls per distinct repo per run (facts, then the branch tip) — 207 repos
       // across the 237 live url/git-subdir entries, so ~420 calls at steady state.
-      // `head` is the CURRENT tip: the catalog pins to what the author publishes
-      // today, never to the stale sourceSha in index.json (see Interfaces).
-      cache.set(key, github(`/repos/${key}`)
-        .then(async (r) => r ? {
+      cache.set(key, gh(`/repos/${key}`)
+        .then((r) => r ? {
           stars: r.stargazers_count,
           license: r.license?.spdx_id && r.license.spdx_id !== "NOASSERTION" ? r.license.spdx_id : undefined,
           pushedAt: r.pushed_at,
-          head: (await github(`/repos/${key}/commits/${r.default_branch}`))?.sha,
+          defaultBranch: r.default_branch,
         } : null)
         .catch(() => null));
     }
-    return cache.get(key);
+    const facts = await cache.get(key);
+    if (!facts) return null;
+    // `head` is the CURRENT tip of the ref the entry names (see sourceGitRef), else of the
+    // default branch: the catalog pins to what the author publishes today, never to the
+    // stale sourceSha in index.json (see Interfaces). One extra call per distinct
+    // (repo, ref) — the five non-default refs today.
+    const at = ref || facts.defaultBranch;
+    const headKey = `${key}@${at}`;
+    if (!heads.has(headKey)) {
+      // A ref may be a branch with slashes; keep them as path separators, escape the rest.
+      const refPath = String(at).split("/").map(encodeURIComponent).join("/");
+      heads.set(headKey, gh(`/repos/${key}/commits/${refPath}`).then((c) => c?.sha).catch(() => undefined));
+    }
+    const { defaultBranch: _omit, ...rest } = facts;
+    return { ...rest, head: await heads.get(headKey) };
   };
 }
 
@@ -185,8 +216,11 @@ export async function normalise(index, files = fetchFiles, repo = repoFacts(), k
   for (const e of index) {
     if (e.deprecated || e.type === "prompt") continue;
     const isOurs = e.sourceMarketplace === "youcoded";
-    const facts = isOurs ? { license: "MIT" } : (await repo(githubRepoUrl(e))) ?? {};
-    // The version we are listing: today's HEAD. NEVER e.sourceSha — see Interfaces.
+    const facts = isOurs ? { license: "MIT" } : (await repo(githubRepoUrl(e), sourceGitRef(e))) ?? {};
+    // The version we are listing: today's HEAD of the entry's own ref. NEVER e.sourceSha —
+    // see Interfaces. If the named ref cannot be resolved, head is undefined and the
+    // recorded sourceSha (taken from that same ref by sync.js) is used — never the
+    // default branch, which is the wrong code for these entries.
     const sourceCommit = facts.head ?? (isOurs ? undefined : e.sourceSha);
     // Unchanged since the catalog last looked → do not emit it, do not download anything;
     // report it (and its members) as skipped so the retire step knows it was seen. The

@@ -132,9 +132,13 @@ hold all 53 of those paths.
 > repository's **default** branch, where the folder `anthropic/netsuite-suitecloud` does not
 > exist — 0 matching paths on `master`, 8 on `ai-plugins-dist` — so all three (13 rows counting
 > their members) had been stamped "Likely safe" having read nothing. They now correctly report
-> `unchecked`. **The root cause is still open:** index.json records `sourceGitRef:
-> "ai-plugins-dist"` and the ingest ignores it, pinning every listing to its repo's default
-> branch. 4 entries name a non-default ref today.
+> `unchecked`. **Root cause fixed 2026-09-23:** the ingest now pins each listing to the tip
+> of the `sourceGitRef` index.json records (branch or tag — `sourceGitRef()` / `repoFacts()` in
+> `sources/wecoded.mjs`), falling back to the recorded `sourceSha` if that ref cannot be
+> resolved, and to the default branch only when no ref is named. 5 entries name a non-default
+> ref (3 netsuite, 42crunch, greptile). Their pinned commit changes, so the skip key misses
+> and the next ingest rescans them; an incoming verdict replaces a stored `unchecked`, so no
+> manual rescan is needed. Guard: `scripts/catalog/test/wecoded.test.mjs`.
 
 ## How a human checks it is still alive
 
