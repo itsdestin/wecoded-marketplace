@@ -135,6 +135,25 @@ export function sourceGitRef(entry) {
   return ref || undefined;
 }
 
+/** Is `ref` a legal git ref name (git check-ref-format's rules) that is also
+ *  safe to put in a GitHub API path?
+ *
+ *  WHY (2026-09-23 review F4): the ref is spliced into `/repos/o/r/commits/<ref>`,
+ *  and URL parsing collapses dot segments — `../../../users/x` would have asked
+ *  GitHub about `/repos/users/x` instead. index.json is ours, but upstream sync
+ *  copies refs from third-party marketplace files, so it is untrusted input.
+ *  Rejected: empty, leading or trailing `/`, `//`, any `.`/`..` component or a
+ *  component starting with `.`, a component ending `.lock`, `..` anywhere,
+ *  `@{`, a lone `@`, a trailing `.`, control characters, space, DEL, and
+ *  ~ ^ : ? * [ \. */
+export function isSafeGitRef(ref) {
+  if (typeof ref !== "string" || !ref || ref === "@") return false;
+  if (/[\x00-\x20\x7f~^:?*[\\]/.test(ref)) return false;
+  if (ref.includes("..") || ref.includes("@{") || ref.endsWith(".")) return false;
+  const parts = ref.split("/");
+  return parts.every((c) => c.length > 0 && !c.startsWith(".") && !c.endsWith(".lock"));
+}
+
 /** GitHub repo facts, cached per run. Call as `facts(url, ref?)`.
  *
  *  `gh` is injectable so the tests can drive this without a token or a network. */
@@ -163,6 +182,13 @@ export function repoFacts(gh = github) {
     // default branch: the catalog pins to what the author publishes today, never to the
     // stale sourceSha in index.json (see Interfaces). One extra call per distinct
     // (repo, ref) — the five non-default refs today.
+    // An unsafe ref is not "no ref": falling back to the default branch would
+    // scan the wrong code again. head stays undefined, so normalise uses the
+    // recorded sourceSha instead.
+    if (ref && !isSafeGitRef(ref)) {
+      const { defaultBranch: _omitted, ...kept } = facts;
+      return { ...kept, head: undefined };
+    }
     const at = ref || facts.defaultBranch;
     const headKey = `${key}@${at}`;
     if (!heads.has(headKey)) {

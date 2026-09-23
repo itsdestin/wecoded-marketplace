@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalise, githubRepoUrl, parseRepo, treeIsReadable, fetchFiles, repoFacts, sourceGitRef } from "../sources/wecoded.mjs";
+import { normalise, githubRepoUrl, parseRepo, treeIsReadable, fetchFiles, repoFacts, sourceGitRef, isSafeGitRef } from "../sources/wecoded.mjs";
 import { skipKey } from "../lib/capabilities.mjs";
 import sample from "./fixtures/index-sample.json" with { type: "json" };
 import collision from "./fixtures/index-collision-sample.json" with { type: "json" };
@@ -264,4 +264,25 @@ test("a branch name with a slash keeps it as a path separator", async () => {
   const gh = async (p) => { calls.push(p); return p === "/repos/a/b" ? { default_branch: "main" } : { sha: "s" }; };
   await repoFacts(gh)("https://github.com/a/b", "release/v2");
   assert.ok(calls.includes("/repos/a/b/commits/release/v2"));
+});
+
+// Review F4 (2026-09-23): the ref is spliced into a GitHub API path, and URL
+// parsing collapses dot segments — `../../../users/x` reached /repos/users/x.
+test("isSafeGitRef follows git's ref-name rules", () => {
+  for (const ok of ["main", "ai-plugins-dist", "v1.5.5", "greptile--v1.2.3", "release/v2", "feature/a.b"]) assert.ok(isSafeGitRef(ok), ok);
+  for (const bad of ["", "@", "../../../users/x", "..", ".", "a/../b", "a/./b", "/main", "main/", "a//b", ".hidden", "a/.b",
+    "x.lock", "a/b.lock", "a..b", "a@{1}", "main.", "a b", "a\\b", "a~1", "a^", "a:b", "a?", "a*", "a[b", "a\u0000b", "a\nb", "a\u007fb"]) {
+    assert.equal(isSafeGitRef(bad), false, JSON.stringify(bad));
+  }
+});
+
+test("an unsafe ref is never requested and falls back to the recorded sourceSha, not the default branch", async () => {
+  const calls = [];
+  const gh = async (p) => { calls.push(p); return p === "/repos/a/b" ? { default_branch: "main" } : { sha: "wrong" }; };
+  const e = { id: "x", sourceMarketplace: "anthropic", sourceType: "git-subdir", sourceRef: "https://github.com/a/b.git",
+    sourceSubdir: "p", sourceGitRef: "../../../users/x", sourceSha: "recorded", displayName: "X" };
+  const seen = [];
+  await normalise([e], async (_e, sha) => { seen.push(sha); return { ok: true, files: [] }; }, repoFacts(gh));
+  assert.deepEqual(seen, ["recorded"]);
+  assert.deepEqual(calls, ["/repos/a/b"]);
 });
