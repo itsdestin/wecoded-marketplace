@@ -96,19 +96,32 @@ describe("head-to-head attestation (§6.2)", () => {
     const { a, b, wsA, wsB, match } = await twoPlayers("dispute");
     wsA.send(result("chess", match, b.userId, "win"));
     await nextMessage(wsA, "game-result-pending");
-
     const disputedAtA = nextMessage(wsA, "game-result-disputed");
     const disputedAtB = nextMessage(wsB, "game-result-disputed");
     wsB.send(result("chess", match, a.userId, "win")); // both claim the win
 
     expect(await disputedAtA).toMatchObject({ match_id: match });
     expect(await disputedAtB).toMatchObject({ match_id: match });
+    // WHY: check AFTER both conflicting reports, independently of the short
+    // correction window. A pre-dispute empty row cannot prove rejection.
     expect(await matchRows(match)).toHaveLength(0);
+    wsA.close(); wsB.close();
+  });
 
-    // A client that corrects itself inside the window can still settle honestly.
+  it("accepts a corrected report during the attestation window", async () => {
+    const { a, b, wsA, wsB, match } = await twoPlayers("correct");
+    const pending = nextMessage(wsA, "game-result-pending");
+    wsA.send(result("chess", match, b.userId, "win"));
+    await pending;
+    const disputedAtA = nextMessage(wsA, "game-result-disputed");
+    const disputedAtB = nextMessage(wsB, "game-result-disputed");
+    wsB.send(result("chess", match, a.userId, "win"));
+    await Promise.all([disputedAtA, disputedAtB]);
+
+    // WHY: no D1 read between dispute and correction: the test window is 600ms.
     const rec = nextMessage(wsB, "game-record");
     wsB.send(result("chess", match, a.userId, "loss"));
-    await rec;
+    expect(await rec).toMatchObject({ source: "attested" });
     expect((await matchRows(match))[0]).toMatchObject({ winner: a.userId });
     wsA.close(); wsB.close();
   });

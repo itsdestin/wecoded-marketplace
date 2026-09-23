@@ -163,6 +163,7 @@ function leaseOp(
   sessionId: string,
   deviceId: string,
   timeoutMs = 2000,
+  expectedHolderId?: string,
 ): Promise<any> {
   const reqId = `req-${++reqSeq}`;
   return new Promise((resolve, reject) => {
@@ -174,11 +175,73 @@ function leaseOp(
       }
     };
     ws.addEventListener("message", handler);
-    ws.send(JSON.stringify({ type: "lease", op, sessionId, deviceId, reqId }));
+    ws.send(JSON.stringify({ type: "lease", op, sessionId, deviceId, reqId, ...(expectedHolderId === undefined ? {} : { expectedHolderId }) }));
   });
 }
 
 describe("sync hub — leases", () => {
+  it('conditionally forces only the exact current holder, never a replacement or an absent holder', async () => {
+    const acct = await createTestAccount(); const token = await issueTestSession(acct);
+    const a = await connect(token, 'Original'); await nextMessage(a, 'hello');
+    const b = await connect(token, 'Replacement'); await nextMessage(b, 'hello');
+    const c = await connect(token, 'Requester'); await nextMessage(c, 'hello');
+    await leaseOp(a, 'acquire', 'conditional-s', 'original');
+    expect((await leaseOp(c, 'force-acquire-if-holder', 'conditional-s', 'requester', 2000, 'wrong'))).toMatchObject({ ok: false, holder: { deviceId: 'original' } });
+    expect((await leaseOp(c, 'force-acquire-if-holder', 'conditional-s', 'requester'))).toMatchObject({ ok: false, holder: { deviceId: 'original' } });
+    await leaseOp(a, 'release', 'conditional-s', 'original');
+    await leaseOp(b, 'acquire', 'conditional-s', 'replacement');
+    expect((await leaseOp(c, 'force-acquire-if-holder', 'conditional-s', 'requester', 2000, 'original'))).toMatchObject({ ok: false, holder: { deviceId: 'replacement' } });
+    const taken = nextMessage(b, 'lease-event');
+    expect((await leaseOp(c, 'force-acquire-if-holder', 'conditional-s', 'requester', 2000, 'replacement'))).toMatchObject({ ok: true, op: 'force-acquire-if-holder', holder: { deviceId: 'requester' } });
+    expect(await taken).toMatchObject({ kind: 'taken', sessionId: 'conditional-s' });
+    await leaseOp(c, 'release', 'conditional-s', 'requester');
+    expect((await leaseOp(c, 'force-acquire-if-holder', 'conditional-s', 'requester', 2000, 'replacement'))).toMatchObject({ ok: false, holder: null });
+    a.close(); b.close(); c.close();
+  });
+  it('correlates takeover nonce with authenticated requester and current holder, not frame claims', async () => {
+    const acct = await createTestAccount(); const token = await issueTestSession(acct);
+    // WHY: two installs on one machine share recency identity but NOT lease
+    // identities. The latter come from account-authenticated lease frames.
+    const a = await connectWithDeviceId(token, 'Holder label', 'shared-machine'); await nextMessage(a, 'hello');
+    const b = await connectWithDeviceId(token, 'Requester label', 'shared-machine'); await nextMessage(b, 'hello');
+    await leaseOp(a, 'acquire', 'session-1', 'holder-1');
+    const nonce = '3db07e20-1244-4a1b-85bf-bde2db925e41';
+    const event = nextMessage(a, 'lease-event');
+    const reply = nextMessage(b, 'lease-result');
+    b.send(JSON.stringify({ type: 'lease', op: 'takeover', sessionId: 'session-1', deviceId: 'requester-1',
+      requesterDeviceId: 'spoofed', senderDeviceId: 'spoofed', from: { deviceId: 'spoofed' },
+      transferNonce: nonce, reqId: 'not-the-nonce' }));
+    expect((await reply).ok).toBe(true);
+    expect(await event).toMatchObject({ kind: 'takeover-request', transferNonce: nonce,
+      senderDeviceId: 'holder-1', from: { deviceId: 'requester-1' } });
+    for (const invalid of ['not-uuid', 'x'.repeat(200)]) {
+      // WHY: attach rejection handlers before either timeout fires so the
+      // negative relay checks cannot leak unhandled rejections under load.
+      const noEvent = expect(nextMessage(a, 'lease-event', 100)).rejects.toThrow();
+      const noReply = expect(nextMessage(b, 'lease-result', 100)).rejects.toThrow();
+      b.send(JSON.stringify({ type: 'lease', op: 'takeover', sessionId: 'session-1', deviceId: 'requester-1', transferNonce: invalid }));
+      await Promise.all([noReply, noEvent]);
+    }
+    a.close(); b.close();
+  });
+
+  it('preserves legacy takeover without a nonce or machine identity', async () => {
+    const acct = await createTestAccount(); const token = await issueTestSession(acct);
+    const a = await connect(token, 'A'); await nextMessage(a, 'hello');
+    const b = await connect(token, 'B'); await nextMessage(b, 'hello');
+    await leaseOp(a, 'acquire', 's', 'holder-1');
+    const event = nextMessage(a, 'lease-event');
+    await leaseOp(b, 'takeover', 's', 'requester-1');
+    expect(await event).not.toHaveProperty('transferNonce');
+    const nonce = '3db07e20-1244-4a1b-85bf-bde2db925e41';
+    const correlated = nextMessage(a, 'lease-event');
+    const result = nextMessage(b, 'lease-result');
+    b.send(JSON.stringify({ type: 'lease', op: 'takeover', sessionId: 's', deviceId: 'requester-1', transferNonce: nonce, reqId: 'another-id' }));
+    await result;
+    expect(await correlated).toMatchObject({ transferNonce: nonce, senderDeviceId: 'holder-1', from: { deviceId: 'requester-1' } });
+    a.close(); b.close();
+  });
+
   it("acquire on a free session returns ok:true with holder=self", async () => {
     const acct = await createTestAccount();
     const token = await issueTestSession(acct);
