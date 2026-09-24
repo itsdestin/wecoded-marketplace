@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalise, githubRepoUrl, parseRepo, treeIsReadable, fetchFiles } from "../sources/wecoded.mjs";
+import { normalise, githubRepoUrl, parseRepo, treeIsReadable, fetchFiles, repoFacts, sourceGitRef, isSafeGitRef } from "../sources/wecoded.mjs";
 import { skipKey } from "../lib/capabilities.mjs";
 import sample from "./fixtures/index-sample.json" with { type: "json" };
 import collision from "./fixtures/index-collision-sample.json" with { type: "json" };
@@ -209,4 +209,80 @@ test("our own local plugins are still read from this checkout, never from GitHub
   const got = await fetchFiles(entry, undefined, { github, githubRaw: async () => "" });
   assert.equal(calledGithub, false);
   assert.equal(got.ok, false);   // the folder is not in this checkout → "could not read"
+});
+
+// Roadmap (marketplace, security, v1.3.1): a plugin that ships from a non-default
+// branch was scanned — and pinned for install — at the DEFAULT branch's tip, where its
+// folder does not exist. The live entry below is netsuite-ai-companion as index.json
+// records it (branch `ai-plugins-dist`); 42crunch pins a tag the same way.
+test("the pinned commit follows the entry's sourceGitRef, not the default branch", async () => {
+  const calls = [];
+  const gh = async (p) => {
+    calls.push(p);
+    if (p === "/repos/oracle/netsuite-suitecloud-sdk") return { stargazers_count: 5, license: { spdx_id: "UPL-1.0" }, default_branch: "master" };
+    if (p === "/repos/oracle/netsuite-suitecloud-sdk/commits/master") return { sha: "defaulttip" };
+    if (p === "/repos/oracle/netsuite-suitecloud-sdk/commits/ai-plugins-dist") return { sha: "disttip" };
+    if (p === "/repos/42Crunch-AI/claude-plugins") return { default_branch: "main" };
+    if (p === "/repos/42Crunch-AI/claude-plugins/commits/v1.5.5") return { sha: "tagcommit" };
+    return null;
+  };
+  const netsuite = {
+    id: "netsuite-ai-companion", sourceMarketplace: "anthropic", sourceType: "git-subdir",
+    sourceRef: "https://github.com/oracle/netsuite-suitecloud-sdk.git", sourceSubdir: "anthropic/netsuite-ai-companion",
+    sourceGitRef: "ai-plugins-dist", sourceSha: "23793a10a9bb557c684c5cb8a97f926eb3463f12", displayName: "NetSuite AI Companion",
+  };
+  const crunch = {
+    id: "42crunch-api-security-testing", sourceMarketplace: "anthropic", sourceType: "git-subdir",
+    sourceRef: "https://github.com/42Crunch-AI/claude-plugins.git", sourceSubdir: "plugins/api-security-testing",
+    sourceGitRef: "v1.5.5", sourceSha: "30287f5e3f122a646d1ac5ca3ab96e130c52a3ad", displayName: "42Crunch",
+  };
+  const seen = [];
+  const { rows } = await normalise([netsuite, crunch], async (e, sha) => { seen.push([e.id, sha]); return { ok: true, files: [] }; }, repoFacts(gh));
+  assert.deepEqual(seen, [["netsuite-ai-companion", "disttip"], ["42crunch-api-security-testing", "tagcommit"]]);
+  assert.equal(rows.find((r) => r.id === "netsuite-ai-companion").catalog.sourceCommit, "disttip");
+  assert.equal(rows.find((r) => r.id === "netsuite-ai-companion").catalog.license, "UPL-1.0");
+  assert.ok(!calls.includes("/repos/oracle/netsuite-suitecloud-sdk/commits/master"), "never asks for the default tip when a ref is named");
+});
+
+test("no sourceGitRef still pins to the default branch; a blank one counts as none", async () => {
+  const gh = async (p) => p === "/repos/a/b" ? { default_branch: "trunk" } : p === "/repos/a/b/commits/trunk" ? { sha: "trunktip" } : null;
+  const facts = repoFacts(gh);
+  assert.equal((await facts("https://github.com/a/b.git")).head, "trunktip");
+  assert.equal((await facts("https://github.com/a/b.git", sourceGitRef({ sourceGitRef: "  " }))).head, "trunktip");
+});
+
+test("an unresolvable ref falls back to the recorded sourceSha, never the default tip", async () => {
+  const gh = async (p) => p === "/repos/a/b" ? { default_branch: "main" } : p === "/repos/a/b/commits/main" ? { sha: "wrongcode" } : null;
+  const e = { id: "x", sourceMarketplace: "anthropic", sourceType: "git-subdir", sourceRef: "https://github.com/a/b.git", sourceSubdir: "p", sourceGitRef: "gone-branch", sourceSha: "recorded", displayName: "X" };
+  const seen = [];
+  await normalise([e], async (_e, sha) => { seen.push(sha); return { ok: true, files: [] }; }, repoFacts(gh));
+  assert.deepEqual(seen, ["recorded"]);
+});
+
+test("a branch name with a slash keeps it as a path separator", async () => {
+  const calls = [];
+  const gh = async (p) => { calls.push(p); return p === "/repos/a/b" ? { default_branch: "main" } : { sha: "s" }; };
+  await repoFacts(gh)("https://github.com/a/b", "release/v2");
+  assert.ok(calls.includes("/repos/a/b/commits/release/v2"));
+});
+
+// Review F4 (2026-09-23): the ref is spliced into a GitHub API path, and URL
+// parsing collapses dot segments — `../../../users/x` reached /repos/users/x.
+test("isSafeGitRef follows git's ref-name rules", () => {
+  for (const ok of ["main", "ai-plugins-dist", "v1.5.5", "greptile--v1.2.3", "release/v2", "feature/a.b"]) assert.ok(isSafeGitRef(ok), ok);
+  for (const bad of ["", "@", "../../../users/x", "..", ".", "a/../b", "a/./b", "/main", "main/", "a//b", ".hidden", "a/.b",
+    "x.lock", "a/b.lock", "a..b", "a@{1}", "main.", "a b", "a\\b", "a~1", "a^", "a:b", "a?", "a*", "a[b", "a\u0000b", "a\nb", "a\u007fb"]) {
+    assert.equal(isSafeGitRef(bad), false, JSON.stringify(bad));
+  }
+});
+
+test("an unsafe ref is never requested and falls back to the recorded sourceSha, not the default branch", async () => {
+  const calls = [];
+  const gh = async (p) => { calls.push(p); return p === "/repos/a/b" ? { default_branch: "main" } : { sha: "wrong" }; };
+  const e = { id: "x", sourceMarketplace: "anthropic", sourceType: "git-subdir", sourceRef: "https://github.com/a/b.git",
+    sourceSubdir: "p", sourceGitRef: "../../../users/x", sourceSha: "recorded", displayName: "X" };
+  const seen = [];
+  await normalise([e], async (_e, sha) => { seen.push(sha); return { ok: true, files: [] }; }, repoFacts(gh));
+  assert.deepEqual(seen, ["recorded"]);
+  assert.deepEqual(calls, ["/repos/a/b"]);
 });
