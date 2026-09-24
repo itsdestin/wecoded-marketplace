@@ -380,7 +380,7 @@ Ask: *"On Windows, what command does your MCP server start with?"* Map their ans
 - **A `.sh` file path directly**: ✗ Windows can't execute `.sh` via CreateProcess. Wrap with the bash short path as above, OR ship a `.cmd` Windows wrapper alongside the `.sh`.
 - **An absolute path containing spaces**: ✗ same word-split problem. Use the 8.3 short name (verify with `powershell -Command "(New-Object -ComObject Scripting.FileSystemObject).GetFile('<path>').ShortPath"`).
 
-If the manifest points at files inside the plugin: use the `{{plugin_root}}` token (YouCoded replaces it with the plugin's install folder). `${PACKAGE_DIR}` works as an alias only from YouCoded 1.3.1, so prefer `{{plugin_root}}`. Either way, users who run Claude Code from the CLI outside of YouCoded will see the literal placeholder reach `spawn()` and the server will fail (`Missing environment variables: PACKAGE_DIR` for the `${...}` form). Either accept that limitation or bake an absolute path / on-PATH command into the manifest instead. To limit a server to some operating systems, use `"platforms": ["darwin", "win32"]` (a list) or `"platform": "linux"` (one value); lists are honoured from YouCoded 1.3.1.
+If the manifest currently uses `${PACKAGE_DIR}` placeholders: warn the user that `${PACKAGE_DIR}` is only expanded by the YouCoded desktop app's MCP reconciler. Users who run Claude Code from the CLI outside of YouCoded will see the literal placeholder reach `spawn()` and the server will fail with `Missing environment variables: PACKAGE_DIR`. Either accept that limitation (it's the precedent set by other community plugins like `imessages`) or bake an absolute path / on-PATH command into the manifest instead.
 
 ### A.2 — Python SDK pinning
 
