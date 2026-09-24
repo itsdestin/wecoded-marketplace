@@ -59,7 +59,10 @@
 
   // ── Required: layout presets ──
   "layout": {
-    "chrome-style": "default",     // "default" | "floating" — floating elevates ALL chrome bars
+    "chrome-style": "default",     // "default" | "floating" | "float". floating elevates the three
+                                   // chrome BARS into detached cards; "float" (the Kit's
+                                   // "Minimalist") removes the wrapping surfaces entirely and
+                                   // lifts every individual control instead
     "input-style": "default",      // "default" | "floating" | "minimal" | "terminal"
     "bubble-style": "default",     // "default" | "pill" | "flat" | "bordered"
     "header-style": "default",     // "default" | "minimal" | "hidden"

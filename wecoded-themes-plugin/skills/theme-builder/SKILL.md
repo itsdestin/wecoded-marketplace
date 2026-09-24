@@ -169,7 +169,7 @@ User lands on the **Kit** — one page with eight swappable columns. Primary aut
 | Column | Kind | What it does |
 |---|---|---|
 | Palette | preset + override | Swap the 15-token color set |
-| Chrome & Layout | preset + override | `chrome-style` / `input-style` / `header-style` / `statusbar-style` |
+| Chrome & Layout | preset + override | `chrome-style` / `input-style` / `header-style` / `statusbar-style`. Four presets: **Classic**, **Floating** (the three bars become detached cards), **Minimal** (header hidden, thin status bar), **Minimalist** (`chrome-style: "float"` — the wrapping surfaces go away entirely and each individual control pops out of the background) |
 | Bubble Style | preset + override | `bubble-style` preset |
 | Font | preset + override | Swap Google Font, auto-linked on rebuild |
 | Effects | multi + override | Particles (pick one) + overlay textures (vignette / noise / scanlines) |

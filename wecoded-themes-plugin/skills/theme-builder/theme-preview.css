@@ -1303,3 +1303,117 @@ body {
   background: var(--inset);
   border: 1px solid var(--edge-dim);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   "Minimalist" chrome — the mockup's mirror of the app's chrome-style: 'float'
+   (youcoded desktop/src/renderer/styles/float-chrome.css). Designed with Destin
+   over review decks 2026-09-20..24; this block matches the APPROVED look, not
+   the first draft (which had a header veil he later rejected).
+
+   Every WRAPPER loses its surface and every CONTROL wears one shared light
+   surface: a faint frosted fill, a hairline inset ring and a soft drop — the
+   difference from "Floating", which lifts the three BARS and leaves the controls
+   inside them flat. Class names differ between this mockup and the app
+   (.input-form vs the app's composer <form>, .status-chip vs .status-bar >
+   button), so the two files cannot share the block; sync-check.cjs requires the
+   .chrome-glass rule below to exist here.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-chrome-style="float"] .chrome-wrapper {
+  background: transparent !important;
+}
+[data-chrome-style="float"] .header-bar,
+[data-chrome-style="float"] .input-bar-container,
+[data-chrome-style="float"] .status-bar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+/* No band behind the header at all: Destin rejected every full-width veil
+   because it hid the wallpaper. In the app the transcript fades locally under
+   the controls; the mockup's three bubbles never reach the header, so it needs
+   no fade. */
+
+/* Header groups (Files, Games, window buttons) lose their shared pill; each
+   button inside becomes its own chip. */
+[data-chrome-style="float"] .header-pill {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  gap: 4px;
+}
+
+/* The one surface — every control, the message box included. The 16% is fixed,
+   not --panels-opacity: the faintness IS the style (app: integration review I7). */
+[data-chrome-style="float"] :is(
+  .header-btn, .header-pill-btn, .session-strip, .view-toggle,
+  .status-chip, .input-form
+) {
+  background: color-mix(in srgb, var(--inset) 16%, transparent) !important;
+  border-color: transparent !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--edge) 40%, transparent), 0 4px 12px -5px rgba(0, 0, 0, .24) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+/* Legible over any wallpaper. The app picks each chip's text colour by
+   sampling the wallpaper behind it (use-wallpaper-header-ink.ts); a static
+   mockup cannot, so it uses the theme's main text colour. (A page-colour halo
+   was tried here and smeared the 9px chip labels.) Over a busy part of the
+   wallpaper the preview can therefore read slightly worse than the app. */
+[data-chrome-style="float"] :is(.header-btn, .header-pill-btn, .session-strip, .view-toggle-btn, .status-chip) {
+  color: var(--fg);
+}
+/* The message box carries reading text, so it is frosted harder. */
+[data-chrome-style="float"] .input-form {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+[data-chrome-style="float"] .header-pill-btn {
+  border-radius: var(--radius-md, 8px);
+}
+
+/* Selected (open Files / Games, the active Chat/Terminal half): a solid bright
+   pill — the one nearly solid thing in the header. */
+[data-chrome-style="float"] .header-pill-btn.is-active,
+[data-chrome-style="float"] .view-toggle-btn.active {
+  background: color-mix(in srgb, var(--panel) 85%, transparent) !important;
+  box-shadow: inset 0 0 0 1px var(--edge), 0 2px 8px -2px rgba(0, 0, 0, .42) !important;
+  color: var(--fg) !important;
+}
+[data-chrome-style="float"] .view-toggle {
+  border-radius: var(--radius-md, 8px);
+}
+
+/* Layout: the message box narrows and centres; the status chips centre as a row. */
+[data-chrome-style="float"] .input-bar-container {
+  width: calc(100% - 32px);
+  margin-inline: auto !important;
+}
+[data-chrome-style="float"] .status-bar {
+  justify-content: center;
+}
+[data-chrome-style="float"] .status-bar .chip-usage {
+  margin-left: 0 !important;
+}
+
+/* The blur strips exist only to carry a backdrop-filter around the chat cutout
+   (mockup-render.js explains why). With no cutout in this mode they would paint
+   blur bands across a chrome area that is supposed to be bare. */
+[data-chrome-style="float"] .chrome-blur {
+  display: none;
+}
+
+/* Minimalist: the frame's continuous surface stops painting, exactly as it does
+   in the app. The mockup scopes it to .app-mockup so the editor page around the
+   bounded box keeps its own chrome. */
+[data-chrome-style="float"] .chrome-glass,
+[data-chrome-style="float"] .app-mockup .chrome-glass {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+}
