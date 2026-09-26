@@ -138,7 +138,30 @@ const CHECKS = [
   { name: 'Framed shell — drawer-pane',                pattern: '\\.framed-shell > \\.drawer-pane' },
   { name: 'Framed shell — chat-pane',                  pattern: '\\.framed-shell > \\.chat-pane' },
   { name: 'Framed shell — frame-divider',              pattern: '\\.framed-shell > \\.frame-divider' },
-  { name: 'Layout — floating chrome fork',             pattern: '\\[data-chrome-style=.floating.\\]' },
+  { name: 'Layout — floating chrome fork',             pattern: '\\n\\[data-chrome-style=.floating.\\]' },
+  // The Minimalist preset (chrome-style: 'float'). Added 2026-09-20 with the
+  // style itself: the preview must render it, or the Kit shows a preset whose
+  // card is identical to Classic — which is exactly the complaint that produced
+  // this style in the first place.
+  //
+  // BOTH details are load-bearing, and the first draft of this line got each
+  // wrong once:
+  //   · leading `\n` — without it, `[^{]*` runs backwards through the previous
+  //     rule's declaration block and captures a stray `[data-chrome-style=…]`
+  //     mentioned inside a COMMENT (the terminal-inset note at globals.css:1042)
+  //     together with whatever body follows. It reported four "missing
+  //     properties" that were really the chrome-glass override.
+  //   · `.float.` rather than a quoted literal — globals.css writes these
+  //     attribute selectors in both quote styles, and a quoted pattern matches
+  //     nothing at all.
+  //   · naming `.chrome-glass`, because the comparison uses the FIRST match on
+  //     each side: the bare attribute matched the chrome-wrapper rule in the
+  //     preview and the chrome-glass rule in globals.css, so it reported four
+  //     "missing properties" for a rule that was present and correct.
+  // The rest of the mode lives in the preview only — it is a bounded mockup box,
+  // and globals.css keeps its half in styles/float-chrome.css, which this guard
+  // does not read. The property-parity checks above cover the app side.
+  { name: 'Layout — minimalist chrome',                pattern: '\\n\\[data-chrome-style=.float.\\] \\.chrome-glass' },
 
   { name: 'Layout — floating input',                   pattern: '\\[data-input-style="floating"\\]' },
   { name: 'Layout — minimal input',                    pattern: '\\[data-input-style="minimal"\\]' },
@@ -152,7 +175,14 @@ const CHECKS = [
   // variant in globals.css, the manifest template, or kit-presets.json. The
   // check that used to be here matched nothing and was pure decoration.
   { name: 'Layout — minimal statusbar',                pattern: '\\[data-statusbar-style="minimal"\\]' },
-  { name: 'Background layer — #theme-bg',              pattern: '#theme-bg' },
+  // Newline-anchored for the same reason the Minimalist check above is: an
+  // unanchored `#theme-bg` matched a COMMENT in globals.css that mentions the
+  // layer ("The wallpaper layer (#theme-bg) is `position: fixed…`"), so the
+  // comparison used the body of whatever rule followed that comment and reported
+  // a permanent, unfixable "missing background-color" against the preview. The
+  // check had been red on master since the comment was written; the property was
+  // present in both files the whole time.
+  { name: 'Background layer — #theme-bg',              pattern: '\\n#theme-bg' },
   { name: 'Background layer — #theme-pattern',         pattern: '#theme-pattern' },
 ];
 

@@ -64,6 +64,12 @@
       "name": "Minimal",
       "blurb": "Header hidden, thin status bar, input as a single line",
       "layout": { "chrome-style": "default", "input-style": "minimal", "header-style": "minimal", "statusbar-style": "minimal" }
+    },
+    {
+      "id": "float",
+      "name": "Minimalist",
+      "blurb": "The bars go away — every control pops out of the background on its own",
+      "layout": { "chrome-style": "float", "input-style": "default", "header-style": "default", "statusbar-style": "default" }
     }
   ],
 
