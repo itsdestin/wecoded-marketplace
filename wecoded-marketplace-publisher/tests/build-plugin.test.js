@@ -6,6 +6,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { buildPlugin } from '../scripts/build-plugin.js';
 import { scanForSecrets } from '../scripts/build-plugin.js';
+import { SECRETS_DIR, SECRETS_FILE } from './fake-secrets.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(__dirname, 'fixtures/source-skill/SKILL.md');
@@ -97,7 +98,7 @@ test('buildPlugin templates a README when none is provided', async () => {
 });
 
 test('scanForSecrets finds Anthropic keys', async () => {
-  const p = path.join(__dirname, 'fixtures/plugin-with-secrets/scripts/fetch.js');
+  const p = SECRETS_FILE;
   const text = await fs.readFile(p, 'utf8');
   const findings = scanForSecrets(text, p);
   const patterns = findings.map(f => f.patternName).sort();
@@ -106,7 +107,7 @@ test('scanForSecrets finds Anthropic keys', async () => {
 });
 
 test('scanForSecrets returns file + line for each finding', async () => {
-  const p = path.join(__dirname, 'fixtures/plugin-with-secrets/scripts/fetch.js');
+  const p = SECRETS_FILE;
   const text = await fs.readFile(p, 'utf8');
   const findings = scanForSecrets(text, p);
   for (const f of findings) {
@@ -117,7 +118,7 @@ test('scanForSecrets returns file + line for each finding', async () => {
 });
 
 test('buildPlugin with sanitize replaces JS secrets with env reads', async () => {
-  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const srcDir = SECRETS_DIR;
   const manifest = {
     pluginId: 'sanity',
     metadata: { displayName: 'Sanity', description: 'd', author: { name: 'x' }, category: 'personal' },
@@ -137,7 +138,7 @@ test('buildPlugin with sanitize replaces JS secrets with env reads', async () =>
 });
 
 test('buildPlugin with sanitize generates SETUP.md listing env vars', async () => {
-  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const srcDir = SECRETS_DIR;
   const manifest = {
     pluginId: 'setup-md',
     metadata: { displayName: 'Setup MD', description: 'd', author: { name: 'x' }, category: 'personal' },
@@ -152,7 +153,7 @@ test('buildPlugin with sanitize generates SETUP.md listing env vars', async () =
 });
 
 test('buildPlugin without sanitize returns findings but leaves content intact', async () => {
-  const srcDir = path.join(__dirname, 'fixtures/plugin-with-secrets');
+  const srcDir = SECRETS_DIR;
   const manifest = {
     pluginId: 'raw',
     metadata: { displayName: 'Raw', description: 'd', author: { name: 'x' }, category: 'personal' },
