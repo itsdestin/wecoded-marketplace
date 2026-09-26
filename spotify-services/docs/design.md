@@ -4,7 +4,7 @@
 
 - **Date:** 2026-04-26
 - **Status:** Drafted (via brainstorm in tutor repo, awaiting user review)
-- **Lives outside this repo:** the plugin's eventual home is the WeCoded marketplace (alongside `google-services`). This spec lives in the tutor repo for now because the brainstorm originated here; it should be copied to `spotify-services/docs/design.md` once the plugin's directory is initialized.
+- **Lives outside this repo:** the plugin's eventual home is the YouCoded marketplace (alongside `google-services`). This spec lives in the tutor repo for now because the brainstorm originated here; it should be copied to `spotify-services/docs/design.md` once the plugin's directory is initialized.
 - **Related tutor-side spec:** `docs/superpowers/specs/subsystems/05-spotify-integration.md`
 - **Related master spec sections (tutor's perspective):** §3.1 (Spotify deprecation context), §5.1 #5 (the subsystem the plugin replaces the bulk of), §6 (data flow), §7.1 (`taste/playlists.json` shape — the plugin's main output for the tutor)
 
@@ -23,7 +23,7 @@ It is modeled after the `google-services` plugin in the same marketplace.
 
 Brainstorm on 2026-04-26 established the following, in order:
 
-1. **Plugin shape and home:** public WeCoded marketplace, sibling of `google-services`. End users register their own Spotify Developer apps; no hardcoded credentials.
+1. **Plugin shape and home:** public YouCoded marketplace, sibling of `google-services`. End users register their own Spotify Developer apps; no hardcoded credentials.
 2. **Surface area target:** full breadth — read, library, playlists, playback, queue, plus local desktop control. Not minimum viable.
 3. **Implementation pattern survey:** `google-services` works by *teaching* Claude how to use an existing tool (the `gws` CLI binary). For Spotify, no equivalent official binary exists. The closest analog is an MCP server.
 4. **MCP server survey:** evaluated `varunneal/spotify-mcp` (Python+spotipy), `marcelmarais/spotify-mcp-server` (TS), and `Carrieukie/spotify-mcp-server` (Kotlin). All three are Web-API-only; none control the local desktop app. Capability coverage varies; none of them ship a one-shot full-library export (the tutor's actual need).
@@ -91,7 +91,7 @@ The plugin's role is identical to `google-services`': teach Claude how to use th
 
 ### 4.4 Repo layout
 
-Single repo, lives at `wecoded-marketplace/spotify-services/` inside the WeCoded marketplace.
+Single repo, lives at `wecoded-marketplace/spotify-services/` inside the YouCoded marketplace.
 
 ```
 wecoded-marketplace/spotify-services/
@@ -290,7 +290,7 @@ Document each of these in the plugin README's "deferred" section so users don't 
 
 ## 12. Open questions (require user input or follow-up decisions)
 
-1. **Should the plugin live in the existing WeCoded marketplace repo, or its own?** Default assumption: same repo as `google-services`. Confirm during plan phase before initializing the directory.
+1. **Should the plugin live in the existing YouCoded marketplace repo, or its own?** Default assumption: same repo as `google-services`. Confirm during plan phase before initializing the directory.
 2. **Linux MPRIS support — punt or include?** Currently punted. Reconsider if there's a demand signal during early use.
 3. **Premium-account handling for `play_pause_smart`** — **Resolved:** free-tier with no local app: surface structured `premium_required` error suggesting opening the desktop app. The smart-routed `play_pause_smart` tool surfaces `{"error": "premium_required", "suggestion": "Open the Spotify desktop app to use local transport without Premium."}` in this case.
 4. **Setup walkthrough format for `register-app.md`** — does it open in the browser as plain markdown, get rendered server-side, or get printed in the terminal? Match `google-services` precedent during implementation.

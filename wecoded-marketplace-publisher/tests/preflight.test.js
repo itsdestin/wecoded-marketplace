@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { preflightLocal } from '../scripts/preflight.js';
+import { SECRETS_DIR } from './fake-secrets.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VALID = path.join(__dirname, 'fixtures/valid-plugin-tree');
-const SECRETS = path.join(__dirname, 'fixtures/plugin-with-secrets');
+const SECRETS = SECRETS_DIR;
 
 test('preflightLocal passes on a valid plugin tree', async () => {
   const result = await preflightLocal({ pluginDir: VALID, metadata: {

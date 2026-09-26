@@ -13,7 +13,7 @@
  *
  * HISTORY / WHY THIS FILE IS PARANOID ABOUT PATHS: this guard was silently dead
  * for ~3 months. Both of its globals.css candidates were stale (a legacy
- * mono-repo layout and a pre-rebrand `destincode` sibling), and its PREVIEW path
+ * mono-repo layout and a sibling folder from before the app was renamed), and its PREVIEW path
  * still said `core/skills/`. It exited on "File not found" before running a
  * single check, so the framed-shell chrome refactor landed completely unguarded.
  * Hence: resolution now tries several layouts, and a path miss is a LOUD failure

@@ -1,6 +1,6 @@
-# Contributing to the WeCoded Marketplace
+# Contributing to the YouCoded Marketplace
 
-The WeCoded Marketplace is the registry that powers YouCoded's plugin discovery — skills, slash commands, hooks, MCPs, and agents that anyone can install into their YouCoded app.
+The YouCoded Marketplace is the registry that powers YouCoded's plugin discovery — skills, slash commands, hooks, MCPs, and agents that anyone can install into their YouCoded app.
 
 ## Submitting a Plugin
 

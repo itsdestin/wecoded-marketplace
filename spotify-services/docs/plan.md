@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a public WeCoded marketplace plugin (`spotify-services`) that exposes the Spotify Web API and native local desktop control to any Claude Code project, modeled after `google-services` but using a self-contained Python MCP server registered declaratively via `mcp-manifest.json`.
+**Goal:** Ship a public YouCoded marketplace plugin (`spotify-services`) that exposes the Spotify Web API and native local desktop control to any Claude Code project, modeled after `google-services` but using a self-contained Python MCP server registered declaratively via `mcp-manifest.json`.
 
 **Architecture:** One Python 3.12 MCP server installed at `~/.spotify-services/server/` via `uv venv`. The server exposes MCP tools that route internally to (a) a Web API backend (`spotipy`, OAuth Authorization Code with PKCE), (b) a macOS local backend (`osascript` subprocess), or (c) a Windows local backend (`pywinrt`'s `winrt-Windows.Media.Control` package for SMTC). A platform router selects the local backend at startup; smart-routed tools prefer local when the desktop app is the active SMTC/Spotify session and fall back to Web API otherwise. The plugin layer is thin — one skill per public tool, plus setup scripts for installing the server, registering the user's Spotify Developer app, and OAuth bootstrap. MCP server registration into `~/.claude.json` is automatic via YouCoded's `reconcileMcp()` — no setup script writes it.
 

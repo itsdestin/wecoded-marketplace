@@ -52,7 +52,7 @@ async function writeReadmeIfMissing(outDir, metadata) {
     await fs.access(p);
     return;
   } catch {}
-  const body = `# ${metadata.displayName}\n\n${metadata.description}\n\n## Installation\n\nInstall via the WeCoded marketplace or directly from this repo.\n`;
+  const body = `# ${metadata.displayName}\n\n${metadata.description}\n\n## Installation\n\nInstall via the YouCoded marketplace or directly from this repo.\n`;
   await fs.writeFile(p, body);
 }
 
