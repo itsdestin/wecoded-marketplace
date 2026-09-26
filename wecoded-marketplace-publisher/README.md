@@ -1,6 +1,6 @@
-# WeCoded Marketplace Publisher
+# YouCoded Marketplace Publisher
 
-Publish your plugins to the WeCoded marketplace — skills, commands, hooks, MCPs, agents, or any combination — without needing to know how plugins are structured.
+Publish your plugins to the YouCoded marketplace — skills, commands, hooks, MCPs, agents, or any combination — without needing to know how plugins are structured.
 
 ## What it does
 
@@ -17,7 +17,7 @@ Run `/publish-to-marketplace`. The skill will:
 ## Two paths
 
 - **Community plugin** — you maintain it in your own GitHub repo; the marketplace lists it with a Community badge.
-- **Request WeCoded adoption** — same community listing goes live, and WeCoded separately reviews whether to take it over. If accepted, WeCoded hosts and maintains an "Official" version; you lose control of the adopted version.
+- **Request YouCoded adoption** — same community listing goes live, and YouCoded separately reviews whether to take it over. If accepted, YouCoded hosts and maintains an "Official" version; you lose control of the adopted version.
 
 You decide after seeing the finished plugin.
 

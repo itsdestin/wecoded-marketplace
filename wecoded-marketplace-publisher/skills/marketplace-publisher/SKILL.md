@@ -1,11 +1,11 @@
 ---
 name: marketplace-publisher
-description: Conversational assistant that helps users publish their plugins (skills, commands, hooks, MCPs, agents) to the WeCoded marketplace. Offers a community-maintained path and an adoption-request path. Handles disk discovery, plugin rebuild, secret sanitization, and PR creation.
+description: Conversational assistant that helps users publish their plugins (skills, commands, hooks, MCPs, agents) to the YouCoded marketplace. Offers a community-maintained path and an adoption-request path. Handles disk discovery, plugin rebuild, secret sanitization, and PR creation.
 ---
 
-# WeCoded Marketplace Publisher
+# YouCoded Marketplace Publisher
 
-You are helping the user publish something they've built to the WeCoded marketplace. The user is a non-technical user who built their plugin via conversation with Claude; they may not know what components it has or where its files live. Your job is to guide them warmly and clearly, never dead-ending, and always explaining what will happen before doing it.
+You are helping the user publish something they've built to the YouCoded marketplace. The user is a non-technical user who built their plugin via conversation with Claude; they may not know what components it has or where its files live. Your job is to guide them warmly and clearly, never dead-ending, and always explaining what will happen before doing it.
 
 ## Step 1 — Preflight (gh CLI check)
 
@@ -261,7 +261,7 @@ If the user says no or wants a change, figure out what they want to adjust and j
 
 ## Step 11 — Path choice
 
-This is the most consequential decision in the flow. The user chooses between maintaining the plugin themselves (community path) or asking WeCoded to adopt it. Present it clearly — especially the irreversible consequences of adoption.
+This is the most consequential decision in the flow. The user chooses between maintaining the plugin themselves (community path) or asking YouCoded to adopt it. Present it clearly — especially the irreversible consequences of adoption.
 
 Show the user the two options verbatim (keep this framing — it's been reviewed for clarity):
 
@@ -274,22 +274,22 @@ Option A: Community plugin (you maintain it)
   • If people report bugs, you fix them
   • Marketplace shows a "Community" badge
 
-Option B: Request WeCoded adoption (they may take over)
+Option B: Request YouCoded adoption (they may take over)
   • Your plugin still gets published to your GitHub repo and listed
     as Community — no matter what, you end up with a working listing
-  • Separately, WeCoded reviews and decides whether to adopt it
+  • Separately, YouCoded reviews and decides whether to adopt it
 
-  If WeCoded accepts:
-    • WeCoded copies your plugin into their own repo
-    • Marketplace shows an "Official WeCoded" badge
+  If YouCoded accepts:
+    • YouCoded copies your plugin into their own repo
+    • Marketplace shows an "Official YouCoded" badge
     • Your community version is delisted (adopted copy replaces it)
     • You no longer control updates, bug fixes, or the plugin itself
     • You still have YOUR repo — it's just no longer what the
       marketplace lists
 
-  If WeCoded declines:
+  If YouCoded declines:
     • Nothing changes — your community version stays listed
-    • WeCoded gives you a reason
+    • YouCoded gives you a reason
 
   Response usually takes 1-2 weeks.
 ```
@@ -300,14 +300,14 @@ Then ask:
 
 If the user picks **B**, follow up with one more question:
 
-> *"In a sentence or two, why would you like WeCoded to take this over?"*
+> *"In a sentence or two, why would you like YouCoded to take this over?"*
 
-Save their answer as `reason`. This goes into the adoption-request PR body so WeCoded knows what they're responding to.
+Save their answer as `reason`. This goes into the adoption-request PR body so YouCoded knows what they're responding to.
 
 If the user hesitates or asks questions, answer them honestly. Common ones:
 - *"What does adoption mean again?"* → restate the consequences in fresh language, emphasize "you lose control if accepted"
 - *"Can I change my mind later?"* → once the adoption PR is merged, no — the community listing is delisted. Before merge, yes — they can close the adoption PR themselves.
-- *"How will I know WeCoded's decision?"* → they'll get a GitHub notification on the adoption-request PR.
+- *"How will I know YouCoded's decision?"* → they'll get a GitHub notification on the adoption-request PR.
 
 ## Step 12 — Publish
 
@@ -353,7 +353,7 @@ On success, give a warm, concrete summary:
 >
 > *What happens next:*
 >
-> *- The WeCoded team reviews community PRs typically within a few days. You'll get a GitHub notification when they respond.*
+> *- The YouCoded team reviews community PRs typically within a few days. You'll get a GitHub notification when they respond.*
 > *- If you chose adoption: the adoption review usually takes 1-2 weeks. Either way, your community listing is already live as soon as the community PR is merged.*
 > *- If you need to make changes before the PR is merged, just push commits to your repo and the PR will update automatically.*
 >

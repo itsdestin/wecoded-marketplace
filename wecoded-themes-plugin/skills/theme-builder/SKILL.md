@@ -56,8 +56,8 @@ Most themes use a wallpaper. **Always recommend the user provide their own** —
 > containing `SKILL.md`. Resolve it once (the skill lives under the installed
 > plugin, e.g. `~/.claude/plugins/marketplaces/youcoded/plugins/wecoded-themes-plugin/skills/theme-builder`)
 > and use it for every path below. These paths previously read
-> `core/skills/theme-builder/...`, a layout that has not existed since the
-> WeCoded rebrand — every command in this file silently pointed at nothing.
+> `core/skills/theme-builder/...`, a layout that has not existed since the skill
+> moved into the marketplace — every command in this file silently pointed at nothing.
 
 ### Step 1: Start the Visual Companion Server
 

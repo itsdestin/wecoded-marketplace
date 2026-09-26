@@ -173,8 +173,8 @@
     {
       "id": "wecoded-marketplace-publisher",
       "type": "plugin",
-      "displayName": "WeCoded Marketplace Publisher",
-      "description": "Publish your plugins to the WeCoded marketplace — conversational, non-technical-user friendly.",
+      "displayName": "YouCoded Marketplace Publisher",
+      "description": "Publish your plugins to the YouCoded marketplace — conversational, non-technical-user friendly.",
       "category": "productivity",
       "author": "@destin",
       "tags": [],

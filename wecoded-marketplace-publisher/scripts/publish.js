@@ -121,13 +121,13 @@ function adoptionRequestBody({ pluginId, metadata, communityPR, reason, repoUrl,
     '',
     '## Acknowledgments',
     '',
-    'I understand that if WeCoded accepts this adoption request:',
-    '- WeCoded will host and maintain the adopted version of this plugin.',
+    'I understand that if YouCoded accepts this adoption request:',
+    '- YouCoded will host and maintain the adopted version of this plugin.',
     '- The community listing from my repo will be delisted in favor of the adopted copy.',
     '- I will no longer control updates, bug fixes, or the plugin itself.',
     '- I keep ownership of my source repo, but it will no longer be what the marketplace lists.',
     '',
-    'If WeCoded declines this request, nothing changes — my community listing remains.',
+    'If YouCoded declines this request, nothing changes — my community listing remains.',
   ].join('\n');
 }
 
