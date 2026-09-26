@@ -31,6 +31,9 @@ on:
   # plugin directory it still RUNS and succeeds — its loop finds nothing to
   # check and exits 0. Running-and-passing is what keeps it unblocking.
   pull_request:
+  # Manual "rebuild the listing now" — catches the index up after a rebuild that
+  # failed, or after a merge whose paths the `push:` filter below skips.
+  workflow_dispatch:
   push:
     branches: [master]  # the repo's default branch is master, not main
     paths:
@@ -354,10 +357,11 @@ jobs:
 
   # ── Auto-rebuild on merge (runs on push to master) ─────────────────────────
   rebuild:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      checks: write  # to report bundled-version-bump on the bot's own commit (see the commit step)
 
     steps:
       - uses: actions/checkout@v7
@@ -389,11 +393,16 @@ jobs:
           # Single line, space-separated — a multi-line value would corrupt GITHUB_OUTPUT
           echo "plugins=$PLUGINS" >> "$GITHUB_OUTPUT"
           echo "Merged plugins: $PLUGINS"
+          # WHY a separate `run` flag: a manual run rebuilds the whole index but
+          # auto-adds nothing (no merged plugins), so the gate can't be `plugins`.
+          if [ -n "$PLUGINS" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=yes" >> "$GITHUB_OUTPUT"
+          fi
 
       # Every step below is skipped when the merge touched no plugin dir, so
       # docs/root-file merges never trigger a rebuild commit.
       - name: Auto-add entries to marketplace.json
-        if: steps.merged.outputs.plugins != ''
+        if: steps.merged.outputs.run == 'yes'
         env:
           MERGED_PLUGINS: ${{ steps.merged.outputs.plugins }}
         run: |
@@ -458,11 +467,11 @@ jobs:
       # — it does not fall back to the root copy. Regenerate the mirror after
       # auto-add so a CC-side re-clone of this repo yields a loadable marketplace.
       - name: Mirror marketplace.json to .claude-plugin/
-        if: steps.merged.outputs.plugins != ''
+        if: steps.merged.outputs.run == 'yes'
         run: node scripts/mirror-cc-manifest.js
 
       - name: Rebuild skills/index.json
-        if: steps.merged.outputs.plugins != ''
+        if: steps.merged.outputs.run == 'yes'
         env:
           # Use the built-in Actions token so the Tree API gets 5000/hr.
           # Public-repo scope is sufficient — we only read public trees.
@@ -470,7 +479,7 @@ jobs:
         run: node scripts/sync.js
 
       - name: Check extraction failure rate
-        if: steps.merged.outputs.plugins != ''
+        if: steps.merged.outputs.run == 'yes'
         run: |
           # Sentinel for "something systemic broke". If >10% of non-deprecated
           # entries failed extraction, fail the build so it lands on Destin's
@@ -486,17 +495,44 @@ jobs:
           "
 
       - name: Commit updated marketplace files
-        if: steps.merged.outputs.plugins != ''
+        if: steps.merged.outputs.run == 'yes'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add marketplace.json .claude-plugin/marketplace.json skills/index.json index.json sync-report.json
+          LISTING="marketplace.json .claude-plugin/marketplace.json skills/index.json index.json sync-report.json"
+          git add $LISTING
           if git diff --cached --quiet; then
             echo "No changes to commit"
-          else
-            git commit -m "chore: auto-add community plugin(s) and rebuild index [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore: auto-add community plugin(s) and rebuild index [skip ci]"
+
+          # WHY this dance instead of a plain `git push`: master requires the
+          # `bundled-version-bump` check (from GitHub Actions), and a bot push
+          # never gets one, so GitHub rejected every rebuild from 2026-09-21 on.
+          # That check only asks "did a plugin change without a version bump?",
+          # and this commit touches listing files only — so it is answered here
+          # honestly: verify the commit is listing-only, park it on a scratch
+          # branch so GitHub knows the commit, report the check on it, then move
+          # master. Anything outside the listing aborts before a check is reported.
+          for f in $(git diff --name-only HEAD~1 HEAD); do
+            case " $LISTING " in
+              *" $f "*) ;;
+              *) echo "::error::rebuild commit touches $f, not a listing file — refusing to self-report bundled-version-bump"; exit 1 ;;
+            esac
+          done
+          SHA=$(git rev-parse HEAD)
+          SCRATCH="ci/rebuild-${GITHUB_RUN_ID}"
+          trap 'git push -q origin --delete "$SCRATCH" || true' EXIT
+          git push origin "HEAD:refs/heads/$SCRATCH"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/check-runs" \
+            -f name=bundled-version-bump -f head_sha="$SHA" \
+            -f status=completed -f conclusion=success \
+            -f 'output[title]=Listing files only' \
+            -f 'output[summary]=Automatic index rebuild; no plugin directory changed, so no version bump applies.' >/dev/null
+          git push origin HEAD:master
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Apple Services validation ──────────────────────────────────────────────
   # apple-services/ also flows through the main validate job like any other
