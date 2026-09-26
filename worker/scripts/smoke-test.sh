@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Manual end-to-end verification after first deploy.
-# Usage: smoke-test.sh https://destincode-marketplace-api.<subdomain>.workers.dev
+# Usage: smoke-test.sh https://api.youcoded.ai
 set -euo pipefail
 
 HOST="${1:?usage: smoke-test.sh <worker-host>}"
@@ -45,7 +45,7 @@ curl -sf "$HOST/stats" | python -m json.tool | head -40
 
 echo
 echo "== GET /ratings/:plugin_id =="
-curl -sS "$HOST/ratings/$(printf %s 'destinclaude:core' | jq -sRr @uri)" | jq .
+curl -sS "$HOST/ratings/$(printf %s 'smoke-test:hello' | jq -sRr @uri)" | jq .
 
 echo
 echo "== DELETE /ratings/smoke-test:hello =="
