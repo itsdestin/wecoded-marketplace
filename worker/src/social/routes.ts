@@ -40,8 +40,18 @@ socialRoutes.get("/social/presence", requireAuth, async (c) => {
   const stub = c.env.PRESENCE.get(c.env.PRESENCE.idFromName("global"));
   const fwd = new Request("https://presence.internal/connect", c.req.raw);
   fwd.headers.set("X-Presence-User", c.get("userId"));
+  // Hidden (incognito) mode comes from the query string and is set — or cleared — HERE, so a
+  // client-sent header can never reach the room (see HIDDEN SOCKETS in presence-room.ts).
+  if (c.req.query("hidden") === "1") fwd.headers.set("X-Presence-Hidden", "1");
+  else fwd.headers.delete("X-Presence-Hidden");
   return stub.fetch(fwd);
 });
+
+// What this server's presence room supports, asked BEFORE connecting. A client that wants to
+// connect hidden (incognito) first checks for `hidden: true`; an older server answers 404, and the
+// client then stays disconnected rather than connect visibly. No session needed — it says nothing
+// about anyone.
+socialRoutes.get("/social/presence/capabilities", (c) => c.json({ hidden: true }));
 
 // Exact-match handle lookup → one minimal card. Prefix/fuzzy search is
 // deliberately excluded (user-enumeration surface — spec §2).

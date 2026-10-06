@@ -26,7 +26,19 @@ type Status = "idle" | "in-game";
 // connectedAt/lastActivityAt: liveness seeds — see livenessOf(). Optional so an
 // attachment written by the pre-liveness code deserializes without a crash (it
 // just reads as maximally stale and gets swept on the next alarm).
-interface Attachment { userId: string; card: UserCard; status: Status; connectedAt?: number; lastActivityAt?: number; }
+interface Attachment { userId: string; card: UserCard; status: Status; connectedAt?: number; lastActivityAt?: number; hidden?: boolean; }
+
+// HIDDEN SOCKETS (incognito, per device — Destin, 2026-10-05: "they shouldn't be able to see me in
+// incognito, but i feel like i should still be able to see who else is online"). A hidden socket
+// RECEIVES its friends' presence like any other, and is invisible in every other sense:
+//  - it is never "online": liveSocketsFor() leaves it out, so it is in no friend's snapshot, does
+//    not count for "was online" / "last socket left", and no challenge is delivered to it;
+//  - its arrival and departure are never broadcast, and it never writes last_seen_at;
+//  - it may not send a status change, a challenge or a challenge response (each answered with
+//    {type:"refused", for, reason:"hidden"}) — any of those would tell a friend it is there.
+// A device's OTHER, visible sockets are unaffected (per-device incognito).
+// The client asks for it with ?hidden=1 and must see {type:"hello", hidden:true} as the FIRST
+// frame, or disconnect — an older server would treat the socket as visible.
 
 const LAST_SEEN_REFRESH_MS = 5 * 60 * 1000; // coarse refresh so a crashed client doesn't freeze last_seen
 
@@ -130,7 +142,13 @@ export class PresenceRoom {
    *  goes through here so there is exactly one definition of presence. Raw
    *  socketsFor() remains for plain delivery, where a ghost is harmless. */
   private liveSocketsFor(userId: string, now = Date.now()): WebSocket[] {
-    return this.socketsFor(userId).filter((s) => this.isLive(s, now));
+    // Hidden sockets are never online (see HIDDEN SOCKETS above) — the one definition every
+    // friend-facing decision goes through.
+    return this.socketsFor(userId).filter((s) => this.isLive(s, now) && !this.isHidden(s));
+  }
+
+  private isHidden(sock: WebSocket): boolean {
+    return (sock.deserializeAttachment() as Attachment | null)?.hidden === true;
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -167,13 +185,19 @@ export class PresenceRoom {
     const inheritedStatus: Status = wasOnline
       ? (existingSockets[0]!.deserializeAttachment() as Attachment).status
       : "idle";
+    // Set by the worker route from ?hidden=1 (never trusted from the client's own headers — the
+    // route overwrites it).
+    const hidden = request.headers.get("X-Presence-Hidden") === "1";
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
     this.state.acceptWebSocket(server, [userId]); // tag = account id (multi-device: N sockets, one tag)
-    server.serializeAttachment({ userId, card, status: inheritedStatus, connectedAt: Date.now() } satisfies Attachment);
+    server.serializeAttachment({ userId, card, status: inheritedStatus, connectedAt: Date.now(), hidden } satisfies Attachment);
 
+    // The confirmation comes FIRST, before the snapshot, so a client can tell an older server
+    // (which would have counted it visible) from this one by the very first frame.
+    if (hidden) this.safeSend(server, JSON.stringify({ type: "hello", hidden: true }));
     await this.sendSnapshot(userId, server);
-    if (!wasOnline) {
+    if (!wasOnline && !hidden) {
       // First connection for this account → tell online friends (spec §3 multi-device rule).
       // inheritedStatus is always "idle" here (!wasOnline) — used for consistency.
       await this.broadcastToFriends(userId, { type: "user-joined", user: { ...card, status: inheritedStatus } });
@@ -195,6 +219,12 @@ export class PresenceRoom {
     // Any real frame proves the peer is alive — stamp it. (Byte-exact pings
     // never reach here — the auto-response pair intercepts and stamps those.)
     ws.serializeAttachment({ ...att, lastActivityAt: Date.now() } satisfies Attachment);
+
+    // A hidden socket may not do anything a friend could notice (HIDDEN SOCKETS above).
+    if (att.hidden && (data.type === "status" || data.type === "challenge" || data.type === "challenge-response")) {
+      this.safeSend(ws, JSON.stringify({ type: "refused", for: data.type, reason: "hidden" }));
+      return;
+    }
 
     switch (data.type) {
       case "ping":
@@ -251,6 +281,8 @@ export class PresenceRoom {
   async webSocketClose(ws: WebSocket): Promise<void> {
     const att = ws.deserializeAttachment() as Attachment | null;
     if (!att) return;
+    // A hidden socket was never online, so its leaving is nothing to announce or record.
+    if (att.hidden) return;
     // getWebSockets can still include the closing socket — count OTHERS only.
     // LIVE others only: counting a ghost here is what pinned accounts "Online"
     // forever (the real close was swallowed because the ghost kept the count
@@ -276,11 +308,19 @@ export class PresenceRoom {
     // this one — do not add a second setAlarm() call anywhere in this class.
     const now = Date.now();
     const live = new Set<string>();
+    // Hidden sockets still need the ghost sweep, but they are never online: they write no
+    // last_seen_at and their eviction announces nothing. Counted only to keep the alarm ticking.
+    let hiddenLive = 0;
     // userId → newest proof-of-life (ms) among that account's stale sockets.
     const evictedAt = new Map<string, number>();
     for (const sock of this.state.getWebSockets()) {
       const att = sock.deserializeAttachment() as Attachment | null;
       if (!att) continue;
+      if (att.hidden) {
+        if (this.isLive(sock, now)) hiddenLive += 1;
+        else { try { sock.close(1001, "stale — no liveness signal"); } catch { /* already closing */ } }
+        continue;
+      }
       if (this.isLive(sock, now)) {
         live.add(att.userId);
       } else {
@@ -313,7 +353,7 @@ export class PresenceRoom {
     // sit in storage until someone happened to reconnect. (It could never
     // produce a wrong record — the read path expires it lazily too — this is
     // storage hygiene.)
-    if (live.size > 0 || stillPending > 0) {
+    if (live.size > 0 || hiddenLive > 0 || stillPending > 0) {
       await this.state.storage.setAlarm(now + LAST_SEEN_REFRESH_MS);
     }
     // Nothing live and nothing pending → no reschedule; the next connect re-arms it.
