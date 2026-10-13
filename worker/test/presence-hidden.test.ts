@@ -166,4 +166,23 @@ describe("PresenceRoom — hidden mode (incognito)", () => {
     expect((await left).id).toBe(a.userId);
     wsB.close();
   });
+
+  // Final review F28: a hidden player is still in the game. Counting them as gone let the other
+  // player claim a forfeit win while they were connected and playing.
+  it("a forfeit cannot be claimed against an opponent who is connected hidden", async () => {
+    const a = await createTestAccount({ handle: `hk${Date.now() % 100000}` });
+    const b = await createTestAccount({ handle: `hl${Date.now() % 100000}` });
+    await befriend(a.userId, b.userId);
+    const wsA = await connect(await issueTestSession(a));
+    await nextMessage(wsA, "presence");
+    const wsB = await connect(await issueTestSession(b), true);
+    await nextMessage(wsB, "presence");
+    const match = `M-hidden-forfeit-${Date.now() % 1000000}`;
+    const rejected = nextMessage(wsA, "game-result-rejected");
+    wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
+    expect(await rejected).toMatchObject({ reason: "opponent-still-connected" });
+    const rows = await env.DB.prepare("SELECT COUNT(*) AS n FROM game_matches WHERE match_id = ?").bind(match).first<{ n: number }>();
+    expect(rows!.n).toBe(0);
+    wsA.close(); wsB.close();
+  });
 });
