@@ -490,8 +490,8 @@ export class PresenceRoom {
    * not come back, so no second report can ever exist.
    *
    * The guard is that this room independently agrees the other player is gone —
-   * no live socket of theirs, hidden or not (see the WHY at the check), so the
-   * claim is checked against state the client cannot touch. If both players dropped, neither is here to claim anything and
+   * no socket that counts as online (an incognito one does not — see the WHY at
+   * the check), so the claim is checked against state the client cannot touch. If both players dropped, neither is here to claim anything and
    * nothing is recorded, which is exactly what §6.3 asks for.
    */
   private async handleGameForfeit(ws: WebSocket, att: Attachment, data: any): Promise<void> {
@@ -507,13 +507,8 @@ export class PresenceRoom {
     // The independent check. A client that claims a forfeit while its opponent
     // is still connected is simply told no — it can retry once the reconnect
     // window has genuinely elapsed.
-    // WHY every live socket here, hidden ones too (final review F28): "online" (liveSocketsFor) leaves
-    // hidden sockets out so friends never see an incognito device, but this question is different — is
-    // the opponent still in the game? A hidden player is, and counting them as gone let the other
-    // player claim a forfeit win against someone still playing. The answer reaches only the claimer,
-    // who must already share an unsettled match with them.
-    const now = Date.now();
-    if (this.socketsFor(opponent).some((s) => this.isLive(s, now))) {
+    // WHY hidden sockets count as gone here (privacy first, Destin): any other answer would tell the claimer an incognito player is still connected.
+    if (this.liveSocketsFor(opponent).length > 0) {
       return this.rejectReport(ws, game, matchId, opponent, "opponent-still-connected");
     }
 

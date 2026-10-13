@@ -167,22 +167,26 @@ describe("PresenceRoom — hidden mode (incognito)", () => {
     wsB.close();
   });
 
-  // Final review F28: a hidden player is still in the game. Counting them as gone let the other
-  // player claim a forfeit win while they were connected and playing.
-  it("a forfeit cannot be claimed against an opponent who is connected hidden", async () => {
-    const a = await createTestAccount({ handle: `hk${Date.now() % 100000}` });
-    const b = await createTestAccount({ handle: `hl${Date.now() % 100000}` });
-    await befriend(a.userId, b.userId);
-    const wsA = await connect(await issueTestSession(a));
-    await nextMessage(wsA, "presence");
-    const wsB = await connect(await issueTestSession(b), true);
-    await nextMessage(wsB, "presence");
-    const match = `M-hidden-forfeit-${Date.now() % 1000000}`;
-    const rejected = nextMessage(wsA, "game-result-rejected");
-    wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await rejected).toMatchObject({ reason: "opponent-still-connected" });
-    const rows = await env.DB.prepare("SELECT COUNT(*) AS n FROM game_matches WHERE match_id = ?").bind(match).first<{ n: number }>();
-    expect(rows!.n).toBe(0);
-    wsA.close(); wsB.close();
+  // Final review F28, privacy first: a forfeit claim against an incognito player must get exactly the
+  // answer it gets against an absent one, or the claimer learns the incognito player is connected.
+  it("a forfeit claim reveals nothing: an incognito opponent is answered exactly like an absent one", async () => {
+    const claim = async (opponentConnectedHidden: boolean) => {
+      const a = await createTestAccount({ handle: `hk${Date.now() % 100000}${opponentConnectedHidden ? "h" : "a"}` });
+      const b = await createTestAccount({ handle: `hl${Date.now() % 100000}${opponentConnectedHidden ? "h" : "a"}` });
+      await befriend(a.userId, b.userId);
+      const wsA = await connect(await issueTestSession(a));
+      await nextMessage(wsA, "presence");
+      const wsB = opponentConnectedHidden ? await connect(await issueTestSession(b), true) : null;
+      if (wsB) await nextMessage(wsB, "presence");
+      const frames = record(wsA);
+      const match = `M-forfeit-${opponentConnectedHidden ? "hidden" : "absent"}-${Date.now() % 1000000}`;
+      wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
+      await nextMessage(wsA, "game-record");
+      await sleep(100);
+      wsA.close(); wsB?.close();
+      // Ids and the match id differ between the two runs; everything else must match.
+      return frames.map((f) => JSON.stringify(f).replaceAll(b.userId, "OPP").replaceAll(a.userId, "ME").replaceAll(match, "MATCH"));
+    };
+    expect(await claim(true)).toEqual(await claim(false));
   });
 });
