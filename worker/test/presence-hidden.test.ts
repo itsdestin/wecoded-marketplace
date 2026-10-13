@@ -185,7 +185,13 @@ describe("PresenceRoom — hidden mode (incognito)", () => {
       await sleep(100);
       wsA.close(); wsB?.close();
       // Ids and the match id differ between the two runs; everything else must match.
-      return frames.map((f) => JSON.stringify(f).replaceAll(b.userId, "OPP").replaceAll(a.userId, "ME").replaceAll(match, "MATCH"));
+      // WHY last_played_at is blanked too: it is the claim's own clock second, so two runs that
+      // straddle a second boundary differ by 1 (failed under full-suite load, 2026-10-13). It
+      // says when A claimed, nothing about whether B is connected.
+      return frames.map((f) =>
+        JSON.stringify(f)
+          .replaceAll(b.userId, "OPP").replaceAll(a.userId, "ME").replaceAll(match, "MATCH")
+          .replace(/"last_played_at":\d+/g, '"last_played_at":"T"'));
     };
     expect(await claim(true)).toEqual(await claim(false));
   });

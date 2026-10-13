@@ -131,9 +131,13 @@ KNOWN_DEV_DEVICES = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 # Presence staleness threshold override so eviction is reachable inside a test
 # run — production uses the generous in-code default (see presence-room.ts).
 PRESENCE_STALE_MS = "800"
-# Head-to-head attestation window override, same reason as PRESENCE_STALE_MS:
-# the 2-minute production default is unreachable in a test run.
-GAME_RESULT_TIMEOUT_MS = "600"
+# Head-to-head attestation window override: the 2-minute production default would
+# keep slots alive across the whole run. WHY 10000, not the old 600: tests that
+# need two reports to SETTLE failed under full-suite load when the second report
+# landed after 600ms (games-records "draw", 2026-10-13). 10s is far past every
+# test's 2s message wait, so the window can never be why a settle test fails; the
+# one test about EXPIRY ages its stored report instead of sleeping through it.
+GAME_RESULT_TIMEOUT_MS = "10000"
 # The ingest gate's secret, fixed for tests (production gets it from CI as a
 # wrangler secret). CATALOG_ENABLED mirrors the top-level var so the kill switch
 # is off in tests.

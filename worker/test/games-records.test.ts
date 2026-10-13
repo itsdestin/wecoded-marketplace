@@ -1,17 +1,29 @@
-import { env, SELF, runDurableObjectAlarm } from "cloudflare:test";
+import { env, SELF, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
 import { createTestAccount, issueTestSession } from "./helpers";
 
 // Head-to-head records via mutual attestation over the presence socket
 // (games spec §6.2) plus the forfeit case (§6.3).
 //
-// [env.test.vars] sets GAME_RESULT_TIMEOUT_MS=600 so the attestation window is
-// reachable in-test; production uses the 2-minute default in presence-room.ts.
+// [env.test.vars] sets GAME_RESULT_TIMEOUT_MS=10000. WHY so wide: a settle test
+// waits on wall-clock-free signals, but the window itself is wall clock, and at
+// 600ms a loaded machine let it close between the two reports (the "draw" test
+// failed under the full suite, 2026-10-13). Expiry is tested by AGEING the slot
+// (ageResultSlots below), not by sleeping through the window.
 // PRESENCE_STALE_MS=800 is the presence liveness threshold (see presence.test.ts).
-const RESULT_TIMEOUT_MS = 600;
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const ping = (ws: WebSocket) => ws.send(JSON.stringify({ type: "ping" }));
+const RESULT_TIMEOUT_MS = 10_000;
 const presenceStub = () => env.PRESENCE.get(env.PRESENCE.idFromName("global"));
+
+/** Move every pending result slot's clock back past the window, as if the
+ *  partner's report had never come in time. Deterministic: no sleep, no race. */
+async function ageResultSlots() {
+  await runInDurableObject(presenceStub(), async (_instance, state) => {
+    const slots = await state.storage.list<{ firstReportAt: number }>({ prefix: "result:" });
+    for (const [key, slot] of slots) {
+      await state.storage.put(key, { ...slot, firstReportAt: slot.firstReportAt - RESULT_TIMEOUT_MS - 1 });
+    }
+  });
+}
 
 async function connect(token: string): Promise<WebSocket> {
   const res = await SELF.fetch("https://test.local/social/presence", {
@@ -118,7 +130,8 @@ describe("head-to-head attestation (§6.2)", () => {
     wsB.send(result("chess", match, a.userId, "win"));
     await Promise.all([disputedAtA, disputedAtB]);
 
-    // WHY: no D1 read between dispute and correction: the test window is 600ms.
+    // WHY: no D1 read between dispute and correction: keeps the correction well
+    // inside the window even on a loaded machine.
     const rec = nextMessage(wsB, "game-record");
     wsB.send(result("chess", match, a.userId, "loss"));
     expect(await rec).toMatchObject({ source: "attested" });
@@ -131,10 +144,9 @@ describe("head-to-head attestation (§6.2)", () => {
     wsA.send(result("chess", match, b.userId, "win"));
     await nextMessage(wsA, "game-result-pending");
 
-    // Let the attestation window close. Ping through it so the SOCKETS stay
-    // live — this test is about the report expiring, not the players leaving.
-    await sleep(RESULT_TIMEOUT_MS / 2 + 50); ping(wsA); ping(wsB);
-    await sleep(RESULT_TIMEOUT_MS / 2 + 50); ping(wsA); ping(wsB);
+    // Close the attestation window by ageing A's slot — no sleep, so the
+    // sockets never go stale and this stays about the report expiring.
+    await ageResultSlots();
 
     // B's late report finds an expired slot: it becomes a NEW lone report, not
     // a settlement.
