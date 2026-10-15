@@ -57,6 +57,21 @@ neither do you unless the person asks to rename the page.
      first time), call `window.youcoded.save(value)` whenever it changes. JSON only, well under
      1 MB. **Never `localStorage`, `sessionStorage`, cookies or IndexedDB** — the page runs in a
      frame where none of those survive a reopen.
+   - **Starting a conversation from the page** (only if the person wants a button that does
+     this). Add `"connections": [{ "id": "start-session", "kind": "session" }]` to `page.json`
+     and call `window.youcoded.startSession({ prompt: '…' })` from a real click on the page's
+     own button — never from a timer or on load; the app refuses those. It opens YouCoded's
+     new-session window showing the message read-only. The person picks the project, model and
+     permissions and presses Create Session; the message then waits unsent until they press
+     Enter. It never throws: it resolves `{ ok, reason }` (`ok: false` with a plain reason if
+     refused). A message over 20,000 characters, or containing invisible or format characters
+     (including zero-width-joiner emoji such as 👩‍💻), is refused — keep it plain text. A
+     project page always starts in its own project; a personal page may pass
+     `project: '<folder path>'`, honoured only if it is one of the person's saved projects.
+     The person allows this once, on the page's approval card; the approval belongs to the
+     `page.json` line, so editing `page.html` or the page's data never asks again. Older apps
+     lack it: check `typeof window.youcoded.startSession === 'function'` and keep a fallback,
+     such as the message in a box with a Copy button.
    - Plain, dependency-free JavaScript. Keep state in memory, save on change, render from
      state. Text a person reads is real words, not placeholders.
    - Works from 390 px wide up. Nothing fixed-width that would overflow a phone.
