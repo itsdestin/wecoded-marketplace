@@ -49,7 +49,8 @@ neither do you unless the person asks to rename the page.
      (The app does not yet block outside connections, so this is on you: a page that reaches
      out will silently break offline and is not what a person expects yet.)
    - Every control is a kit class: `.yc-button` (one `.yc-button--primary` per screen, the
-     rest default or `--ghost`), `.yc-input` / `.yc-textarea` / `.yc-select`, `.yc-card`,
+     rest default or `--ghost`), `.yc-input` / `.yc-textarea` / `.yc-select` (a plain `<select>` — the app opens it in its
+     own menu; never a hand-made dropdown, see style-kit.md → Dropdowns), `.yc-card`,
      `.yc-eyebrow` for section labels, `.yc-app` / `.yc-toolbar` / `.yc-rail` / `.yc-sidebar`
      for app-shaped layouts. Colours come from `var(--…)`; hard-code colours only for content
      that must keep them (a drawing, a chart series, a photo).
