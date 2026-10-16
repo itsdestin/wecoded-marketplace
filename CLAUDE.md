@@ -7,5 +7,5 @@ wecoded-marketplace is the YouCoded skill-marketplace registry plus the Cloudfla
 This repo is one component of the YouCoded product. Development is coordinated from the **youcoded-dev workspace repo**: https://github.com/itsdestin/youcoded-dev — if it isn't on this machine, clone it and run `bash setup.sh` (it clones every sub-repo and carries the working rules, path-scoped rules, and cross-repo docs).
 
 - **Lifecycle documents** (specs, plans, handoffs, investigations) do NOT live in this repo — they go to the workspace: `youcoded-dev/docs/active/` (in flight) → `youcoded-dev/docs/archive/` (done). This repo's `docs/` holds living reference only (`worker-backend.md`, `mcp-authoring.md`).
-- **Planning** happens in the workspace `ROADMAP.md` — one roadmap for the whole product.
+- **Planning** happens in the workspace's work items — one per piece of work in `youcoded-dev/cards/` (`node scripts/cards.mjs index` lists them; the idea-intake skill files new ones). The old `ROADMAP.md` and `docs/roadmap/` were retired on 2026-10-15.
 - Worker/analytics invariants live in the workspace rule `youcoded-dev/.claude/rules/worker-backend.md`; registry/MCP-authoring invariants in `youcoded-dev/.claude/rules/registries.md`.
