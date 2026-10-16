@@ -49,10 +49,23 @@ neither do you unless the person asks to rename the page.
      (The app does not yet block outside connections, so this is on you: a page that reaches
      out will silently break offline and is not what a person expects yet.)
    - Every control is a kit class: `.yc-button` (one `.yc-button--primary` per screen, the
-     rest default or `--ghost`), `.yc-input` / `.yc-textarea` / `.yc-select`, `.yc-card`,
+     rest default or `--ghost`, which is outlined), `.yc-input` / `.yc-textarea` / `.yc-select` (a plain `<select>` — the app opens it in its
+     own menu; never a hand-made dropdown, see style-kit.md → Dropdowns), `.yc-card`,
      `.yc-eyebrow` for section labels, `.yc-app` / `.yc-toolbar` / `.yc-rail` / `.yc-sidebar`
      for app-shaped layouts. Colours come from `var(--…)`; hard-code colours only for content
      that must keep them (a drawing, a chart series, a photo).
+   - Use the app's own building blocks instead of inventing them (style-kit.md → "The app's
+     building blocks"): `.yc-status` pills for a state, `.yc-notice` boxes for a warning or error
+     (raw error text only in its Details fold), `.yc-loading` while something loads,
+     `.yc-screen-error` when the whole page cannot load, `.yc-switch` for on/off,
+     `.yc-search` + `.yc-filter` chips, `.yc-fold` for anything that opens, `.yc-section` for
+     long sections (they fold on a phone, the first open), `.yc-box` inside a card,
+     `.yc-chips` for a row of short facts. Scrolling boxes fade at their edges by themselves.
+   - **The kit is a starting point, not a rule.** Destin: "users should still be able to fully
+     customize page ui and disregard our design principles if they so choose. the kit is just a
+     starting point for good first-shot attempts, but should be ignored if the user provides
+     contradictory guidance." When the person asks for a look the kit does not give (or that
+     goes against it), build what they asked for with the page's own styles.
    - Saved data goes through `window.youcoded`: read `window.youcoded.data` at start (null the
      first time), call `window.youcoded.save(value)` whenever it changes. JSON only, well under
      1 MB. **Never `localStorage`, `sessionStorage`, cookies or IndexedDB** — the page runs in a
