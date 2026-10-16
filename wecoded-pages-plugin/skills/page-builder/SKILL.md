@@ -72,6 +72,28 @@ neither do you unless the person asks to rename the page.
      `page.json` line, so editing `page.html` or the page's data never asks again. Older apps
      lack it: check `typeof window.youcoded.startSession === 'function'` and keep a fallback,
      such as the message in a box with a Copy button.
+   - **Showing the person's chats** (only if the page is about their conversations). Add
+     `{ "id": "chats", "kind": "chats", "access": "lookup", "scope": "all" }` to `connections`.
+     `scope` is `"all"`, `{ "projects": ["<project name>"] }` or `{ "tag": "<tag name>" }` — ask
+     for the narrowest the page needs; the approval card names it. `access: "full"` (a separate,
+     wider approval) also lets the page change tags, notes and the pinned/complete marks — only
+     when the person asked for that. `await window.youcoded.chats.list()` resolves
+     `{ ok, chats: [{ id, name, lastActive, created, tags:[{id,name,color}], note, project, model,
+     pinned, complete, branch, open }] }` — never what was said in a chat. `chats.resume(id)`
+     opens one, and works only from a real click (like startSession). With `full`:
+     `setTag(id, tagId, on)`, `setNote(id, text)` (8,000 characters at most),
+     `setMark(id, 'pinned'|'complete', on)`. Every call resolves `{ ok, reason }`; it never throws.
+     A tag's `color` names a theme colour: paint it with `var(--<color>)`. Never combine with
+     `"kind": "open"` (the app refuses the whole list).
+   - **Running a program** (rare; only when the person asks for something a page alone cannot do,
+     such as reading their files or running git). Put the program in the page's own folder
+     (`.mjs`/`.js`/`.cjs` run on the app's own Node, `.py` on python3, `.sh` on bash), add
+     `{ "id": "helper", "kind": "program", "file": "<name>" }`, and call
+     `await window.youcoded.program.run('<name>', inputString)` → `{ ok, output, exitCode, stderr? }`
+     or `{ ok: false, reason }`. Input arrives on stdin (1 MB at most); the answer is stdout
+     (2 MB at most); it is stopped after two minutes and when the page closes. **Tell the person
+     plainly**: the approval card says it can do anything their account can, and editing the
+     program file makes the page ask again.
    - Plain, dependency-free JavaScript. Keep state in memory, save on change, render from
      state. Text a person reads is real words, not placeholders.
    - Works from 390 px wide up. Nothing fixed-width that would overflow a phone.
@@ -113,7 +135,9 @@ offer to rewrite the change instead.
 
 ## Honest limits (say them when relevant)
 
-- A page cannot open the person's files, use their accounts, or run programs. Connections come
-  in a later phase.
+- A page cannot open the person's files on its own. It can reach approved services, see chats
+  and run a program from its own folder only through the connections above, each approved on
+  its card. Older apps lack `chats` and `program`: check `window.youcoded.chats` /
+  `window.youcoded.program` exist and say so plainly if not.
 - The app does not block a page from the internet yet; you do not use it (above).
 - Switching to another page reloads it; saved data survives, unsaved in-page state does not.
