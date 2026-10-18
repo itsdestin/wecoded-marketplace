@@ -50,10 +50,10 @@ neither do you unless the person asks to rename the page.
      no images loaded from the web. **The app blocks all of it**: a page cannot load anything
      from the internet itself. If you want a library (a chart library, a date library), paste
      its code into a `<script>` in the page. Pictures go in as `data:` URLs or inline SVG.
-   - Information from outside — live numbers, a feed, weather — comes ONLY through
-     `window.youcoded.fetch`, and only from places listed in `page.json` (see "Pages that
-     connect" below). Never call `fetch`, `XMLHttpRequest` or `WebSocket` directly; they are
-     blocked and fail silently.
+   - Information from outside comes through the app's approved APIs: `window.youcoded.fetch`
+     for requests, or `window.youcoded.socket` / `window.youcoded.video` for home-device events
+     and camera pictures. List each connection in `page.json` (see "Pages that connect" below).
+     Never call `fetch`, `XMLHttpRequest` or `WebSocket` directly; the frame blocks them.
    - Every control is a kit class: `.yc-button` (one `.yc-button--primary` per screen, the
      rest default or `--ghost`, which is outlined), `.yc-input` / `.yc-textarea` / `.yc-select` (a plain `<select>` — the app opens it in its
      own menu; never a hand-made dropdown, see style-kit.md → Dropdowns), `.yc-card`,
@@ -140,9 +140,15 @@ page never sees them.
   { "id": "weather", "kind": "key", "service": "OpenWeather", "address": "api.openweathermap.org",
     "access": "lookup", "keyIn": "query", "keyParam": "appid",
     "keyHelp": { "steps": ["Sign in at openweathermap.org.", "Open My API keys.", "Copy the key."] } },
-  { "id": "gh",      "kind": "github", "access": "lookup" },
-  { "id": "any",     "kind": "open" }
+  { "id": "gh",      "kind": "github", "access": "lookup" }
 ]
+```
+
+Choose only the entries the page needs. A page needing any public website uses this
+**separate alternative**, never added to the credentialled list above:
+
+```json
+"connections": [{ "id": "any", "kind": "open" }]
 ```
 
 | kind | reaches | credential |
@@ -151,22 +157,28 @@ page never sees them.
 | `public` | exactly `address` | none |
 | `key` | exactly `address` | a key the person pastes into the app, once |
 | `github` | `api.github.com` only | the GitHub sign-in the app already holds |
-| `open` | any public website | none — and it may **never** sit beside `youcoded`, `key` or `github` |
+| `open` | any public website | none — never combine with `youcoded`, `key`, `github`, `device`, `plaid` or `chats` |
+| `device` | an approved home/Tailscale address, optionally with a port | a device key held by the app, if needed |
+
+For a home-device page, **read `${SKILL}/reference/device-connections.md`** before building:
+manifest, approved address, live events and app-played camera video. The style kit covers
+see-through backgrounds; keep the page background transparent when the person wants the theme behind it.
 
 Rules the app enforces — a manifest that breaks one is dropped, and the page reaches nothing:
 
-- `address` is a bare hostname: `api.example.com`. No `https://`, path, port or `*`.
+- For public/key services, `address` is a bare hostname: `api.example.com`. No `https://`,
+  path, port or `*`. A `device` connection uses its own address rules in the reference below.
 - Each address must be the **exact** host the page requests. `example.com` does not cover
   `api.example.com`; list both if the page needs both.
 - `access`: `"lookup"` (the default) lets the page send look-ups only (GET). Use `"full"` only
   when the page must create, change or delete things at that service; the approval card then
   says so bluntly. Choose the narrowest one that works.
-- A `youcoded` connection is look-up only unless it lists `writePaths` — the exact places on
-  the service the page must change something, e.g.
+- A `youcoded` connection is look-up only unless it lists `writePaths`. **Each entry grants
+  changes at that path and every descendant path**, e.g. `/admin/foo` also permits
+  `/admin/foo/bar`, but not `/admin/foobar`. Use the narrowest prefix the page needs:
   `{ "id": "yc", "kind": "youcoded", "writePaths": ["/admin/analytics/website-campaigns"] }`.
-  List only what the page actually posts to; the approval card names each one and tells the
-  person nothing else on their account can be changed. Plain paths only (letters, digits,
-  `-`, `_`, `/`), at most four.
+  Explain the descendant access when requesting approval; nothing outside those prefixes can
+  be changed. Plain paths only (letters, digits, `-`, `_`, `/`), at most four.
 - **`open` alone.** A page that needs the whole internet (a feed reader following any link, a
   link previewer) gets `open` and no keys or sign-ins. If a request needs both, build two pages.
 - A `key` service's key goes as `Authorization: Bearer <key>` unless you say otherwise:
