@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-10-16T15:59:40.200Z",
+  "timestamp": "2026-10-18T19:46:35.177Z",
   "totalEntries": 367,
   "counts": {
-    "added": 2,
-    "updated": 123,
-    "unchanged": 204,
-    "deprecated": 1
+    "added": 0,
+    "updated": 1,
+    "unchanged": 328,
+    "deprecated": 0
   },
   "components": {
-    "extracted": 189,
+    "extracted": 67,
     "failed": [],
     "truncated": [],
-    "startedAt": "2026-10-16T15:59:07.976Z",
-    "finishedAt": "2026-10-16T15:59:40.178Z"
+    "startedAt": "2026-10-18T19:46:33.912Z",
+    "finishedAt": "2026-10-18T19:46:35.160Z"
   }
 }
