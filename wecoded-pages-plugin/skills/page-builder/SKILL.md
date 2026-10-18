@@ -76,6 +76,43 @@ neither do you unless the person asks to rename the page.
      first time), call `window.youcoded.save(value)` whenever it changes. JSON only, well under
      1 MB. **Never `localStorage`, `sessionStorage`, cookies or IndexedDB** — the page runs in a
      frame where none of those survive a reopen.
+   - **Starting a conversation from the page** (only if the person wants a button that does
+     this). Add `"connections": [{ "id": "start-session", "kind": "session" }]` to `page.json`
+     and call `window.youcoded.startSession({ prompt: '…' })` from a real click on the page's
+     own button — never from a timer or on load; the app refuses those. It opens YouCoded's
+     new-session window showing the message read-only. The person picks the project, model and
+     permissions and presses Create Session; the message then waits unsent until they press
+     Enter. It never throws: it resolves `{ ok, reason }` (`ok: false` with a plain reason if
+     refused). A message over 20,000 characters, or containing invisible or format characters
+     (including zero-width-joiner emoji such as 👩‍💻), is refused — keep it plain text. A
+     project page always starts in its own project; a personal page may pass
+     `project: '<folder path>'`, honoured only if it is one of the person's saved projects.
+     The person allows this once, on the page's approval card; the approval belongs to the
+     `page.json` line, so editing `page.html` or the page's data never asks again. Older apps
+     lack it: check `typeof window.youcoded.startSession === 'function'` and keep a fallback,
+     such as the message in a box with a Copy button.
+   - **Showing the person's chats** (only if the page is about their conversations). Add
+     `{ "id": "chats", "kind": "chats", "access": "lookup", "scope": "all" }` to `connections`.
+     `scope` is `"all"`, `{ "projects": ["<project name>"] }` or `{ "tag": "<tag name>" }` — ask
+     for the narrowest the page needs; the approval card names it. `access: "full"` (a separate,
+     wider approval) also lets the page change tags, notes and the pinned/complete marks — only
+     when the person asked for that. `await window.youcoded.chats.list()` resolves
+     `{ ok, chats: [{ id, name, lastActive, created, tags:[{id,name,color}], note, project, model,
+     pinned, complete, branch, open }] }` — never what was said in a chat. `chats.resume(id)`
+     opens one, and works only from a real click (like startSession). With `full`:
+     `setTag(id, tagId, on)`, `setNote(id, text)` (8,000 characters at most),
+     `setMark(id, 'pinned'|'complete', on)`. Every call resolves `{ ok, reason }`; it never throws.
+     A tag's `color` names a theme colour: paint it with `var(--<color>)`. Never combine with
+     `"kind": "open"` (the app refuses the whole list).
+   - **Running a program** (rare; only when the person asks for something a page alone cannot do,
+     such as reading their files or running git). Put the program in the page's own folder
+     (`.mjs`/`.js`/`.cjs` run on the app's own Node, `.py` on python3, `.sh` on bash), add
+     `{ "id": "helper", "kind": "program", "file": "<name>" }`, and call
+     `await window.youcoded.program.run('<name>', inputString)` → `{ ok, output, exitCode, stderr? }`
+     or `{ ok: false, reason }`. Input arrives on stdin (1 MB at most); the answer is stdout
+     (2 MB at most); it is stopped after two minutes and when the page closes. **Tell the person
+     plainly**: the approval card says it can do anything their account can, and editing the
+     program file makes the page ask again.
    - Plain, dependency-free JavaScript. Keep state in memory, save on change, render from
      state. Text a person reads is real words, not placeholders.
    - Works from 390 px wide up. Nothing fixed-width that would overflow a phone.
@@ -201,7 +238,10 @@ offer to rewrite the change instead.
 
 ## Honest limits (say them when relevant)
 
-- A page cannot open the person's files or run programs.
+- A page cannot open the person's files on its own. It can reach approved services, see chats
+  and run a program from its own folder only through the connections above, each approved on
+  its card. Older apps lack `chats` and `program`: check `window.youcoded.chats` /
+  `window.youcoded.program` exist and say so plainly if not.
 - A page reaches only the places it lists, after the person agrees. Sign-in style services
   (Google, Microsoft and the like) are not available yet — only keys the person pastes, their
   YouCoded sign-in and their GitHub sign-in.
