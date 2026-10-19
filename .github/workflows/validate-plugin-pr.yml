@@ -354,6 +354,12 @@ jobs:
         run: |
           if git diff --quiet ${{ github.event.pull_request.base.sha }} HEAD -- wecoded-themes-plugin/; then echo "unchanged"; exit 0; fi
           cd wecoded-themes-plugin/skills/theme-builder/scripts && node --test build-mascot.test.mjs
+      # WHY: the builder's icon step and manifest example must stay executable as the format evolves.
+      - name: Run Page Builder reference tests when the pages plugin changed
+        if: always()
+        run: |
+          if git diff --quiet ${{ github.event.pull_request.base.sha }} HEAD -- wecoded-pages-plugin/; then echo "unchanged"; exit 0; fi
+          node --test wecoded-pages-plugin/tests/*.test.mjs
 
   # ── Auto-rebuild on merge (runs on push to master) ─────────────────────────
   rebuild:

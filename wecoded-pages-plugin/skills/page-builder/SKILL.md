@@ -20,7 +20,7 @@ One folder, three files:
 ```
 <home>/<slug>/
   page.html    the whole page — a complete document, no external files
-  page.json    { "name": "…", "description": "…", "icon": "…", "connections": [ … ] }
+  page.json    { "name": "…", "description": "…", "icon": "…", "customIcon": { … }, "connections": [ … ] }
   data.json    written by the app when the page saves data; never write it yourself
 ```
 
@@ -37,7 +37,10 @@ Two homes. Ask which if the person did not say:
 its home ignoring case. Check with `ls` before you pick it. The app never renames a folder;
 neither do you unless the person asks to rename the page.
 
-`icon` is one of: `page` `timer` `notes` `paint` `chart` `calendar` `list` `game`.
+Every **new** Page includes its own purpose-designed `customIcon`, used in the pinned button,
+Pages list and page title. Read `${SKILL}/reference/icons.md` for its path-only vector format.
+Keep `icon` as an older-app fallback: `page` `timer` `notes` `paint` `chart` `calendar` `list`
+`game` `money`. The fallback list does not limit the custom artwork a Page can have.
 
 ## Building a page
 
@@ -45,7 +48,12 @@ neither do you unless the person asks to rename the page.
    personal or project, and a name. A one-line description you can write yourself.
 2. **Read `${SKILL}/reference/style-kit.md`** — the classes and theme values a page may use.
    Start from `${SKILL}/reference/page-template.html`.
-3. **Write `page.html`.** Rules:
+3. **Design the Page’s icon** — a new drawing that communicates this Page’s purpose at a
+   glance, in the app’s outlined iconography style. Pick a concrete motif from what the Page
+   does, check nearby Pages so unrelated ones remain distinguishable, and inspect the result
+   at 16px as well as enlarged. Read `${SKILL}/reference/icons.md` and author `customIcon`;
+   choosing only a stock fallback or copying the example for every Page is not this step.
+4. **Write `page.html`.** Rules:
    - A complete document. No `<link>` to outside stylesheets, no `<script src>`, no web fonts,
      no images loaded from the web. **The app blocks all of it**: a page cannot load anything
      from the internet itself. If you want a library (a chart library, a date library), paste
@@ -117,9 +125,10 @@ neither do you unless the person asks to rename the page.
      state. Text a person reads is real words, not placeholders.
    - Works from 390 px wide up. Nothing fixed-width that would overflow a phone.
    - The page's own title (`<h1>`) is its name; the app shows the name in its band too.
-4. **Write `page.json`** with the name, description and icon, plus `connections` if the page
-   reaches outside.
-5. **Say what you made and where**, in one or two sentences: the page is in their library now,
+5. **Write `page.json`** with the name, description, purpose-designed `customIcon` and named
+   `icon` fallback, plus `connections` if the page reaches outside. On an unrelated edit to an
+   existing Page, preserve its icon unless the person requests an icon change.
+6. **Say what you made and where**, in one or two sentences: the page is in their library now,
    they can pin it from the card or the panel, and "edit in chat" or `/page-builder edit <name>`
    changes it.
 
@@ -233,6 +242,8 @@ code, not by editing the file.
 ## Rename, description, icon, delete
 
 - Rename or re-describe: edit `page.json`. A rename does not change the folder.
+- Change the icon: design purpose-matched artwork using `reference/icons.md`, then update
+  `customIcon` and its named `icon` fallback in `page.json`. Keep all other fields unchanged.
 - Delete: remove the folder. Say so first if the page has a `data.json` with content.
 
 ## "Put it back" — history
