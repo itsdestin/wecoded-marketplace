@@ -68,6 +68,28 @@ describe("site analytics", () => {
     expect(response.status).toBe(200);
   });
 
+  it("registration hands out one stable short code that attributes visits", async () => {
+    const admin = await createTestAccount({ githubId: "424242" });
+    const auth = { Authorization: `Bearer ${await issueTestSession(admin)}`, "Content-Type": "application/json" };
+    const register = async () => (await (await SELF.fetch("https://api.youcoded.ai/admin/analytics/website-campaigns", { method: "POST", headers: auth, body: JSON.stringify({ source: "reddit", campaign: "launch" }) })).json()) as { code: string; created: boolean };
+    const first = await register(), again = await register();
+    expect(first.code).toMatch(/^[a-hjkmnp-z2-9]{6}$/);
+    expect(again).toMatchObject({ code: first.code, created: false });
+    const visit = async (n: string, code: unknown) => SELF.fetch("https://api.youcoded.ai/site-analytics/start", { method: "POST", headers, body: JSON.stringify(start({ nonce: n.repeat(32), source: null, campaign: null, code })) });
+    expect((await (await visit("4", first.code)).json() as { attribution: unknown }).attribution).toEqual({ source: "reddit", campaign: "launch" });
+    expect((await (await visit("5", "zzzzzz")).json() as { attribution: { source: unknown } }).attribution.source).toBeNull();
+    for (const bad of ["ABCDEF", "abc", 7]) expect((await visit("6", bad)).status).toBe(400);
+  });
+
+  it("a campaign registered before codes existed gets one when copied again", async () => {
+    await env.DB.prepare("INSERT INTO site_campaigns(source,campaign,created_at) VALUES('reddit','older',?)").bind(Math.floor(Date.now() / 1000)).run();
+    const admin = await createTestAccount({ githubId: "424242" });
+    const response = await SELF.fetch("https://api.youcoded.ai/admin/analytics/website-campaigns", { method: "POST", headers: { Authorization: `Bearer ${await issueTestSession(admin)}`, "Content-Type": "application/json" }, body: JSON.stringify({ source: "reddit", campaign: "older" }) });
+    const body = await response.json() as { code: string; created: boolean };
+    expect(body.created).toBe(false);
+    expect(await env.DB.prepare("SELECT code FROM site_campaigns WHERE campaign='older'").first("code")).toBe(body.code);
+  });
+
   it("returns exact-origin CORS on both successful and rejected public POSTs", async () => {
     const ok = await SELF.fetch("https://api.youcoded.ai/site-analytics/start", { method: "POST", headers, body: JSON.stringify(start({ nonce: "33333333333333333333333333333333" })) });
     const bad = await SELF.fetch("https://api.youcoded.ai/site-analytics/start", { method: "POST", headers, body: "{}" });
