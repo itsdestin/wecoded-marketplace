@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { HonoEnv } from '../types';
 import { websiteAdminRoutes } from './admin';
-import { DAY, dayOf, fail, labels, domain, counters, parseFields, validDay } from './validation';
+import { DAY, dayOf, fail, labels, domain, counters, parseFields, validDay, campaignCode } from './validation';
 
 export const siteAnalyticsEnabled = (value: string | undefined) => value === '1';
 type Journey = { day: string; expires_at: number; campaign_id: number; instructions: number; windows: number; macos: number; linux: number; android: number };
@@ -49,10 +49,11 @@ siteAnalyticsRoutes.route('/', websiteAdminRoutes);
 siteAnalyticsRoutes.post('/site-analytics/start', async c => {
   try {
     guard(c);
-    const input = await parseFields(c, startFields), now = Math.floor(Date.now() / 1000), d = counters(input.downloads);
+    const input = await parseFields(c, startFields, ['code']), now = Math.floor(Date.now() / 1000), d = counters(input.downloads);
     if (input.version !== 1 || typeof input.nonce !== 'string' || !/^[a-f0-9]{32}$/.test(input.nonce)
       || typeof input.createdAt !== 'number' || !Number.isSafeInteger(input.createdAt) || Math.abs(now - input.createdAt) > 300
-      || !domain(input.referrerDomain) || typeof input.instructions !== 'boolean' || !d) throw fail(400, 'invalid_request');
+      || !domain(input.referrerDomain) || typeof input.instructions !== 'boolean' || !d
+      || (input.code !== undefined && input.code !== null && !campaignCode(input.code))) throw fail(400, 'invalid_request');
     const secret = c.env.SITE_ANALYTICS_SECRET;
     if (!secret) throw fail(503, 'unavailable');
     // The raw random page label never reaches persistence, logs, or the returned capability.
@@ -60,7 +61,10 @@ siteAnalyticsRoutes.post('/site-analytics/start', async c => {
     const old = await storedReply(c.env.DB, secret, pageKey);
     if (old) return c.json(old);
     const day = dayOf(now);
-    const found = labels(input.source) && labels(input.campaign) && input.source && input.campaign
+    // WHY code first: short links carry only the code; utm links shared earlier still resolve by label.
+    const found = campaignCode(input.code)
+      ? await c.env.DB.prepare('SELECT id FROM site_campaigns WHERE code=?').bind(input.code).first<{ id: number }>()
+      : labels(input.source) && labels(input.campaign) && input.source && input.campaign
       ? await c.env.DB.prepare('SELECT id FROM site_campaigns WHERE source=? AND campaign=?').bind(input.source, input.campaign).first<{ id: number }>() : null;
     const candidate = input.referrerDomain;
     // WHY one transaction: admission and the visit either both commit or both roll back.

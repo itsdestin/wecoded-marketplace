@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { requireAdminAuth } from '../auth/admin-middleware';
 import { requireAdminAccount } from '../auth/admin';
 import type { HonoEnv } from '../types';
-import { DAY, dayOf, fail, labels, parseFields, validDay } from './validation';
+import { CODE_ALPHABET, DAY, dayOf, fail, labels, parseFields, validDay } from './validation';
 
 type Cursor = [string, number, string];
 type Row = { day: string; campaign_id: number; source: string; campaign: string; referrerDomain: string; visits: number; instructions: number; clickedVisits: number; Windows: number; macOS: number; Linux: number; Android: number };
@@ -45,6 +45,24 @@ websiteAdminRoutes.get('/admin/analytics/website', requireAdminAuth, async c => 
       downloads: { Windows: r.Windows, macOS: r.macOS, Linux: r.Linux, Android: r.Android } })),
     cursor: rows.length === 1000 ? encodeCursor(rows[rows.length - 1]!) : null });
 });
+// WHY random, not the row id: a guessable code lets anyone inflate another post's visits.
+// Campaigns registered before codes existed get one the next time the dashboard copies them.
+async function assignCode(db: D1Database, source: string, campaign: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(6));
+    const candidate = [...bytes].map(b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+    try {
+      await db.prepare('UPDATE site_campaigns SET code=? WHERE source=? AND campaign=? AND code IS NULL').bind(candidate, source, campaign).run();
+    } catch (e) {
+      if (e instanceof Error && /UNIQUE/i.test(e.message)) continue;
+      throw e;
+    }
+    const row = await db.prepare('SELECT code FROM site_campaigns WHERE source=? AND campaign=?').bind(source, campaign).first<{ code: string | null }>();
+    if (!row) return null;
+    if (row.code) return row.code;
+  }
+  throw fail(503, 'unavailable');
+}
 websiteAdminRoutes.post('/admin/analytics/website-campaigns', requireAdminAuth, async c => {
   await requireAdminAccount(c);
   const input = await parseFields(c, ['source', 'campaign']);
@@ -57,9 +75,9 @@ websiteAdminRoutes.post('/admin/analytics/website-campaigns', requireAdminAuth, 
     const result = await c.env.DB.prepare(`INSERT INTO site_campaigns(source,campaign,created_at) SELECT ?,?,?
       WHERE (SELECT count(*) FROM site_campaigns)<? ON CONFLICT(source,campaign) DO NOTHING`)
       .bind(source, campaign, Math.floor(Date.now() / 1000), capacity).run();
-    if (result.meta.changes) return c.json({ source, campaign, created: true });
-    const exists = await c.env.DB.prepare('SELECT 1 FROM site_campaigns WHERE source=? AND campaign=?').bind(source, campaign).first();
-    if (exists) return c.json({ source, campaign, created: false });
+    const created = Boolean(result.meta.changes);
+    const code = await assignCode(c.env.DB, source, campaign);
+    if (code) return c.json({ source, campaign, code, created });
     throw fail(429, 'limited');
   } catch (e) {
     if (e instanceof HTTPException) throw e;

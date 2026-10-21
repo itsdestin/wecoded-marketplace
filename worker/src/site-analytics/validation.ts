@@ -20,6 +20,9 @@ export function labels(value: unknown): value is string | null {
   // WHY Unicode mode: a valid emoji pair is one scalar; lone UTF-16 surrogates are rejected.
   return !/[\x00-\x1f\x7f-\x9f\ud800-\udfff]/u.test(value);
 }
+// WHY no 0/o/1/l/i: codes are read aloud and retyped from screenshots.
+export const CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+export const campaignCode = (value: unknown): value is string => typeof value === 'string' && /^[a-hjkmnp-z2-9]{6}$/.test(value);
 export function domain(value: unknown): value is string {
   if (value === '') return true;
   if (typeof value !== 'string' || value.length > 253 || value !== value.toLowerCase()) return false;
@@ -32,7 +35,7 @@ export function counters(value: unknown): Downloads | null {
   return Object.values(d).every(n => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n <= 100)
     && Object.values(d).reduce((a, b) => a + b, 0) <= 100 ? d : null;
 }
-export async function parseFields(c: Context<HonoEnv>, fields: readonly string[]): Promise<Record<string, unknown>> {
+export async function parseFields(c: Context<HonoEnv>, fields: readonly string[], optional: readonly string[] = []): Promise<Record<string, unknown>> {
   if (c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') throw fail(400, 'invalid_request');
   const reader = c.req.raw.body?.getReader();
   if (!reader) throw fail(400, 'invalid_request');
@@ -51,6 +54,9 @@ export async function parseFields(c: Context<HonoEnv>, fields: readonly string[]
   let input: unknown;
   try { input = JSON.parse(new TextDecoder().decode(await new Blob(chunks).arrayBuffer())); }
   catch { throw fail(400, 'invalid_request'); }
-  if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).sort().join(',') !== [...fields].sort().join(',')) throw fail(400, 'invalid_request');
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw fail(400, 'invalid_request');
+  // WHY optional keys: a new field can ship without rejecting pages cached before it existed.
+  const keys = Object.keys(input).filter(k => !optional.includes(k)).sort().join(',');
+  if (keys !== [...fields].sort().join(',')) throw fail(400, 'invalid_request');
   return input as Record<string, unknown>;
 }
