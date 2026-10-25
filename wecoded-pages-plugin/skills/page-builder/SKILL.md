@@ -200,6 +200,58 @@ Rules the app enforces — a manifest that breaks one is dropped, and the page r
 - **Never build a box inside the page asking for a key, a password or a token.** The app asks
   for keys on its own card; a page that asks is misbehaving.
 
+### Service recipes: say exactly what the page may do
+
+**Always ask for the narrowest connection that does what the person wants.** For a `key` or
+`public` service, prefer an `allow` list over `"access": "full"`: the approval card then lists
+each thing in plain words, and the app lets through only those method + path pairs.
+
+```json
+{ "id": "tasks", "kind": "key", "service": "Todoist", "address": "api.todoist.com",
+  "allow": [
+    { "method": "GET",  "path": "/rest/v2/tasks",    "does": "See your tasks and projects" },
+    { "method": "GET",  "path": "/rest/v2/projects", "does": "See your tasks and projects" },
+    { "method": "POST", "path": "/rest/v2/tasks",    "does": "Add, complete and move tasks" }
+  ] }
+```
+
+- `path` covers itself and everything under it at a `/` (`/rest/v2/tasks` covers
+  `/rest/v2/tasks/123`, not `/rest/v2/tasksX`). `"/"` means the whole service. Plain characters
+  only: no `%`, `?`, `..` or `;`. Requests whose path contains `%`, `;`, `\` or `//` are refused.
+- `method` is any method the service uses in capitals (`PROPFIND` and `REPORT` for calendar
+  servers), never `CONNECT`, `TRACE` or `TRACK`. 1–16 entries.
+- `does` is what the person reads, at most 80 characters, starting with a verb. Several entries
+  may share one sentence; it is shown once. Write it honestly: it is the only description the
+  person sees, and the app cannot check that the words match the path.
+- With `allow`, `access` no longer decides anything for that line. One invalid entry drops the
+  whole connection.
+- A service that also accepts `?_method=DELETE` (or similar) in the address can be made to do
+  more than the method says; avoid listing paths on such services more widely than needed.
+
+**A sign-in made of several values** (an email and an app password, an ID and a secret):
+
+```json
+{ "id": "cal", "kind": "key", "service": "iCloud Calendar", "address": "caldav.icloud.com",
+  "parts": [
+    { "id": "user", "label": "Apple ID email", "in": "basic-user" },
+    { "id": "pass", "label": "App password", "in": "basic-password", "secret": true,
+      "hint": "An app password, not your Apple ID password." }
+  ],
+  "allow": [{ "method": "PROPFIND", "path": "/", "does": "See your calendars and events" }] }
+```
+
+- `in`: `basic-user` + `basic-password` (always both) become `Authorization: Basic …`;
+  `header` or `query` put that value under `param`. 2–4 parts, ids of plain letters.
+- The card shows one named box per part; the values are stored together, encrypted, and sent
+  only over `https://`.
+
+### Opening websites
+
+A page cannot open popups. Links (`<a href>`), `window.open(url)` and `youcoded.open(url)` all go
+to the app: a site the page already reaches, or one the person said not to ask about, opens
+straight away; anything else shows "Open this website?" with the full address first. Do not
+try to work around it, and do not put what the page read into a link's address.
+
 In the page's script:
 
 ```js
@@ -265,9 +317,12 @@ offer to rewrite the change instead.
   and run a program from its own folder only through the connections above, each approved on
   its card. Older apps lack `chats` and `program`: check `window.youcoded.chats` /
   `window.youcoded.program` exist and say so plainly if not.
-- A page reaches only the places it lists, after the person agrees. Sign-in style services
-  (Google, Microsoft and the like) are not available yet — only keys the person pastes, their
-  YouCoded sign-in and their GitHub sign-in.
+- A page reaches only the places it lists, after the person agrees. "Sign in with…" services
+  (Google, Microsoft and the like) are not available yet — only keys or sign-in values the person
+  types into the app's card, their YouCoded sign-in and their GitHub sign-in.
+- `allow` and `parts` need a YouCoded newer than 1.3.0. An older app ignores `allow` (the card
+  then shows the general sentence) and asks for one key instead of `parts`, so a multi-part
+  sign-in will not work there.
 - Look-up only stops a page CHANGING anything at a service; it does not stop the page putting
   what it knows into the address it looks up. Do not describe it as "read-only" or "safe".
 - Adding a key cannot be done from a phone; the person finishes that on their computer.
