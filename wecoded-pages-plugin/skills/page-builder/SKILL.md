@@ -112,8 +112,30 @@ Keep `icon` as an older-app fallback: `page` `timer` `notes` `paint` `chart` `ca
      `setMark(id, 'pinned'|'complete', on)`. Every call resolves `{ ok, reason }`; it never throws.
      A tag's `color` names a theme colour: paint it with `var(--<color>)`. Never combine with
      `"kind": "open"` (the app refuses the whole list).
+   - **The person's files** (a budget that reads their spreadsheet, a photo board, a notes
+     page that saves a file). Add one `files` line and ask for the **narrowest level that does
+     the job** — the card says each level bluntly, and a wider one is a bigger yes:
+     `{ "id": "files", "kind": "files", "level": "pick", "access": "read", "types": [".csv"] }`.
+     Levels: `pick` (the person chooses a file each time), `remember` (chosen once, reopened
+     later without asking), `folder` (everything in ONE folder the person chooses on the card),
+     `all` (anything under their home folder — almost never right). `access` is `read`,
+     `write` or `readwrite`. The page never sees a path; it gets handles. Calls (each resolves
+     `{ ok, ... }` or `{ ok: false, code, message }`, never throws; show `message` to the person):
+     - `youcoded.files.pick({ types, multiple })` → `{ files: [{ handle, name, size }] }` —
+       only from a real click; `read(handle, { as: 'text' | 'bytes' })` → `{ data }`
+       (bytes come back as a `Uint8Array`);
+     - with write access: `save(handle, data)` and `saveAs({ suggestedName, types, data })`
+       (click only); data is a string, `Uint8Array` or `ArrayBuffer`;
+     - `remember` level: `recent()` → the files kept from earlier picks;
+     - `folder` / `all` level: `list(path)` → `{ entries: [{ name, kind, size, modified }] }`,
+       `readPath(path, opts)`, and with write access `writePath(path, data, { replace })`,
+       `makeFolder(path)`, `remove(path)` (to the bin). Paths are relative to the chosen folder
+       (`'Receipts/2026.csv'`, `''` for the folder itself) or, at `all`, start with `~/`.
+     Limits: 25 MB a file (10 MB from a phone, 5 MB as text). Password and key files and
+     YouCoded's own folders are never reachable at any level. Check `window.youcoded.files`
+     exists and say so if not (older apps, and the Android app for now).
    - **Running a program** (rare; only when the person asks for something a page alone cannot do,
-     such as reading their files or running git). Put the program in the page's own folder
+     such as running git). Put the program in the page's own folder
      (`.mjs`/`.js`/`.cjs` run on the app's own Node, `.py` on python3, `.sh` on bash), add
      `{ "id": "helper", "kind": "program", "file": "<name>" }`, and call
      `await window.youcoded.program.run('<name>', inputString)` → `{ ok, output, exitCode, stderr? }`
@@ -313,10 +335,12 @@ offer to rewrite the change instead.
 
 ## Honest limits (say them when relevant)
 
-- A page cannot open the person's files on its own. It can reach approved services, see chats
-  and run a program from its own folder only through the connections above, each approved on
-  its card. Older apps lack `chats` and `program`: check `window.youcoded.chats` /
-  `window.youcoded.program` exist and say so plainly if not.
+- A page cannot open the person's files on its own. It can use their files, reach approved
+  services, see chats and run a program from its own folder only through the connections above,
+  each approved on its card. Older apps lack `files`, `chats` and `program`: check
+  `window.youcoded.files` / `.chats` / `.program` exist and say so plainly if not.
+- Files are not available in the Android app yet (its card says so); they work in YouCoded on
+  the computer and from a phone's browser connected to it.
 - A page reaches only the places it lists, after the person agrees. "Sign in with…" services
   (Google, Microsoft and the like) are not available yet — only keys or sign-in values the person
   types into the app's card, their YouCoded sign-in and their GitHub sign-in.
