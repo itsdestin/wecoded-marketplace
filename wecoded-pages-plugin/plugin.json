@@ -1,7 +1,7 @@
 {
   "name": "wecoded-pages-plugin",
   "description": "Build and edit YouCoded Pages — small apps inside the app, made by describing them",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": { "name": "itsdestin" },
   "license": "MIT",
   "provides": {

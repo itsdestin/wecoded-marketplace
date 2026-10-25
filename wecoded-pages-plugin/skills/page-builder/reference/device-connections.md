@@ -49,6 +49,13 @@ or the device's socket operations are needed, and explain that authority on appr
 - Never combine `device` with `open`, even when the device needs no key. `socketDeny` can
   name additional lower-case message-type prefixes to refuse. It cannot weaken the app's
   built-in refusal of authentication/key/person-management messages.
+- **A device that does not speak Home Assistant's `{ "type": … }` JSON:** `"socketTypeField":
+  "cmd"` names the JSON field that says what a message is (the deny list, `socketReady` and
+  `socketAuthFailed` are then read from it); `"socketFormat": "text"` for a device that sends
+  plain text (checked by the start of the text). Leave both out for Home Assistant.
+- **A camera other than Nest:** in `videoProfile`, `"tracks": ["video"]` (or `["audio",
+  "video"]`, the default) says what the offer receives, and `"dataChannel": "name"` or `false`
+  replaces Nest's required `dataSendChannel`. Leave both out for Home Assistant's Nest cameras.
 
 ## Live events
 
