@@ -133,8 +133,15 @@ app.onError((err, c) => {
   };
   if (err instanceof HTTPException) return siteCors(err.getResponse());
   const message = err instanceof Error ? err.message : "internal error";
+  // Full detail always goes to the server log.
   console.error("worker onError:", message);
-  return c.json({ ok: false, error: message }, 500);
+  // WHY generic for everyone else: raw database/runtime messages can name tables,
+  // columns or internal URLs. Only a signed-in caller on an /admin/ route (the
+  // analytics skill debugging Analytics Engine SQL) still gets the real text.
+  let userId: string | undefined;
+  try { userId = c.get("userId"); } catch { /* not set */ }
+  const detailOk = c.req.path.startsWith("/admin/") && Boolean(userId);
+  return c.json({ ok: false, error: detailOk ? message : "internal error" }, 500);
 });
 
 app.get("/health", (c) => c.json({ ok: true }));

@@ -25,9 +25,12 @@
 import { Hono } from "hono";
 import type { HonoEnv } from "../types";
 import { randomToken, randomUserCode, constantTimeEqual } from "../lib/crypto";
-import { badRequest, notFound, unauthorized } from "../lib/errors";
+import { badRequest, notFound, tooMany, unauthorized } from "../lib/errors";
+import { escapeHtml } from "../lib/html";
+import { HTTPException } from "hono/http-exception";
+import { authorizeDeviceCode, ipBucket, isValidLoopbackPort, loopbackSecretOk } from "./device-flow";
 import { buildAuthorizeUrl, exchangeCode, fetchGitHubUser } from "./github";
-import { issueSession, revokeSession } from "./sessions";
+import { issueSession, revokeSession, revokeAllSessions } from "./sessions";
 import { requireAuth } from "./middleware";
 import { resolveProviderSignIn } from "../db";
 import { parseJsonBody } from "../lib/parse-json";
@@ -68,17 +71,48 @@ const CSRF_COOKIE_NAME = "oauth_csrf";
 
 export const authRoutes = new Hono<HonoEnv>();
 
+// How many sign-ins one network may start per window. WHY a D1 count rather than the
+// cache limiter: the cache limiter does nothing on the *.workers.dev address that
+// shipped apps still use, and every start costs a database write.
+const START_WINDOW_SEC = 600;
+const START_MAX_PER_BUCKET = 10;
+
 authRoutes.post("/auth/github/start", async (c) => {
+  // Optional body from newer apps: { loopback_port }. Older apps send none.
+  const body = (await c.req.json().catch(() => ({}))) as { loopback_port?: unknown };
+  const hasPort = body && body.loopback_port !== undefined && body.loopback_port !== null;
+  if (hasPort && !isValidLoopbackPort(body.loopback_port)) throw badRequest("invalid loopback_port");
+  const loopbackPort = hasPort ? (body.loopback_port as number) : null;
+  // WHY: once every supported app sends a loopback port, flipping this switch makes
+  // a link-only sign-in (the takeover path) impossible. Off until then so apps that
+  // predate the fix keep signing in.
+  if (loopbackPort === null && c.env.REQUIRE_LOOPBACK_SIGNIN === "1") {
+    throw new HTTPException(426, { message: "please update YouCoded to sign in" });
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  // Per-network cap. Skipped when no caller address is present (tests / local runs);
+  // behind Cloudflare it is always set.
+  const ip = c.req.header("CF-Connecting-IP");
+  let bucket: string | null = null;
+  if (ip) {
+    bucket = await ipBucket(c.env.GH_CLIENT_SECRET, ip, now);
+    const recent = await c.env.DB
+      .prepare("SELECT COUNT(*) AS n FROM device_codes WHERE ip_bucket = ? AND created_at > ?")
+      .bind(bucket, now - START_WINDOW_SEC)
+      .first<{ n: number }>();
+    if ((recent?.n ?? 0) >= START_MAX_PER_BUCKET) throw tooMany("too many sign-in attempts, try again later");
+  }
+
   const deviceCode = randomToken(32);
   const userCode = randomUserCode();
   const csrfState = randomToken(32);
-  const now = Math.floor(Date.now() / 1000);
   await c.env.DB
     .prepare(
-      `INSERT INTO device_codes (device_code, user_code, csrf_state, expires_at, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT INTO device_codes (device_code, user_code, csrf_state, expires_at, created_at, loopback_port, ip_bucket)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(deviceCode, userCode, csrfState, now + DEVICE_CODE_TTL_SEC, now)
+    .bind(deviceCode, userCode, csrfState, now + DEVICE_CODE_TTL_SEC, now, loopbackPort, bucket)
     .run();
   const origin = new URL(c.req.url).origin;
   const authUrl = `${origin}/auth/github/start-redirect?user_code=${encodeURIComponent(userCode)}`;
@@ -151,40 +185,54 @@ authRoutes.get("/auth/github/callback", async (c) => {
   });
 
   // Store only the user_id. The session token is issued at poll time so no raw
-  // bearer ever sits in D1.
-  await c.env.DB
-    .prepare("UPDATE device_codes SET authorized_user_id = ? WHERE csrf_state = ?")
-    .bind(userId, state)
-    .run();
+  // bearer ever sits in D1. For newer apps this also mints the one-time secret that
+  // goes back to THIS browser's own computer (see device-flow.ts).
+  const loopback = await authorizeDeviceCode(c.env.DB, state, userId);
 
   // Clear the CSRF cookie now that it's served its purpose.
   c.header(
     "Set-Cookie",
     `${CSRF_COOKIE_NAME}=; Path=/auth/github/callback; Max-Age=0; HttpOnly; Secure; SameSite=Lax`
   );
+  const login = escapeHtml(gh.login); // WHY escape: never trust a value we did not write into a page
+  if (loopback) {
+    // Hand the secret to the app listening on this computer. Only the browser that
+    // approved the sign-in can do this, which is the whole point.
+    const back = `http://127.0.0.1:${loopback.port}/youcoded-signin?secret=${loopback.secret}`;
+    return c.html(
+      `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(back)}"><title>Signed in</title></head>` +
+        `<body><h1>Signed in as ${login}</h1><p>Returning you to YouCoded&hellip; If nothing happens, <a href="${escapeHtml(back)}">click here</a>.</p></body></html>`
+    );
+  }
   return c.html(
-    `<h1>Signed in as ${gh.login}</h1><p>You can close this window and return to YouCoded.</p>`
+    `<h1>Signed in as ${login}</h1><p>You can close this window and return to YouCoded.</p>`
   );
 });
 
 authRoutes.post("/auth/github/poll", async (c) => {
   // parseJsonBody, not c.req.json(): malformed input becomes a 400, not a 500. See
   // lib/parse-json.ts.
-  const body = await parseJsonBody<{ device_code?: string }>(c);
+  const body = await parseJsonBody<{ device_code?: string; loopback_secret?: string }>(c);
   if (!body.device_code) throw badRequest("missing device_code");
 
   const row = await c.env.DB
     .prepare(
-      "SELECT authorized_user_id, expires_at FROM device_codes WHERE device_code = ?"
+      "SELECT authorized_user_id, expires_at, loopback_hash FROM device_codes WHERE device_code = ?"
     )
     .bind(body.device_code)
-    .first<{ authorized_user_id: string | null; expires_at: number }>();
+    .first<{ authorized_user_id: string | null; expires_at: number; loopback_hash: string | null }>();
   if (!row) throw notFound("unknown device_code");
   if (row.expires_at < Math.floor(Date.now() / 1000)) {
     await c.env.DB.prepare("DELETE FROM device_codes WHERE device_code = ?").bind(body.device_code).run();
     throw badRequest("expired");
   }
   if (!row.authorized_user_id) return c.json({ status: "pending" }, 202);
+  // WHY: a sign-in bound to a computer is only collectable by the app that received
+  // the secret from the browser redirect. A wrong or missing secret looks exactly
+  // like "not finished yet", so a guesser learns nothing and the row is not consumed.
+  if (!(await loopbackSecretOk(row.loopback_hash, body.loopback_secret))) {
+    return c.json({ status: "pending" }, 202);
+  }
 
   // Atomically claim the row: only the first poll that wins the DELETE gets to
   // issue the session. Duplicate/retried polls see no row and return pending,
@@ -211,6 +259,13 @@ authRoutes.post("/auth/logout", async (c) => {
   const header = c.req.header("Authorization");
   if (!header?.startsWith("Bearer ")) throw unauthorized();
   await revokeSession(c.env.DB, header.slice(7));
+  return c.body(null, 204);
+});
+
+// POST /auth/logout-all — sign this account out of EVERY device (revokes all of its
+// sessions, including the one presented). Backend only for now; no app button yet.
+authRoutes.post("/auth/logout-all", requireAuth, async (c) => {
+  await revokeAllSessions(c.env.DB, c.get("userId"));
   return c.body(null, 204);
 });
 
