@@ -39,6 +39,11 @@ interface RingEntry {
 // they never enter ALLOWED_KINDS or the replay ring (a replayed stale lease
 // frame would lie about who holds the lease now).
 interface LeaseRecord { deviceId: string; device: string; expiresAt: number; }
+// WHY a cap: lease records are only ever overwritten or released, never swept, so a
+// signed-in account could otherwise create unlimited distinct session ids and grow its
+// own room's storage without bound (the owner pays for that storage). Real use is a
+// handful of open sessions per account.
+export const MAX_LEASES_PER_ROOM = 200;
 const LEASE_TTL_MS = 300_000; // spec §3: 30s heartbeat, 300s expiry — ten missed beats
 
 export class SyncGroupRoom {
@@ -171,6 +176,21 @@ export class SyncGroupRoom {
     }
   }
 
+  // Writes a lease record, refusing to create a NEW key once the room is full of live
+  // ones. Expired records are cleared first so a busy long-lived account never gets stuck.
+  private async putLease(key: string, rec: LeaseRecord): Promise<boolean> {
+    if ((await this.state.storage.get(key)) === undefined) {
+      const all = await this.state.storage.list<LeaseRecord>({ prefix: "lease:", limit: MAX_LEASES_PER_ROOM + 1 });
+      if (all.size >= MAX_LEASES_PER_ROOM) {
+        const now = Date.now();
+        for (const [k, v] of all) if (v.expiresAt <= now) { await this.state.storage.delete(k); all.delete(k); }
+        if (all.size >= MAX_LEASES_PER_ROOM) return false;
+      }
+    }
+    await this.state.storage.put(key, rec);
+    return true;
+  }
+
   private async handleLease(ws: WebSocket, data: any): Promise<void> {
     // Same null-guard discipline as relaySignal — webSocketMessage has no
     // try/catch, so a missing attachment on this ungated path must not throw.
@@ -215,8 +235,8 @@ export class SyncGroupRoom {
       // Free OR already ours → (re)stamp a fresh TTL. Re-acquire is idempotent.
       if (!rec || rec.deviceId === deviceId) {
         rec = { deviceId, device: att.device, expiresAt: now + LEASE_TTL_MS };
-        await this.state.storage.put(key, rec);
-        ok = true;
+        ok = await this.putLease(key, rec);
+        if (!ok) rec = null;
       }
     } else if (op === "renew") {
       // Heartbeat: the holder extends; a renew against a FREE lease (no record,
@@ -232,8 +252,8 @@ export class SyncGroupRoom {
       // that holder reported so the client can attribute a real takeover.
       if (!rec || rec.deviceId === deviceId) {
         rec = { deviceId, device: att.device, expiresAt: now + LEASE_TTL_MS };
-        await this.state.storage.put(key, rec);
-        ok = true;
+        ok = await this.putLease(key, rec);
+        if (!ok) rec = null;
       }
     } else if (op === "release") {
       if (!rec) {
@@ -268,17 +288,17 @@ export class SyncGroupRoom {
           expected !== '.' && expected !== '..' && expected !== deviceId &&
           rec?.deviceId === expected) {
         rec = { deviceId, device: att.device, expiresAt: now + LEASE_TTL_MS };
-        await this.state.storage.put(key, rec);
-        ok = true;
+        ok = await this.putLease(key, rec);
+        if (!ok) rec = null;
         this.broadcastLeaseEvent(ws, { kind: "taken", sessionId, device: att.device });
       }
     } else if (op === "force-acquire") {
       // Spec §3 step 5: holder is unresponsive and the user confirmed a steal.
       // Overwrite unconditionally and notify the (possibly dead) prior holder.
       rec = { deviceId, device: att.device, expiresAt: now + LEASE_TTL_MS };
-      await this.state.storage.put(key, rec);
-      ok = true;
-      this.broadcastLeaseEvent(ws, { kind: "taken", sessionId, device: att.device });
+      ok = await this.putLease(key, rec);
+      if (!ok) rec = null;
+      if (ok) this.broadcastLeaseEvent(ws, { kind: "taken", sessionId, device: att.device });
     } else {
       return; // unknown op: drop, never reply
     }

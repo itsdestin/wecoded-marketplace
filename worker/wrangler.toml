@@ -19,6 +19,11 @@ routes = [
 # true until no supported build names the workers.dev host — retirement is tracked
 # in the workspace roadmap (docs/roadmap/marketplace.md → backend).
 workers_dev = true
+# 2026-10-30 security review: this is ALSO why the cache-based rate limiter can be
+# dodged (callers can simply use the workers.dev address). It was deliberately left on.
+# The hostname-independent protections added since: a D1-backed cap on sign-in starts,
+# a KV-cached /stats, and per-account caps. Turning this off is a single line once the
+# oldest supported app no longer names the workers.dev host.
 
 [triggers]
 crons = ["17 6 * * *"]   # daily maintenance: prune sessions/handles/device codes
@@ -66,6 +71,12 @@ CATALOG_ENABLED = "1"
 # Signing remains a CI-provisioned secret, never a public [vars] placeholder.
 SITE_ANALYTICS_ENABLED = "1"
 SITE_CAMPAIGN_CAPACITY = "1000"
+# Where the list of real theme names comes from (public data). Used to reject likes and
+# votes for themes that do not exist; cached in KV for an hour and fail-open if unreachable.
+THEME_REGISTRY_URL = "https://raw.githubusercontent.com/itsdestin/wecoded-themes/main/registry/theme-registry.json"
+# Sign-in binding (card #55). Leave "0" until every supported YouCoded build sends a
+# loopback port when signing in; then set "1" to make the link-takeover impossible.
+REQUIRE_LOOPBACK_SIGNIN = "0"
 
 # Where GET /catalog serves from: one pre-built object written at the end of an
 # ingest run that changed something (src/catalog/publish.ts), instead of
@@ -146,6 +157,12 @@ CATALOG_ENABLED = "1"
 SITE_ANALYTICS_ENABLED = "1"
 SITE_ANALYTICS_SECRET = "test-site-analytics-secret"
 SITE_CAMPAIGN_CAPACITY = "1000"
+# "0" = no stats cache in tests, so tests that change data and re-read /stats see it at once.
+STATS_CACHE_TTL_SEC = "0"
+# Empty on purpose: tests must never reach the network. Registry behaviour is tested by
+# seeding the KV copy (key "theme-registry:slugs") instead.
+THEME_REGISTRY_URL = ""
+REQUIRE_LOOPBACK_SIGNIN = "0"
 
 # Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
 # are injected as secrets by CI (see .github/workflows/worker-deploy.yml).

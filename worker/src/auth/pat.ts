@@ -33,9 +33,9 @@ async function hashToken(token: string): Promise<string> {
     .join("");
 }
 
-export async function resolvePat(db: D1Database, token: string): Promise<string | null> {
+export async function resolvePat(db: D1Database, token: string, requiredScopes: string[] = []): Promise<string | null> {
   if (!token) return null;
-  const key = await hashToken(token);
+  const key = await hashToken(token + "|" + requiredScopes.join(","));
   const cached = patCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.userId;
 
@@ -47,6 +47,13 @@ export async function resolvePat(db: D1Database, token: string): Promise<string 
     },
   });
   if (!res.ok) return null;  // do NOT cache failures — a rotated PAT can start working
+  // WHY optional scope check: GitHub accepts ANY token for the owner's account here, including a
+  // low-power token a third-party app was given. When the operator names required scopes
+  // (ADMIN_PAT_REQUIRED_SCOPES), a token without them is refused. Unset = old behaviour.
+  if (requiredScopes.length > 0) {
+    const granted = (res.headers.get("X-OAuth-Scopes") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+    if (!requiredScopes.every((sc) => granted.includes(sc))) return null;
+  }
   const user = (await res.json()) as { id: number };
   if (typeof user.id !== "number") return null;
   // Resolve the GitHub numeric id to the platform account via `identities`.

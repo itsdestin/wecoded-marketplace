@@ -54,7 +54,8 @@ export const dashboardHtml = `<!DOCTYPE html>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- WHY integrity: a changed or hijacked copy of the library is refused by the browser. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 <script>
 // The dashboard is served by the same origin as the JSON routes, so the browser's
 // session cookie (set by the OAuth flow) authenticates these requests automatically.
@@ -64,10 +65,18 @@ async function getJSON(url) {
   return r.json();
 }
 
+// WHY: table values include text that came from unauthenticated app check-ins (version,
+// platform). Escape everything before it goes into innerHTML.
+function esc(v) {
+  return String(v).replace(/[&<>"']/g, function (ch) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+  });
+}
+
 function renderTable(id, rows, keys) {
   const tbody = document.getElementById(id);
   tbody.innerHTML = rows.map(function (r) {
-    return "<tr>" + keys.map(function (k) { return "<td>" + (r[k] == null ? "" : r[k]) + "</td>"; }).join("") + "</tr>";
+    return "<tr>" + keys.map(function (k) { return "<td>" + (r[k] == null ? "" : esc(r[k])) + "</td>"; }).join("") + "</tr>";
   }).join("") || '<tr><td colspan="2" style="color:#6a6f78">No data yet</td></tr>';
 }
 
@@ -109,7 +118,7 @@ function renderLineChart(canvasId, rows, xKey, yKey, label) {
     renderTable("tbl-countries", countries, ["country", "users"]);
   } catch (e) {
     document.body.insertAdjacentHTML("afterbegin",
-      '<pre style="color:#ff6b6b">' + String(e) + "</pre>");
+      '<pre style="color:#ff6b6b">' + esc(e) + "</pre>");
   }
 })();
 </script>

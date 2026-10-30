@@ -25,7 +25,11 @@ export const requireAdminAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
   const pat = c.req.header("X-GitHub-PAT");
   if (pat) {
     // resolvePat maps the PAT's GitHub identity to a platform account via the DB.
-    const userId = await resolvePat(c.env.DB, pat);
+    const userId = await resolvePat(
+      c.env.DB,
+      pat,
+      (c.env.ADMIN_PAT_REQUIRED_SCOPES ?? "").split(",").map((x) => x.trim()).filter(Boolean)
+    );
     if (!userId) throw unauthorized("invalid pat");
     c.set("userId", userId);
     return next();

@@ -9,7 +9,7 @@ const LEGACY_PAYLOAD = {
   os: "mac",
 };
 const NEW_PAYLOAD = {
-  deviceIdHash: "a".repeat(64),
+  deviceIdHash: "0123456789abcdef".repeat(4), // realistic: the forged-hash filter rejects repeated characters
   appVersion: "1.3.0",
   platform: "desktop",
   os: "mac",
@@ -37,7 +37,7 @@ describe("POST /app/heartbeat — new device-hash payload", () => {
     }, env);
     expect(res.status).toBe(200);
     expect(writes).toHaveLength(1);
-    expect(writes[0].blobs[1]).toBe("a".repeat(64));
+    expect(writes[0].blobs[1]).toBe("0123456789abcdef".repeat(4));
     expect(writes[0].blobs[5]).toBe("US");
     expect(writes[0].blobs[6]).toBe("CA");
   });

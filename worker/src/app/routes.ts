@@ -11,6 +11,10 @@ const HEX_64 = /^[a-f0-9]{64}$/i;
 const PLATFORMS = new Set(["desktop", "android"]);
 const MAX_VERSION_LEN = 32;
 const MAX_OS_LEN = 16;
+// WHY strict patterns: these values come from an unauthenticated endpoint and are
+// later shown in the admin dashboard and used in analytics queries.
+const VERSION_RE = /^[0-9A-Za-z.+-]{1,32}$/;
+const OS_RE = /^[0-9A-Za-z._-]{0,16}$/;
 
 interface AppEventBody {
   installId?: unknown;        // LEGACY — accepted but no AE write
@@ -47,9 +51,9 @@ function parseBody(body: AppEventBody): ParsedBody {
   if (deviceIdHash !== "" && !validDeviceHash) throw badRequest("invalid request");
   if (installId !== "" && !validInstallId) throw badRequest("invalid request");
 
-  if (!appVersion || appVersion.length > MAX_VERSION_LEN) throw badRequest("invalid request");
+  if (!appVersion || appVersion.length > MAX_VERSION_LEN || !VERSION_RE.test(appVersion)) throw badRequest("invalid request");
   if (!PLATFORMS.has(platform)) throw badRequest("invalid request");
-  if (os.length > MAX_OS_LEN) throw badRequest("invalid request");
+  if (os.length > MAX_OS_LEN || !OS_RE.test(os)) throw badRequest("invalid request");
 
   return {
     deviceIdHash: validDeviceHash ? deviceIdHash : null,
@@ -68,12 +72,26 @@ async function handleHeartbeat(c: any) {
   if (!(await checkRateLimit(`app-heartbeat:${ip}`, 30, 3600))) {
     throw tooMany("too many requests");
   }
+  // WHY a daily cap as well: a real install reports about once a day, so a single
+  // network sending hundreds of different devices a day is inflating the numbers.
+  // The ceiling is generous because a school or office shares one address. No address
+  // is stored; the limiter keeps only a counter that expires.
+  if (!(await checkRateLimit(`app-heartbeat-day:${ip}`, 300, 86400))) {
+    throw tooMany("too many requests");
+  }
   const body = (await c.req.json().catch(() => ({}))) as AppEventBody;
   const parsed = parseBody(body);
 
   // Legacy installId-only payload: 200 OK, no AE write. Lets old clients
   // advance their lastPingedDate and stop retrying that day.
   if (parsed.deviceIdHash === null) {
+    return c.json({ ok: true });
+  }
+
+  // WHY: a hash made of one repeated or two alternating characters is not the output
+  // of a real hash function — it is a hand-typed forgery. Answer OK (so the sender
+  // gets no hint) but do not count it.
+  if (new Set(parsed.deviceIdHash.toLowerCase()).size < 8) {
     return c.json({ ok: true });
   }
 
