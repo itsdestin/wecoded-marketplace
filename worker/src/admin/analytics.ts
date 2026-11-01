@@ -356,12 +356,14 @@ adminAnalyticsRoutes.get("/admin/analytics/milestones", requireAdminAuth, async 
   const days = clampDays(c.req.query("days"), 90);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
   const platform = platformClause(c.req.query("platform"));
-  const rows = await runAnalyticsQuery<{ milestone: string; devices: number }>(
+  // weekly=1 adds a week column (Sunday starts, like /weekly) for the Overview's journey table.
+  const weekly = c.req.query("weekly") === "1";
+  const rows = await runAnalyticsQuery<{ milestone: string; devices: number; week?: string }>(
     c.env,
-    `SELECT blob9 AS milestone, count(DISTINCT blob2) AS devices
+    `SELECT ${weekly ? "toStartOfWeek(timestamp) AS week, " : ""}blob9 AS milestone, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
      WHERE blob1 = 'milestone' AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform}
-     GROUP BY milestone ORDER BY devices DESC`
+     GROUP BY ${weekly ? "week, " : ""}milestone ORDER BY devices DESC`
   );
   return c.json(rows);
 });

@@ -568,6 +568,13 @@ describe("analytics dashboard additions: systems, setup steps, exclusions, lapse
     expect(sql).toContain("AND blob4 = 'desktop' AND blob5 = 'win'");
   });
 
+  it("groups setup steps by week when asked", async () => {
+    const token = await seedAdmin();
+    const sql = await sqlFor(token, "/admin/analytics/milestones?weekly=1");
+    expect(sql).toContain("toStartOfWeek(timestamp) AS week");
+    expect(sql).toContain("GROUP BY week, milestone");
+  });
+
   it("caps new devices short of the 90-day edge", async () => {
     const token = await seedAdmin();
     const sql = await sqlFor(token, "/admin/analytics/installs?days=90");
