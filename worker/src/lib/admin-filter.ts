@@ -15,10 +15,10 @@ import type { Env } from "../types";
 // hex characters — the first such run is the hash. Any surrounding injection
 // characters (apostrophes, semicolons, SQL keywords) are non-hex and thus
 // not captured. Tokens with no 64-hex run are dropped.
-export function adminFilterClause(env: Env, includeAdmins: boolean): string {
-  if (includeAdmins) return "";
+// The hand-kept list of the owner's device hashes, as quoted SQL literals.
+function knownDevHashes(env: Env): string[] {
   const raw = env.KNOWN_DEV_DEVICES ?? "";
-  if (!raw) return "";
+  if (!raw) return [];
   // Match the first run of exactly 64 hex chars from each comma-separated token.
   // The negative lookahead/lookbehind prevent matching a substring of a longer
   // hex run (e.g. 128-char token should not produce a truncated hash).
@@ -33,8 +33,24 @@ export function adminFilterClause(env: Env, includeAdmins: boolean): string {
     })
     .filter((h): h is string => h !== null)
     .map((h) => `'${h}'`);
-  if (!hashes.length) return "";
-  return `AND blob2 NOT IN (${hashes.join(",")})`;
+  return hashes;
+}
+
+// Leaves out the owner's and contributors' devices: anything the app marked as a
+// team device (blob8, analytics deck D-2, 2026-10-31) plus the hand-kept hash list.
+// Returns "" only when the owner asked to include them ("My devices").
+export function adminFilterClause(env: Env, includeAdmins: boolean): string {
+  if (includeAdmins) return "";
+  const hashes = knownDevHashes(env);
+  const team = "AND blob8 != 'team'";
+  return hashes.length ? `${team} AND blob2 NOT IN (${hashes.join(",")})` : team;
+}
+
+// "blob2 IN (…)" for the hand-kept list, or "" when it is empty — used only to
+// COUNT how many devices the list left out (deck D-5), never to return them.
+export function knownDevInClause(env: Env): string {
+  const hashes = knownDevHashes(env);
+  return hashes.length ? `AND blob2 IN (${hashes.join(",")})` : "";
 }
 
 // Historical packaged smoke tests reported ordinary beta versions before the
@@ -98,10 +114,20 @@ export function localTimestampExpr(rawOffset: string | undefined): string {
     : `(timestamp - INTERVAL '${Math.abs(minutes)}' MINUTE)`;
 }
 
-// Returns "AND blob4 = '<platform>'" for exactly `desktop` or `android`, else "".
-// An allowlist (not a charset) because the platform set is closed.
+// WHY these expressions (analytics audit, 2026-10-31): Android 1.3.1–1.3.3
+// checked in with platform "desktop", but a phone never fills the OS field and
+// a computer always does — so an empty OS means a phone, for old rows and new.
+export const PLATFORM_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', 'desktop')";
+// Windows / Mac / Linux / Android, the same four the website's download buttons use.
+export const OS_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', blob5)";
+
+// Row filter for one platform: `desktop`, `android`, or one of the four
+// systems `win`, `mac`, `linux` (Android counts as its own system). Anything
+// else returns "". An allowlist (not a charset) because the set is closed.
 export function platformClause(raw: string | undefined): string {
-  if (raw === "desktop" || raw === "android") return `AND blob4 = '${raw}'`;
+  if (raw === "android") return "AND (blob4 = 'android' OR blob5 = '')";
+  if (raw === "desktop") return "AND blob4 = 'desktop' AND blob5 != ''";
+  if (raw === "win" || raw === "mac" || raw === "linux") return `AND blob4 = 'desktop' AND blob5 = '${raw}'`;
   return "";
 }
 

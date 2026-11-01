@@ -51,6 +51,10 @@ export interface Env {
   SITE_ANALYTICS_ENABLED?: string;
   SITE_ANALYTICS_SECRET?: string;
   SITE_CAMPAIGN_CAPACITY?: string;
+  // Workers rate-limiting binding (wrangler.toml [[ratelimits]]): per internet
+  // address, per minute, for the public analytics write paths (app check-ins
+  // and website visits). Optional: omitted in [env.test].
+  EVENT_RATE_LIMITER?: RateLimit;
 }
 
 // NOTE: full-row interfaces (UserRow/IdentityRow/SessionRow/RatingRow) used to

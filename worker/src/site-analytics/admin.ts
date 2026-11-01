@@ -36,11 +36,14 @@ websiteAdminRoutes.get('/admin/analytics/website', requireAdminAuth, async c => 
   const rows = (await c.env.DB.prepare(sql).bind(oldest, end, ...(cursor ?? [])).all<Row>()).results;
   const health = await c.env.DB.prepare('SELECT last_sweep_at,last_sweep_ok,collection_started_day FROM site_analytics_health WHERE id=1').first<{ last_sweep_at: number | null; last_sweep_ok: number | null; collection_started_day: string | null }>();
   const budgets = await c.env.DB.prepare('SELECT starts,changes,cells FROM site_daily_budget WHERE day=?').bind(today).first<{ starts: number; changes: number; cells: number }>();
+  // When each campaign link was made, so charts can mark launches (deck X-3).
+  const campaigns = (await c.env.DB.prepare('SELECT source,campaign,created_at createdAt FROM site_campaigns ORDER BY created_at').all<{ source: string; campaign: string; createdAt: number }>()).results;
   return c.json({ version: 1, end, enabled: c.env.SITE_ANALYTICS_ENABLED === '1',
     retentionStart: oldest, collectionStart: health?.collection_started_day ?? null,
     health: !health || health.last_sweep_at === null ? 'unknown' : !health.last_sweep_ok ? 'failed' : nowSeconds - health.last_sweep_at > 2 * DAY ? 'stale' : 'ok',
     limited: !!budgets && (budgets.starts >= 10000 || budgets.changes >= 50000 || budgets.cells >= 1000),
     lastSweepAt: health?.last_sweep_at ?? null,
+    campaigns: campaigns.map(r => ({ source: r.source, campaign: r.campaign, createdAt: r.createdAt })),
     rows: rows.map(r => ({ day: r.day, source: r.source, campaign: r.campaign, referrerDomain: r.referrerDomain, visits: r.visits, instructions: r.instructions, clickedVisits: r.clickedVisits,
       downloads: { Windows: r.Windows, macOS: r.macOS, Linux: r.Linux, Android: r.Android } })),
     cursor: rows.length === 1000 ? encodeCursor(rows[rows.length - 1]!) : null });
