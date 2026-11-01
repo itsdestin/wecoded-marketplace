@@ -573,6 +573,7 @@ describe("analytics dashboard additions: systems, setup steps, exclusions, lapse
     const sql = await sqlFor(token, "/admin/analytics/milestones?weekly=1");
     expect(sql).toContain("toStartOfWeek(timestamp) AS week");
     expect(sql).toContain("GROUP BY week, milestone");
+    expect(await sqlFor(token, "/admin/analytics/milestones?weekly=1&tz_offset=-420")).toContain("toStartOfWeek((timestamp - INTERVAL '420' MINUTE)) AS week");
   });
 
   it("caps new devices short of the 90-day edge", async () => {

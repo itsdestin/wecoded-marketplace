@@ -17,8 +17,11 @@ export async function saveDailyTotals(env: Env, now: Date = new Date()): Promise
   const today = now.toISOString().slice(0, 10);
   const oldest = new Date(now.getTime() - BACKFILL_DAYS * 86400000).toISOString().slice(0, 10);
   const refreshFrom = new Date(now.getTime() - REFRESH_DAYS * 86400000).toISOString().slice(0, 10);
-  // The same exclusions the dashboard applies by default: team/listed devices,
-  // test builds and the historical CI versions.
+  // Exclusions: team/listed devices everywhere. Active days also leave out test
+  // builds and the historical CI versions; NEW devices cannot (a version filter
+  // would move a device's first-seen day — see /installs), so a device whose very
+  // first check-in was a test build is still counted new. Official-build gating in
+  // the app (2026-10-31) stops new test builds from checking in at all.
   const filter = `${cutoverClause(env)} ${adminFilterClause(env, false)}`;
   const [active, fresh] = await Promise.all([
     runAnalyticsQuery<{ day: string; platform: string; devices: number }>(

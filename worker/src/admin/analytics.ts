@@ -358,9 +358,13 @@ adminAnalyticsRoutes.get("/admin/analytics/milestones", requireAdminAuth, async 
   const platform = platformClause(c.req.query("platform"));
   // weekly=1 adds a week column (Sunday starts, like /weekly) for the Overview's journey table.
   const weekly = c.req.query("weekly") === "1";
+  // WHY tz_offset: the Overview lines these weeks up with new devices, which are
+  // counted in the owner's own time zone; UTC weeks put a Saturday-evening setup
+  // in the next week's row.
+  const local = localTimestampExpr(c.req.query("tz_offset"));
   const rows = await runAnalyticsQuery<{ milestone: string; devices: number; week?: string }>(
     c.env,
-    `SELECT ${weekly ? "toStartOfWeek(timestamp) AS week, " : ""}blob9 AS milestone, count(DISTINCT blob2) AS devices
+    `SELECT ${weekly ? `toStartOfWeek(${local}) AS week, ` : ""}blob9 AS milestone, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
      WHERE blob1 = 'milestone' AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform}
      GROUP BY ${weekly ? "week, " : ""}milestone ORDER BY devices DESC`
