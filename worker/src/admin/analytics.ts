@@ -26,7 +26,10 @@ import {
   cutoverClause,
   hideTestClause,
   historicalCiVersionClause,
+  knownDevInClause,
   localTimestampExpr,
+  OS_EXPR,
+  PLATFORM_EXPR,
   platformClause,
   versionClause,
 } from "../lib/admin-filter";
@@ -58,6 +61,9 @@ export const adminAnalyticsRoutes = new Hono<HonoEnv>();
 // Installs/retention deliberately omit it because version row filters redefine
 // first_seen/last_seen and would turn a later real launch into a new install.
 const historicalCi = historicalCiVersionClause();
+
+// Days back that "new device" can be trusted (see /installs).
+export const NEW_DEVICE_HORIZON = 83;
 
 // GET /admin/analytics/dau?days=30 — devices active per LOCAL day.
 // Params: tz_offset, platform, version, hide_test.
@@ -114,7 +120,10 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => 
 // AE SQL subquery support: subqueries in FROM work in production.
 adminAnalyticsRoutes.get("/admin/analytics/installs", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
-  const days = clampDays(c.req.query("days"), 90);
+  // WHY capped at NEW_DEVICE_HORIZON: check-ins are kept 90 days, so every
+  // long-time user's OLDEST surviving check-in sits at the 90-day edge and looks
+  // like a first launch. The last week before the edge is never reported.
+  const days = Math.min(clampDays(c.req.query("days"), 90), NEW_DEVICE_HORIZON);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
@@ -162,7 +171,7 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (
   const hideTest = hideTestClause(c.req.query("hide_test"));
   const rows = await runAnalyticsQuery<{ platform: string; devices: number }>(
     c.env,
-    `SELECT blob4 AS platform, count(DISTINCT blob2) AS devices
+    `SELECT ${PLATFORM_EXPR} AS platform, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
      WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${version} ${hideTest}
      GROUP BY platform ORDER BY devices DESC`
@@ -297,4 +306,140 @@ adminAnalyticsRoutes.get("/admin/analytics/retention", requireAdminAuth, async (
      GROUP BY cohort ORDER BY cohort`
   );
   return c.json(rows);
+});
+
+// GET /admin/analytics/os — rolling 30-day split by Windows / Mac / Linux /
+// Android, the website's four download buttons (deck X-2). Params: version, hide_test.
+adminAnalyticsRoutes.get("/admin/analytics/os", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const days = clampDays(c.req.query("days"), 30);
+  const cutover = cutoverClause(c.env);
+  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const version = versionClause(c.req.query("version"));
+  const hideTest = hideTestClause(c.req.query("hide_test"));
+  const rows = await runAnalyticsQuery<{ os: string; devices: number }>(
+    c.env,
+    `SELECT ${OS_EXPR} AS os, count(DISTINCT blob2) AS devices
+     FROM youcoded_app_events
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${version} ${hideTest}
+     GROUP BY os ORDER BY devices DESC`
+  );
+  return c.json(rows);
+});
+
+// GET /admin/analytics/new-by-os?days=N — devices first seen in the window, by
+// system, to set beside the website's download clicks per platform (deck X-2).
+adminAnalyticsRoutes.get("/admin/analytics/new-by-os", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const days = Math.min(clampDays(c.req.query("days"), 30), NEW_DEVICE_HORIZON);
+  const cutover = cutoverClause(c.env);
+  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const rows = await runAnalyticsQuery<{ os: string; devices: number }>(
+    c.env,
+    `SELECT os, count() AS devices
+     FROM (
+       SELECT blob2, ${OS_EXPR} AS os, MIN(timestamp) AS first_seen
+       FROM youcoded_app_events
+       WHERE blob1 = 'heartbeat' ${cutover} ${filter}
+       GROUP BY blob2, os
+     )
+     WHERE first_seen > NOW() - INTERVAL '${days}' DAY
+     GROUP BY os ORDER BY devices DESC`
+  );
+  return c.json(rows);
+});
+
+// GET /admin/analytics/milestones?days=90 — the setup staircase (deck U-2):
+// how many devices reached each one-time step. Params: platform.
+adminAnalyticsRoutes.get("/admin/analytics/milestones", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const days = clampDays(c.req.query("days"), 90);
+  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const platform = platformClause(c.req.query("platform"));
+  // weekly=1 adds a week column (Sunday starts, like /weekly) for the Overview's journey table.
+  const weekly = c.req.query("weekly") === "1";
+  // WHY tz_offset: the Overview lines these weeks up with new devices, which are
+  // counted in the owner's own time zone; UTC weeks put a Saturday-evening setup
+  // in the next week's row.
+  const local = localTimestampExpr(c.req.query("tz_offset"));
+  const rows = await runAnalyticsQuery<{ milestone: string; devices: number; week?: string }>(
+    c.env,
+    `SELECT ${weekly ? `toStartOfWeek(${local}) AS week, ` : ""}blob9 AS milestone, count(DISTINCT blob2) AS devices
+     FROM youcoded_app_events
+     WHERE blob1 = 'milestone' AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform}
+     GROUP BY ${weekly ? "week, " : ""}milestone ORDER BY devices DESC`
+  );
+  return c.json(rows);
+});
+
+// GET /admin/analytics/opt-outs?days=90 — how many apps switched analytics
+// off (deck U-6). The notice carries no device hash, so this counts notices.
+adminAnalyticsRoutes.get("/admin/analytics/opt-outs", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const days = clampDays(c.req.query("days"), 90);
+  const team = includeAdmins(c.req.query("include_admins")) ? "" : "AND blob8 != 'team'";
+  const rows = await runAnalyticsQuery<{ optOuts: number }>(
+    c.env,
+    `SELECT count() AS optOuts FROM youcoded_app_events
+     WHERE blob1 = 'opt_out' AND timestamp > NOW() - INTERVAL '${days}' DAY ${team}`
+  );
+  return c.json({ optOuts: Number(rows[0]?.optOuts ?? 0) });
+});
+
+// GET /admin/analytics/excluded — how much the default view leaves out over the
+// last 30 days, so the owner can see exclusion working (deck D-5). Counts only.
+adminAnalyticsRoutes.get("/admin/analytics/excluded", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const cutover = cutoverClause(c.env);
+  const listed = knownDevInClause(c.env);
+  const count = async (where: string) => {
+    const rows = await runAnalyticsQuery<{ devices: number }>(
+      c.env,
+      `SELECT count(DISTINCT blob2) AS devices FROM youcoded_app_events
+       WHERE blob1 = 'heartbeat' ${cutover} AND timestamp > NOW() - INTERVAL '30' DAY ${where}`
+    );
+    return Number(rows[0]?.devices ?? 0);
+  };
+  const [teamDevices, listedDevices, testBuildDevices] = await Promise.all([
+    count("AND blob8 = 'team'"),
+    listed ? count(listed) : Promise.resolve(0),
+    count("AND (blob3 LIKE '%-releasetest' OR blob3 LIKE '%-dev')"),
+  ]);
+  return c.json({ teamDevices, listedDevices, testBuildDevices });
+});
+
+// GET /admin/analytics/lapsed — devices that stopped coming back (deck U-3):
+// seen in the last 90 days, but not in the last 14. `byWeek` buckets them by the
+// week of their last check-in. Params: platform.
+adminAnalyticsRoutes.get("/admin/analytics/lapsed", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const cutover = cutoverClause(c.env);
+  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const platform = platformClause(c.req.query("platform"));
+  const perDevice = `SELECT blob2, MAX(timestamp) AS last_seen
+       FROM youcoded_app_events
+       WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} ${filter} ${platform}
+       GROUP BY blob2`;
+  const [totals, byWeek] = await Promise.all([
+    runAnalyticsQuery<{ stopped: number; seen: number }>(
+      c.env,
+      `SELECT countIf(last_seen < NOW() - INTERVAL '14' DAY) AS stopped, count() AS seen FROM (${perDevice})`
+    ),
+    runAnalyticsQuery<{ week: string; devices: number }>(
+      c.env,
+      `SELECT toStartOfWeek(last_seen) AS week, count() AS devices FROM (${perDevice})
+       WHERE last_seen < NOW() - INTERVAL '14' DAY GROUP BY week ORDER BY week`
+    ),
+  ]);
+  return c.json({ stopped: Number(totals[0]?.stopped ?? 0), seen: Number(totals[0]?.seen ?? 0), byWeek });
+});
+
+// GET /admin/analytics/history — daily totals kept past the 90-day limit (deck
+// U-4), saved nightly by saveDailyTotals(). Totals only, never device hashes.
+adminAnalyticsRoutes.get("/admin/analytics/history", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const rows = await c.env.DB.prepare(
+    "SELECT day, platform, active, new_devices AS newDevices FROM app_daily_totals ORDER BY day, platform"
+  ).all<{ day: string; platform: string; active: number; newDevices: number }>();
+  return c.json(rows.results);
 });

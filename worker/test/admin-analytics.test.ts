@@ -42,7 +42,8 @@ const INVALID_FILTERS =
   `platform=ios&version=${encodeURIComponent("1';DROP")}&tz_offset=abc&hide_test=yes`;
 
 function expectNoRowFilters(sql: string) {
-  expect(sql).not.toContain("blob4 =");
+  expect(sql).not.toContain("AND blob4 =");
+  expect(sql).not.toContain("AND (blob4");
   expect(sql).not.toContain("blob3 =");
   expect(sql).not.toContain("NOT LIKE");
   expect(sql).not.toContain("MINUTE");
@@ -153,7 +154,7 @@ describe("GET /admin/analytics/dau", () => {
     );
     expect(sql).toContain("toDate((timestamp - INTERVAL '300' MINUTE)) AS day");
     expect(sql).toContain("INTERVAL '8' DAY");
-    expect(sql).toContain("AND blob4 = 'android'");
+    expect(sql).toContain("AND (blob4 = 'android' OR blob5 = '')");
     expect(sql).toContain("AND blob3 = '1.2.3'");
     expect(sql).toContain("AND blob3 NOT LIKE '%-releasetest' AND blob3 NOT LIKE '%-dev'");
   });
@@ -228,7 +229,7 @@ describe("GET /admin/analytics/versions", () => {
       "/admin/analytics/versions?days=7&platform=android&hide_test=1&version=1.0"
     );
     expect(sql).toContain("INTERVAL '7' DAY");
-    expect(sql).toContain("AND blob4 = 'android'");
+    expect(sql).toContain("AND (blob4 = 'android' OR blob5 = '')");
     expect(sql).toContain("NOT LIKE '%-releasetest'");
     expect(sql).not.toContain("blob3 =");
   });
@@ -253,7 +254,8 @@ describe("GET /admin/analytics/platforms", () => {
     expect(res.status).toBe(200);
     const sql = (globalThis.fetch as any).mock.calls[0][1].body as string;
     expect(sql).toContain("count(DISTINCT blob2) AS devices");
-    expect(sql).toContain("blob4 AS platform");
+    // A check-in with no OS is a phone, even one that said "desktop" (1.3.1–1.3.3).
+    expect(sql).toContain("if(blob4 = 'android' OR blob5 = '', 'android', 'desktop') AS platform");
     expectNoRowFilters(sql);
   });
 
@@ -265,7 +267,8 @@ describe("GET /admin/analytics/platforms", () => {
     );
     expect(sql).toContain("AND blob3 = '1.0'");
     expect(sql).toContain("NOT LIKE '%-dev'");
-    expect(sql).not.toContain("blob4 =");
+    expect(sql).not.toContain("AND blob4 =");
+  expect(sql).not.toContain("AND (blob4");
   });
 
   it("drops invalid params", async () => {
@@ -424,7 +427,7 @@ describe("GET /admin/analytics/active-by-version", () => {
     );
     expect(sql).toContain("toDate((timestamp + INTERVAL '120' MINUTE)) AS day");
     expect(sql).toContain("INTERVAL '15' DAY");
-    expect(sql).toContain("AND blob4 = 'android'");
+    expect(sql).toContain("AND (blob4 = 'android' OR blob5 = '')");
     expect(sql).toContain("NOT LIKE '%-dev'");
     expect(sql).not.toContain("blob3 =");
   });
@@ -543,5 +546,79 @@ describe("GET /admin/analytics/retention", () => {
     const sql = await sqlFor(token, `/admin/analytics/retention?weeks=999&${INVALID_FILTERS}`);
     expect(sql).toContain("INTERVAL '84' DAY");
     expectNoRowFilters(sql);
+  });
+});
+
+describe("analytics dashboard additions: systems, setup steps, exclusions, lapsed devices, history", () => {
+  beforeEach(async () => { await clearAuth(); mockCfSql([]); });
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  it("splits by the four systems, with an empty OS counted as Android", async () => {
+    const token = await seedAdmin();
+    const sql = await sqlFor(token, "/admin/analytics/os");
+    expect(sql).toContain("if(blob4 = 'android' OR blob5 = '', 'android', blob5) AS os");
+    expect(sql).toContain("blob8 != 'team'");
+  });
+
+  it("counts setup steps per device from milestone events only", async () => {
+    const token = await seedAdmin();
+    const sql = await sqlFor(token, "/admin/analytics/milestones?platform=win");
+    expect(sql).toContain("blob1 = 'milestone'");
+    expect(sql).toContain("count(DISTINCT blob2)");
+    expect(sql).toContain("AND blob4 = 'desktop' AND blob5 = 'win'");
+  });
+
+  it("groups setup steps by week when asked", async () => {
+    const token = await seedAdmin();
+    const sql = await sqlFor(token, "/admin/analytics/milestones?weekly=1");
+    expect(sql).toContain("toStartOfWeek(timestamp) AS week");
+    expect(sql).toContain("GROUP BY week, milestone");
+    expect(await sqlFor(token, "/admin/analytics/milestones?weekly=1&tz_offset=-420")).toContain("toStartOfWeek((timestamp - INTERVAL '420' MINUTE)) AS week");
+  });
+
+  it("caps new devices short of the 90-day edge", async () => {
+    const token = await seedAdmin();
+    const sql = await sqlFor(token, "/admin/analytics/installs?days=90");
+    expect(sql).toContain("INTERVAL '83' DAY");
+  });
+
+  it("My devices includes team devices again", async () => {
+    const token = await seedAdmin();
+    expect(await sqlFor(token, "/admin/analytics/dau")).toContain("blob8 != 'team'");
+    expect(await sqlFor(token, "/admin/analytics/dau?include_admins=1")).not.toContain("blob8");
+  });
+
+  it("reports how many team devices were left out", async () => {
+    const token = await seedAdmin();
+    mockCfSql([{ devices: 3 }]);
+    const res = await SELF.fetch("https://test.local/admin/analytics/excluded", { headers: { Authorization: `Bearer ${token}` } });
+    expect(res.status).toBe(200);
+    expect((await res.json() as any).teamDevices).toBe(3);
+  });
+
+  it("counts devices not seen for 14 days as stopped", async () => {
+    const token = await seedAdmin();
+    mockCfSql([{ stopped: 4, seen: 10 }]);
+    const res = await SELF.fetch("https://test.local/admin/analytics/lapsed", { headers: { Authorization: `Bearer ${token}` } });
+    const body = await res.json() as any;
+    expect(body.stopped).toBe(4);
+    const sql = (globalThis.fetch as any).mock.calls[0][1].body as string;
+    expect(sql).toContain("INTERVAL '14' DAY");
+  });
+
+  it("saves finished days' totals nightly and serves them as history", async () => {
+    const { saveDailyTotals } = await import("../src/admin/daily-totals");
+    await env.DB.prepare("DELETE FROM app_daily_totals").run();
+    mockCfSql([
+      { day: "2026-10-29", platform: "desktop", devices: 7 },
+      { day: "2026-10-29", platform: "android", devices: 2 },
+      { day: "2026-10-31", platform: "desktop", devices: 99 }, // today: unfinished, not saved
+    ]);
+    const saved = await saveDailyTotals(env as any, new Date("2026-10-31T06:17:00Z"));
+    expect(saved).toBe(2);
+    const token = await seedAdmin();
+    const res = await SELF.fetch("https://test.local/admin/analytics/history", { headers: { Authorization: `Bearer ${token}` } });
+    const rows = await res.json() as any[];
+    expect(rows.map((r) => [r.day, r.platform, r.active])).toEqual([["2026-10-29", "android", 2], ["2026-10-29", "desktop", 7]]);
   });
 });
