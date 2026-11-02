@@ -2,7 +2,26 @@ import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { HonoEnv } from '../types';
 import { websiteAdminRoutes } from './admin';
-import { DAY, dayOf, fail, labels, domain, counters, parseFields, validDay, campaignCode } from './validation';
+import { DAY, dayOf, fail, labels, domain, counters, parseFields, validDay, campaignCode, type Downloads } from './validation';
+
+// WHY 5 (analytics deck T-1, 2026-10-31): the page still accepts up to 100 clicks
+// from pages cached before this change, but one visit now adds at most five, so
+// a script replaying one visit cannot fake hundreds of download clicks.
+export const MAX_CLICKS_PER_VISIT = 5;
+const PLATFORMS: (keyof Downloads)[] = ['Windows', 'macOS', 'Linux', 'Android'];
+// The visit's new per-platform counts: never below what is stored, and the
+// increase stops once the visit holds MAX_CLICKS_PER_VISIT in total.
+export function capClicks(old: Downloads, next: Downloads): Downloads {
+  const out = { ...old };
+  let total = PLATFORMS.reduce((n, k) => n + old[k], 0);
+  for (const k of PLATFORMS) {
+    const want = Math.max(old[k], next[k]) - old[k];
+    const add = Math.max(0, Math.min(want, MAX_CLICKS_PER_VISIT - total));
+    out[k] += add; total += add;
+  }
+  return out;
+}
+const NONE: Downloads = { Windows: 0, macOS: 0, Linux: 0, Android: 0 };
 
 export const siteAnalyticsEnabled = (value: string | undefined) => value === '1';
 type Journey = { day: string; expires_at: number; campaign_id: number; instructions: number; windows: number; macos: number; linux: number; android: number };
@@ -49,7 +68,16 @@ siteAnalyticsRoutes.route('/', websiteAdminRoutes);
 siteAnalyticsRoutes.post('/site-analytics/start', async c => {
   try {
     guard(c);
-    const input = await parseFields(c, startFields, ['code']), now = Math.floor(Date.now() / 1000), d = counters(input.downloads);
+    // WHY per address (deck T-1): the site-wide daily cap let one script fill a
+    // whole day with fake visits. A reload no longer starts a visit (the page
+    // keeps its visit for the tab), so 20 a minute is far above a real reader.
+    const limiter = c.env.EVENT_RATE_LIMITER;
+    if (limiter) {
+      const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+      if (!(await limiter.limit({ key: `site:${ip}` })).success) throw fail(429, 'limited');
+    }
+    const input = await parseFields(c, startFields, ['code']), now = Math.floor(Date.now() / 1000), raw = counters(input.downloads);
+    const d = raw && capClicks(NONE, raw);
     if (input.version !== 1 || typeof input.nonce !== 'string' || !/^[a-f0-9]{32}$/.test(input.nonce)
       || typeof input.createdAt !== 'number' || !Number.isSafeInteger(input.createdAt) || Math.abs(now - input.createdAt) > 300
       || !domain(input.referrerDomain) || typeof input.instructions !== 'boolean' || !d
@@ -96,10 +124,11 @@ siteAnalyticsRoutes.post('/site-analytics/update', async c => {
     if (!old) throw fail(410, 'expired');
     const merged = Math.max(old.windows, d.Windows) + Math.max(old.macos, d.macOS) + Math.max(old.linux, d.Linux) + Math.max(old.android, d.Android);
     if (merged > 100) throw fail(400, 'invalid_request');
+    const capped = capClicks({ Windows: old.windows, macOS: old.macos, Linux: old.linux, Android: old.android }, d);
     // Maxima plus SQL CHECK protect the cap even if concurrent updates advance other platforms.
     await c.env.DB.prepare(`UPDATE site_journeys SET update_day=?,instructions=MAX(instructions,?),windows=MAX(windows,?),macos=MAX(macos,?),linux=MAX(linux,?),android=MAX(android,?)
       WHERE page_key=? AND expires_at>?`)
-      .bind(dayOf(Math.floor(Date.now() / 1000)), input.instructions ? 1 : 0, d.Windows, d.macOS, d.Linux, d.Android, pageKey, Math.floor(Date.now() / 1000)).run();
+      .bind(dayOf(Math.floor(Date.now() / 1000)), input.instructions ? 1 : 0, capped.Windows, capped.macOS, capped.Linux, capped.Android, pageKey, Math.floor(Date.now() / 1000)).run();
     return c.json({ ok: true });
   } catch (error) { return storageError(error); }
 });

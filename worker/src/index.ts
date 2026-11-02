@@ -19,6 +19,7 @@ import { adminAnalyticsRoutes } from "./admin/analytics";
 import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
+import { saveDailyTotals } from "./admin/daily-totals";
 
 const app = new Hono<HonoEnv>();
 
@@ -163,6 +164,11 @@ export default {
   fetch: app.fetch,
   async scheduled(_event: ScheduledController, env: Env): Promise<void> {
     await pruneExpired(env.DB, Math.floor(Date.now() / 1000));
+    // Daily app totals kept past the 90-day analytics limit. Its own catch: a
+    // failed analytics query must not mark the maintenance run as failed, and
+    // the next night re-saves the last week anyway.
+    try { await saveDailyTotals(env); }
+    catch (e) { console.error("daily totals not saved:", e instanceof Error ? e.message : String(e)); }
   },
 };
 // Also export the raw Hono app so tests that dispatch via `app.request(...)`
