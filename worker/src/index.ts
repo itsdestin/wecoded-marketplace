@@ -20,6 +20,7 @@ import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
+import { routePartykitRequest } from "partyserver";
 
 const app = new Hono<HonoEnv>();
 
@@ -161,7 +162,18 @@ app.route("/", siteAnalyticsRoutes);
 // SELF.fetch (and Cloudflare's runtime) accept either shape, so HTTP routing is
 // unchanged. Cron trigger is declared in wrangler.toml [triggers].
 export default {
-  fetch: app.fetch,
+  // WHY the games check runs BEFORE Hono: the CORS middleware above would try to
+  // add headers to a WebSocket (101) response, which is immutable. The game
+  // rooms (/parties/connectfour/<room>, /parties/chess/<room>) are matched here
+  // first; anything else (including a non-matching /parties/... path) falls
+  // through to the normal router untouched, so no existing route is affected.
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (new URL(req.url).pathname.startsWith("/parties/")) {
+      const res = await routePartykitRequest(req, env as unknown as Cloudflare.Env);
+      if (res) return res;
+    }
+    return app.fetch(req, env, ctx);
+  },
   async scheduled(_event: ScheduledController, env: Env): Promise<void> {
     await pruneExpired(env.DB, Math.floor(Date.now() / 1000));
     // Daily app totals kept past the 90-day analytics limit. Its own catch: a
@@ -182,3 +194,5 @@ export { PresenceRoom } from "./social/presence-room";
 // SyncGroupRoom must also be exported from the entrypoint so the runtime can
 // instantiate it for the SYNC_HUB binding (SyncHub §6).
 export { SyncGroupRoom } from "./sync/room";
+// Versus-game relay rooms (replace the dead hosted-PartyKit rooms, 2026-11-01).
+export { ConnectFourRoom, ChessRoom } from "./games/relay-room";

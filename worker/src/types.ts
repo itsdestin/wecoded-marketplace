@@ -8,6 +8,10 @@ export interface Env {
   // metadata-only "space-updated" signals between a user's own devices so
   // pulls happen instantly instead of waiting for the 120s poll (SyncHub §6).
   SYNC_HUB: DurableObjectNamespace;
+  // Versus-game relay rooms. Binding names are what partyserver turns into the
+  // URL name (CONNECTFOUR -> /parties/connectfour/<room>), so do not rename.
+  CONNECTFOUR: DurableObjectNamespace;
+  CHESS: DurableObjectNamespace;
   // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
   // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
   APP_ANALYTICS?: AnalyticsEngineDataset;
