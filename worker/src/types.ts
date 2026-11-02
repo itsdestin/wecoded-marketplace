@@ -62,7 +62,13 @@ export interface Env {
   THEME_REGISTRY_URL?: string;
   // Comma-separated GitHub token scopes the admin X-GitHub-PAT path must carry
   // (e.g. "repo"). Unset -> any token GitHub accepts for the admin's account, as before.
+  // DO NOT SET if an admin uses a fine-grained token: GitHub sends no scope header for those, so
+  // every one would be refused. Only classic tokens carry scopes.
   ADMIN_PAT_REQUIRED_SCOPES?: string;
+  // Workers rate-limiting binding (wrangler.toml [[ratelimits]]): per internet
+  // address, per minute, for the public analytics write paths (app check-ins
+  // and website visits). Optional: omitted in [env.test].
+  EVENT_RATE_LIMITER?: RateLimit;
 }
 
 // NOTE: full-row interfaces (UserRow/IdentityRow/SessionRow/RatingRow) used to

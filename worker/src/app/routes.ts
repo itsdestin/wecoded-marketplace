@@ -22,6 +22,8 @@ interface AppEventBody {
   appVersion?: unknown;
   platform?: unknown;
   os?: unknown;
+  team?: unknown;             // optional: true marks a team device (analytics deck D-2)
+  milestone?: unknown;        // /app/milestone only
 }
 
 interface ParsedBody {
@@ -29,6 +31,7 @@ interface ParsedBody {
   appVersion: string;
   platform: "desktop" | "android";
   os: string;
+  team: boolean;
 }
 
 // Validates the payload. Accepts either legacy `installId` (UUID) or new
@@ -54,12 +57,14 @@ function parseBody(body: AppEventBody): ParsedBody {
   if (!appVersion || appVersion.length > MAX_VERSION_LEN || !VERSION_RE.test(appVersion)) throw badRequest("invalid request");
   if (!PLATFORMS.has(platform)) throw badRequest("invalid request");
   if (os.length > MAX_OS_LEN || !OS_RE.test(os)) throw badRequest("invalid request");
+  if (body.team !== undefined && typeof body.team !== "boolean") throw badRequest("invalid request");
 
   return {
     deviceIdHash: validDeviceHash ? deviceIdHash : null,
     appVersion,
     platform: platform as "desktop" | "android",
     os,
+    team: body.team === true,
   };
 }
 
@@ -67,11 +72,24 @@ function clientIp(c: any): string {
   return c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For") || "unknown";
 }
 
-async function handleHeartbeat(c: any) {
+// WHY the platform rate-limit binding first (analytics deck T-1, 2026-10-31):
+// checkRateLimit's Cache API counter was measured to limit nothing, so one
+// script could invent thousands of devices. The binding is per address, per
+// minute; absent in tests (and if ever unbound) it falls back to the old check.
+export async function allowAppEvent(c: any, kind: string): Promise<boolean> {
   const ip = clientIp(c);
-  if (!(await checkRateLimit(`app-heartbeat:${ip}`, 30, 3600))) {
+  const limiter = c.env.EVENT_RATE_LIMITER as RateLimit | undefined;
+  if (limiter) {
+    try { return (await limiter.limit({ key: `app:${ip}` })).success; } catch { /* fall through */ }
+  }
+  return checkRateLimit(`app-${kind}:${ip}`, 30, 3600);
+}
+
+async function handleHeartbeat(c: any) {
+  if (!(await allowAppEvent(c, "heartbeat"))) {
     throw tooMany("too many requests");
   }
+  const ip = clientIp(c);
   // WHY a daily cap as well: a real install reports about once a day, so a single
   // network sending hundreds of different devices a day is inflating the numbers.
   // The ceiling is generous because a school or office shares one address. No address
@@ -104,12 +122,62 @@ async function handleHeartbeat(c: any) {
     os: parsed.os,
     country,
     region,
+    team: parsed.team,
+  });
+  return c.json({ ok: true });
+}
+
+// One-time setup steps a fresh install passes (analytics deck U-2). Closed
+// names only: the app never sends free text, and neither may anyone else.
+const MILESTONE_RE = /^(first_open|setup_done|first_message|setup_failed_[a-z]{1,24})$/;
+
+async function handleMilestone(c: any) {
+  if (!(await allowAppEvent(c, "milestone"))) throw tooMany("too many requests");
+  const body = (await c.req.json().catch(() => ({}))) as AppEventBody;
+  const parsed = parseBody(body);
+  const milestone = typeof body.milestone === "string" ? body.milestone : "";
+  if (parsed.deviceIdHash === null || !MILESTONE_RE.test(milestone)) throw badRequest("invalid request");
+  writeAppEvent(c.env, {
+    kind: "milestone",
+    deviceIdHash: parsed.deviceIdHash,
+    appVersion: parsed.appVersion,
+    platform: parsed.platform,
+    os: parsed.os,
+    country: c.req.header("CF-IPCountry") || "",
+    region: c.req.header("CF-IPRegionCode") || "",
+    team: parsed.team,
+    detail: milestone,
+  });
+  return c.json({ ok: true });
+}
+
+// The single notice an app sends when its owner turns analytics off (deck
+// U-6). It carries NO device hash — the person just asked not to be identified.
+async function handleOptOut(c: any) {
+  if (!(await allowAppEvent(c, "opt-out"))) throw tooMany("too many requests");
+  const body = (await c.req.json().catch(() => ({}))) as AppEventBody;
+  const appVersion = typeof body.appVersion === "string" ? body.appVersion : "";
+  const platform = typeof body.platform === "string" ? body.platform : "";
+  const os = typeof body.os === "string" ? body.os : "";
+  if (!appVersion || appVersion.length > MAX_VERSION_LEN || !PLATFORMS.has(platform) || os.length > MAX_OS_LEN) throw badRequest("invalid request");
+  if (body.deviceIdHash !== undefined || (body.team !== undefined && typeof body.team !== "boolean")) throw badRequest("invalid request");
+  writeAppEvent(c.env, {
+    kind: "opt_out",
+    deviceIdHash: "",
+    appVersion,
+    platform: platform as "desktop" | "android",
+    os,
+    country: "",
+    region: "",
+    team: body.team === true,
   });
   return c.json({ ok: true });
 }
 
 // POST /app/heartbeat — fired at most once/day per device.
 appRoutes.post("/app/heartbeat", handleHeartbeat);
+appRoutes.post("/app/milestone", handleMilestone);
+appRoutes.post("/app/opt-out", handleOptOut);
 
 // POST /app/install — DEPRECATED. Returns 410 Gone. Legacy clients still
 // post here once per launch (they fire-and-forget; the install event was

@@ -41,6 +41,18 @@ binding = "AI"
 binding = "APP_ANALYTICS"
 dataset = "youcoded_app_events"
 
+# Per-address limit on the public analytics write paths (app check-ins,
+# milestones, website visits): 20 a minute. WHY a binding: the Cache-API counter
+# in lib/rate-limit.ts was measured to limit nothing (worker-backend rule), so
+# one script could invent devices and visits (analytics deck T-1, 2026-10-31).
+# `unsafe.bindings` because this wrangler (3.x) predates the [[ratelimits]] key.
+# Omitted from [env.test]: the code treats a missing binding as "no limiter".
+[[unsafe.bindings]]
+name = "EVENT_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1031"
+simple = { limit = 20, period = 60 }
+
 [durable_objects]
 bindings = [
   { name = "PRESENCE", class_name = "PresenceRoom" },

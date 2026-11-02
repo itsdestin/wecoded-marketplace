@@ -94,3 +94,49 @@ describe("POST /app/install — deprecated, returns 410", () => {
     delete (env as any).APP_ANALYTICS;
   });
 });
+
+describe("POST /app/heartbeat, /app/milestone and /app/opt-out — one-time messages and team devices", () => {
+  let writes: any[];
+  beforeEach(() => {
+    writes = [];
+    (env as any).APP_ANALYTICS = { writeDataPoint: (dp: any) => writes.push(dp) };
+  });
+  afterEach(() => { delete (env as any).APP_ANALYTICS; });
+
+  const post = (path: string, body: unknown) => app.request(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }, env);
+
+  it("a team device's check-in is stored with the team mark", async () => {
+    expect((await post("/app/heartbeat", { ...NEW_PAYLOAD, team: true })).status).toBe(200);
+    expect(writes[0].blobs[7]).toBe("team");
+    expect((await post("/app/heartbeat", NEW_PAYLOAD)).status).toBe(200);
+    expect(writes[1].blobs[7]).toBe("");
+  });
+
+  it("rejects a team field that is not true or false", async () => {
+    expect((await post("/app/heartbeat", { ...NEW_PAYLOAD, team: "yes" })).status).toBe(400);
+    expect(writes).toHaveLength(0);
+  });
+
+  it("stores a known milestone name and refuses free text", async () => {
+    expect((await post("/app/milestone", { ...NEW_PAYLOAD, milestone: "setup_failed_node" })).status).toBe(200);
+    expect(writes[0].blobs[0]).toBe("milestone");
+    expect(writes[0].blobs[8]).toBe("setup_failed_node");
+    for (const bad of ["", "hello world", "setup_failed_/home/me", "first_open; DROP"]) {
+      expect((await post("/app/milestone", { ...NEW_PAYLOAD, milestone: bad })).status).toBe(400);
+    }
+    expect((await post("/app/milestone", { ...LEGACY_PAYLOAD, milestone: "first_open" })).status).toBe(400);
+    expect(writes).toHaveLength(1);
+  });
+
+  it("an opt-out notice is stored without any device hash, and one carrying a hash is refused", async () => {
+    expect((await post("/app/opt-out", { appVersion: "1.4.0", platform: "desktop", os: "win" })).status).toBe(200);
+    expect(writes[0].blobs[0]).toBe("opt_out");
+    expect(writes[0].blobs[1]).toBe("");
+    expect((await post("/app/opt-out", { ...NEW_PAYLOAD })).status).toBe(400);
+    expect(writes).toHaveLength(1);
+  });
+});

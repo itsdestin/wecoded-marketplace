@@ -33,7 +33,7 @@ describe("writeAppEvent", () => {
       }
     );
     expect(writeDataPoint).toHaveBeenCalledWith({
-      blobs: ["heartbeat", "a".repeat(64), "1.2.1", "android", "", "DE", ""],
+      blobs: ["heartbeat", "a".repeat(64), "1.2.1", "android", "", "DE", "", "", ""],
       doubles: [],
       indexes: ["heartbeat"],
     });
@@ -61,6 +61,28 @@ describe("writeAppEvent", () => {
       "mac",
       "US",
       "US-CA",
+      "",
+      "",
     ]);
+  });
+
+  it("marks a team device in blob8 and a milestone's name in blob9", () => {
+    const writeDataPoint = vi.fn();
+    writeAppEvent({ APP_ANALYTICS: { writeDataPoint } } as any, {
+      kind: "milestone",
+      deviceIdHash: "a".repeat(64),
+      appVersion: "1.4.0",
+      platform: "android",
+      os: "",
+      country: "",
+      region: "",
+      team: true,
+      detail: "setup_done",
+    });
+    expect(writeDataPoint).toHaveBeenCalledWith({
+      blobs: ["milestone", "a".repeat(64), "1.4.0", "android", "", "", "", "team", "setup_done"],
+      doubles: [],
+      indexes: ["milestone"],
+    });
   });
 });

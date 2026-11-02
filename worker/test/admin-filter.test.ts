@@ -10,9 +10,9 @@ import {
 } from "../src/lib/admin-filter";
 
 describe("adminFilterClause", () => {
-  it("returns empty string when KNOWN_DEV_DEVICES is unset", () => {
-    expect(adminFilterClause({ KNOWN_DEV_DEVICES: "" } as any, false)).toBe("");
-    expect(adminFilterClause({ KNOWN_DEV_DEVICES: undefined } as any, false)).toBe("");
+  it("still leaves out team devices when KNOWN_DEV_DEVICES is unset", () => {
+    expect(adminFilterClause({ KNOWN_DEV_DEVICES: "" } as any, false)).toBe("AND blob8 != 'team'");
+    expect(adminFilterClause({ KNOWN_DEV_DEVICES: undefined } as any, false)).toBe("AND blob8 != 'team'");
   });
 
   it("returns empty string when include_admins=true", () => {
@@ -24,7 +24,7 @@ describe("adminFilterClause", () => {
       KNOWN_DEV_DEVICES: `${"a".repeat(64)},${"b".repeat(64)}`,
     } as any;
     const clause = adminFilterClause(env, false);
-    expect(clause).toBe(`AND blob2 NOT IN ('${"a".repeat(64)}','${"b".repeat(64)}')`);
+    expect(clause).toBe(`AND blob8 != 'team' AND blob2 NOT IN ('${"a".repeat(64)}','${"b".repeat(64)}')`);
   });
 
   it("strips non-hex characters defensively", () => {
@@ -34,7 +34,7 @@ describe("adminFilterClause", () => {
     const clause = adminFilterClause(env, false);
     // The injection attempt is reduced to hex chars only; the dropped string
     // becomes a < 64-char hash and is rejected by the length filter.
-    expect(clause).toBe(`AND blob2 NOT IN ('${"a".repeat(64)}')`);
+    expect(clause).toBe(`AND blob8 != 'team' AND blob2 NOT IN ('${"a".repeat(64)}')`);
   });
 
   it("rejects hashes that aren't exactly 64 hex chars", () => {
@@ -42,7 +42,7 @@ describe("adminFilterClause", () => {
       KNOWN_DEV_DEVICES: `short,${"a".repeat(64)},${"b".repeat(63)}`,
     } as any;
     const clause = adminFilterClause(env, false);
-    expect(clause).toBe(`AND blob2 NOT IN ('${"a".repeat(64)}')`);
+    expect(clause).toBe(`AND blob8 != 'team' AND blob2 NOT IN ('${"a".repeat(64)}')`);
   });
 });
 
@@ -104,15 +104,21 @@ describe("localTimestampExpr", () => {
 });
 
 describe("platformClause", () => {
-  it("accepts exactly desktop or android", () => {
-    expect(platformClause("desktop")).toBe("AND blob4 = 'desktop'");
-    expect(platformClause("android")).toBe("AND blob4 = 'android'");
+  it("counts a check-in with no OS as a phone, whatever platform it claimed", () => {
+    expect(platformClause("desktop")).toBe("AND blob4 = 'desktop' AND blob5 != ''");
+    expect(platformClause("android")).toBe("AND (blob4 = 'android' OR blob5 = '')");
+  });
+
+  it("accepts the three computer systems", () => {
+    expect(platformClause("win")).toBe("AND blob4 = 'desktop' AND blob5 = 'win'");
+    expect(platformClause("mac")).toBe("AND blob4 = 'desktop' AND blob5 = 'mac'");
+    expect(platformClause("linux")).toBe("AND blob4 = 'desktop' AND blob5 = 'linux'");
   });
 
   it("drops anything else, including case variants and injection", () => {
     for (const bad of [
       undefined, "", "ios", "Desktop", "ANDROID", " desktop", "desktop ",
-      "desktop' OR '1'='1", "android'; DROP TABLE x --",
+      "desktop' OR '1'='1", "android'; DROP TABLE x --", "Win", "macos", "windows",
     ]) {
       expect(platformClause(bad)).toBe("");
     }
