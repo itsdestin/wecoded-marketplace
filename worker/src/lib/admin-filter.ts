@@ -147,3 +147,44 @@ export function hideTestClause(raw: string | undefined): string {
   if (raw !== "1") return "";
   return "AND blob3 NOT LIKE '%-releasetest' AND blob3 NOT LIKE '%-dev'";
 }
+
+// "Hide one-day devices" (Destin, 2026-11-05): devices whose every check-in fell
+// on a single UTC day, and that day is at least 2 days old (so today's and
+// yesterday's brand-new installs aren't hidden before they've had a chance to
+// come back). Returns "AND blob2 NOT IN (…)" or "".
+//
+// WHY two steps instead of one SQL statement: Analytics Engine has no JOIN and
+// no IN-subquery support we can rely on, so the Worker first asks for the list,
+// then splices it in — the same shape as the KNOWN_DEV_DEVICES list. The hashes
+// never leave the Worker (never returned, never logged).
+// WHY the hex check: blob2 is whatever a client sent, so a hash that isn't
+// exactly 64 hex chars is dropped rather than spliced into SQL.
+// WHY the 5-minute cache: the dashboard fires a dozen requests per load; this
+// keeps it to one extra query per load instead of one per chart.
+const ONE_DAY_TTL_MS = 5 * 60 * 1000;
+let oneDayCache: { at: number; clause: string } | null = null;
+
+export async function oneDayDevicesClause(
+  env: Env,
+  raw: string | undefined,
+  run: (sql: string) => Promise<Array<{ device: string }>>
+): Promise<string> {
+  if (raw !== "1") return "";
+  if (oneDayCache && Date.now() - oneDayCache.at < ONE_DAY_TTL_MS) return oneDayCache.clause;
+  const rows = await run(
+    `SELECT blob2 AS device FROM (
+       SELECT blob2, count(DISTINCT toDate(timestamp)) AS days, MAX(timestamp) AS last_seen
+       FROM youcoded_app_events
+       WHERE blob1 = 'heartbeat' ${cutoverClause(env)}
+       GROUP BY blob2
+     )
+     WHERE days = 1 AND last_seen < NOW() - INTERVAL '2' DAY`
+  );
+  const hashes = rows
+    .map((r) => String(r.device ?? "").toLowerCase())
+    .filter((h) => /^[a-f0-9]{64}$/.test(h))
+    .map((h) => `'${h}'`);
+  const clause = hashes.length ? `AND blob2 NOT IN (${hashes.join(",")})` : "";
+  oneDayCache = { at: Date.now(), clause };
+  return clause;
+}
