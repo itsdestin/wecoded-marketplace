@@ -50,6 +50,17 @@ export class SyncGroupRoom {
   constructor(private state: DurableObjectState, private env: Env) {}
 
   async fetch(request: Request): Promise<Response> {
+    // WHY (2026-11-05, privacy policy): deleting an account must erase this room too — device
+    // names, the sync-recency map, the replay ring and session leases. Only DELETE /auth/account
+    // sends this (eraseSyncRoom below); the public /sync/hub route always forwards to /connect, so
+    // no client can choose this path. Sockets close first so nothing writes after the wipe.
+    if (request.method === "POST" && new URL(request.url).pathname === "/erase") {
+      for (const ws of this.state.getWebSockets()) {
+        try { ws.close(4001, "account deleted"); } catch { /* already closing */ }
+      }
+      await this.state.storage.deleteAll();
+      return new Response(null, { status: 204 });
+    }
     // Identity arrives via internal headers set by the authenticated route —
     // this DO is never reachable without requireAuth having resolved the user.
     const userId = request.headers.get("X-Sync-User");
