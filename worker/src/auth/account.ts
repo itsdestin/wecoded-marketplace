@@ -172,6 +172,13 @@ accountRoutes.put("/auth/handle", requireAuth, async (c) => {
 accountRoutes.delete("/auth/account", requireAuth, async (c) => {
   const userId = c.get("userId");
   const now = Math.floor(Date.now() / 1000);
+  // WHY erase sync first (2026-11-05): the account's SyncGroupRoom lives outside D1, so the
+  // cascade never reached it. Erasing it BEFORE the rows go means a failure here leaves the
+  // account intact for a retry, never a deleted account with orphaned sync data. The room
+  // only speeds sync up (devices reconcile through git), so losing it costs nothing.
+  const room = c.env.SYNC_HUB.get(c.env.SYNC_HUB.idFromName(userId));
+  const erased = await room.fetch("https://synchub.internal/erase", { method: "POST" });
+  if (erased.status !== 204) throw new Error(`sync room erase failed: ${erased.status}`);
   await c.env.DB.batch([
     c.env.DB.prepare(
       "INSERT OR REPLACE INTO handle_releases (handle, released_at) SELECT handle, ? FROM users WHERE id = ? AND handle IS NOT NULL"
@@ -193,7 +200,7 @@ accountRoutes.get("/auth/export", requireAuth, async (c) => {
   if (!(await checkRateLimit(`export:${userId}`, 5, 3600))) throw tooMany("too many export requests");
   const db = c.env.DB;
   const all = <T>(r: { results?: T[] }) => r.results ?? [];
-  const [account, identities, sessions, installs, ratings, thumbs, comments, themeLikes, reports, friendships, requestsIn, requestsOut, blocks] = await Promise.all([
+  const [account, identities, sessions, installs, ratings, thumbs, comments, themeLikes, reports, friendships, requestsIn, requestsOut, blocks, gameScores, gameMatches] = await Promise.all([
     db.prepare("SELECT id, display_name, avatar_url, handle, status, created_at, last_seen_at FROM users WHERE id = ?").bind(userId).first(),
     db.prepare("SELECT provider, provider_user_id, provider_login, linked_at FROM identities WHERE user_id = ?").bind(userId).all(),
     // Timestamps only — never token_hash. See exclusion note above.
@@ -218,6 +225,11 @@ accountRoutes.get("/auth/export", requireAuth, async (c) => {
     db.prepare("SELECT id, to_user, created_at FROM friend_requests WHERE from_user = ?").bind(userId).all(),
     // Only blocks the user MADE (blocker = me) — never blocks AGAINST them.
     db.prepare("SELECT blocked, created_at FROM blocks WHERE blocker = ?").bind(userId).all(),
+    // WHY games opt in (2026-11-05, privacy policy): scores and head-to-head results are the
+    // user's own records and were missing from the export. A match names the opponent's
+    // account id, the same way friendships do; both players already know who they played.
+    db.prepare("SELECT game, best_score, best_at, runs, updated_at FROM game_scores WHERE user_id = ?").bind(userId).all(),
+    db.prepare("SELECT user_low, user_high, game, match_id, winner, source, recorded_at FROM game_matches WHERE user_low = ? OR user_high = ?").bind(userId, userId).all(),
   ]);
   return c.json({
     exported_at: Math.floor(Date.now() / 1000),
@@ -233,5 +245,7 @@ accountRoutes.get("/auth/export", requireAuth, async (c) => {
     friendships: all(friendships),
     friend_requests: { incoming: all(requestsIn), outgoing: all(requestsOut) },
     blocks: all(blocks),
+    game_scores: all(gameScores),
+    game_matches: all(gameMatches),
   });
 });
