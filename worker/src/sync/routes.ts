@@ -20,7 +20,9 @@ syncRoutes.get("/sync/hub", requireAuth, async (c) => {
   const stub = c.env.SYNC_HUB.get(c.env.SYNC_HUB.idFromName(userId));
   const fwd = new Request("https://synchub.internal/connect", c.req.raw);
   fwd.headers.set("X-Sync-User", userId);
-  fwd.headers.set("X-Sync-Device", c.req.query("device") ?? "unknown");
+  // WHY truncate + strip control characters: the label is only a human-readable name that is
+  // stored and sent to the account's other devices; it must not be an unbounded string.
+  fwd.headers.set("X-Sync-Device", (c.req.query("device") ?? "unknown").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 64) || "unknown");
   // ?deviceId= is the stable machineId (a UUID), threaded through so the DO can
   // key per-device sync recency reliably (rename-proof, unlike the ?device= label).
   // Omitted by old clients — the DO skips the recency write when it's absent.
