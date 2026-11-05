@@ -26,7 +26,9 @@ workers_dev = true
 # oldest supported app no longer names the workers.dev host.
 
 [triggers]
-crons = ["17 6 * * *"]   # daily maintenance: prune sessions/handles/device codes
+# daily maintenance (prune sessions/handles/device codes); hourly attack alarms (src/security/alarms.ts).
+# The hourly string must match HOURLY_ALARM_CRON in src/index.ts.
+crons = ["17 6 * * *", "41 * * * *"]
 
 [[d1_databases]]
 binding = "DB"

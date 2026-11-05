@@ -20,6 +20,7 @@ import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
+import { checkAlarms, sendAlarms } from "./security/alarms";
 
 const app = new Hono<HonoEnv>();
 
@@ -167,9 +168,19 @@ app.route("/", siteAnalyticsRoutes);
 // cron. The export shape changes from `app` to `{ fetch, scheduled }`, but
 // SELF.fetch (and Cloudflare's runtime) accept either shape, so HTTP routing is
 // unchanged. Cron trigger is declared in wrangler.toml [triggers].
+// Must match the hourly entry in wrangler.toml [triggers].
+const HOURLY_ALARM_CRON = "41 * * * *";
+
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+  async scheduled(event: ScheduledController, env: Env): Promise<void> {
+    // WHY (security apparatus, 2026-11): the hourly trigger only runs the attack alarms
+    // (src/security/alarms.ts); the daily trigger keeps doing maintenance as before.
+    if (event.cron === HOURLY_ALARM_CRON) {
+      const alarms = await checkAlarms(env, Math.floor(Date.now() / 1000));
+      await sendAlarms(env, alarms);
+      return;
+    }
     await pruneExpired(env.DB, Math.floor(Date.now() / 1000));
     // Daily app totals kept past the 90-day analytics limit. Its own catch: a
     // failed analytics query must not mark the maintenance run as failed, and

@@ -54,6 +54,12 @@ export interface Env {
   // "1" = refuse sign-ins that are not bound to the starting computer (card #55).
   // Leave unset until every supported app sends a loopback port; see auth/device-flow.ts.
   REQUIRE_LOOPBACK_SIGNIN?: string;
+  // Phone alert channel for the hourly attack alarms (src/security/alarms.ts). Secret, pushed by CI
+  // from repo secret NTFY_TOPIC; unset -> alarms only go to the server log.
+  NTFY_TOPIC?: string;
+  // Optional overrides for the alarm thresholds (per hour). Unset -> the defaults in alarms.ts.
+  ALARM_SIGNIN_START_LIMIT?: string;
+  ALARM_NEW_SESSION_LIMIT?: string;
   // Seconds GET /stats may be served from the KV copy (default 300). "0" disables
   // the cache; tests set it so data changes show up at once.
   STATS_CACHE_TTL_SEC?: string;
