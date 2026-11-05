@@ -40,6 +40,11 @@ concurrency:
 # 2026-08-30, no other workflow has a `schedule:` key — so that 60-day rule has never
 # applied here before and nobody has had reason to learn it.)
 
+# WHY (code scanning, 2026-11): read-only unless a job asks for more. Jobs that write
+# (publishing, signing, check runs) declare their own permissions, which override this.
+permissions:
+  contents: read
+
 jobs:
   ingest:
     runs-on: ubuntu-latest
