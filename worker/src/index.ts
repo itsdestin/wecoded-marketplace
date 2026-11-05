@@ -20,6 +20,7 @@ import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
+import { securityRoutes } from "./security/routes";
 import { checkAlarms, sendAlarms } from "./security/alarms";
 
 const app = new Hono<HonoEnv>();
@@ -156,6 +157,7 @@ app.route("/", statsRoutes);
 app.route("/", reportRoutes);
 app.route("/", feedbackRoutes);
 app.route("/", catalogRoutes);
+app.route("/", securityRoutes);
 app.route("/", appRoutes);
 app.route("/", socialRoutes);
 app.route("/", gameRoutes);
