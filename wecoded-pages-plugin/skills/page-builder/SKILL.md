@@ -15,14 +15,21 @@ The app lists it in Pages, lets them pin it to the top bar, and opens it in its 
 
 ## What a page is on disk
 
-One folder, three files:
+One folder, four files:
 
 ```
 <home>/<slug>/
   page.html    the whole page — a complete document, no external files
   page.json    { "name": "…", "description": "…", "icon": "…", "customIcon": { … }, "connections": [ … ] }
+  page.md      notes for the page's assistant: what the page is for, what data.json holds, how to change it
   data.json    written by the app when the page saves data; never write it yourself
 ```
+
+`page.md` is read by the page's own assistant (the chat button on every page): YouCoded gives
+it to that chat before the person says anything. Keep it short and factual — what the page
+does, the shape of its saved data (the keys and what each means), anything an assistant
+changing it must know (a computed field, a connection it relies on). Not instructions to the
+person, and never secrets.
 
 `connections` is optional — leave it out for a page that needs nothing from outside (most pages).
 
@@ -149,10 +156,11 @@ Keep `icon` as an older-app fallback: `page` `timer` `notes` `paint` `chart` `ca
    - The page's own title (`<h1>`) is its name; the app shows the name in its band too.
 5. **Write `page.json`** with the name, description, purpose-designed `customIcon` and named
    `icon` fallback, plus `connections` if the page reaches outside. On an unrelated edit to an
-   existing Page, preserve its icon unless the person requests an icon change.
+   existing Page, preserve its icon unless the person requests an icon change. **Write
+   `page.md`** too (see "What a page is on disk").
 6. **Say what you made and where**, in one or two sentences: the page is in their library now,
-   they can pin it from the card or the panel, and "edit in chat" or `/page-builder edit <name>`
-   changes it.
+   they can pin it from the card or the panel, and the page's chat button (or `/page-builder
+   edit <name>`) changes it.
 
 Show restraint: a page does one thing well. Do not add settings, themes, accounts, or
 "future" panels the person did not ask for.
@@ -311,7 +319,8 @@ changing an `address` makes the page ask the person again the next time it opens
 you make such a change. Removing one never asks. The app reloads the open page when the file
 changes; any unsaved in-page state is lost, which is expected. Keep `data.json` untouched
 unless the change makes the saved shape invalid — then migrate it in the page's own start-up
-code, not by editing the file.
+code, not by editing the file. Update `page.md` when the change alters what the page does or
+the shape of its data; write one if the page has none yet.
 
 ## Rename, description, icon, delete
 
@@ -321,6 +330,11 @@ code, not by editing the file.
 - Delete: remove the folder. Say so first if the page has a `data.json` with content.
 
 ## "Put it back" — history
+
+In the page's own chat, the person can put back any earlier version themselves: YouCoded saves
+the page before each of their messages there, and the chat's Earlier versions button (the
+arrow turning back) lists them with Put back. Point them to it first. The synced history
+below is for anything older, or a change made outside the page's chat.
 
 Pages live in synced folders that are git repositories, but not in the usual place:
 
