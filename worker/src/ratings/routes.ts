@@ -35,7 +35,7 @@ ratingRoutes.post("/ratings", requireAuth, async (c) => {
   // onError reports as a 500 ("we broke") when the truth is a 400 ("your request was
   // broken"). Every other route already parses through this helper.
   const body = await parseJsonBody<{ plugin_id?: string; stars?: number; review_text?: string | null }>(c);
-  const pluginId = await requireCatalogId(c.env.DB, body.plugin_id);
+  const pluginId = await requireCatalogId(c.env.DB, body.plugin_id, "plugin_id", c.env);
   const stars = body.stars;
   if (typeof stars !== "number" || !Number.isInteger(stars) || stars < 1 || stars > 5) {
     throw badRequest("stars must be an integer 1-5");

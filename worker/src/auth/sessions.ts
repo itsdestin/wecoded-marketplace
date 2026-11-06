@@ -6,6 +6,10 @@ import { randomToken, sha256Hex } from "../lib/crypto";
 
 // Sessions idle longer than this are invalid (and pruned by the daily cron).
 export const SESSION_MAX_IDLE_SEC = 90 * 24 * 3600;
+// WHY an absolute cap too: the idle window slides forward on every use, so a stolen
+// token used regularly would otherwise never expire. After this long the person
+// simply signs in again (the app already handles a rejected session as signed-out).
+export const SESSION_MAX_AGE_SEC = 365 * 24 * 3600;
 
 export async function issueSession(db: D1Database, userId: string): Promise<string> {
   const token = randomToken(32);
@@ -21,14 +25,14 @@ export async function issueSession(db: D1Database, userId: string): Promise<stri
 export async function resolveSession(db: D1Database, token: string): Promise<string | null> {
   const hash = await sha256Hex(token);
   const row = await db
-    .prepare("SELECT user_id, last_used_at FROM sessions WHERE token_hash = ?")
+    .prepare("SELECT user_id, last_used_at, created_at FROM sessions WHERE token_hash = ?")
     .bind(hash)
-    .first<{ user_id: string; last_used_at: number }>();
+    .first<{ user_id: string; last_used_at: number; created_at: number }>();
   if (!row) return null;
   const now = Math.floor(Date.now() / 1000);
   // Enforce idle expiry: a session untouched for longer than the idle window is
   // dead. Delete it eagerly so the row doesn't linger until the cron prune.
-  if (row.last_used_at < now - SESSION_MAX_IDLE_SEC) {
+  if (row.last_used_at < now - SESSION_MAX_IDLE_SEC || row.created_at < now - SESSION_MAX_AGE_SEC) {
     await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(hash).run();
     return null;
   }
@@ -42,4 +46,9 @@ export async function resolveSession(db: D1Database, token: string): Promise<str
 export async function revokeSession(db: D1Database, token: string): Promise<void> {
   const hash = await sha256Hex(token);
   await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(hash).run();
+}
+
+// Sign out everywhere: every session this account holds, on every device.
+export async function revokeAllSessions(db: D1Database, userId: string): Promise<void> {
+  await db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }

@@ -52,7 +52,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0  # need the PR base commit for the diff below
 
@@ -305,7 +305,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0 }
       - name: Require a version bump when any plugin's files change
         run: |
@@ -338,9 +338,9 @@ jobs:
           done
           exit $FAIL
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Run the chatsearch CLI tests when it changed
         if: always()
         run: |
@@ -370,14 +370,14 @@ jobs:
       checks: write  # to report bundled-version-bump on the bot's own commit (see the commit step)
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 2  # Need previous commit to detect changes
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Find merged plugin directories
         id: merged
@@ -549,7 +549,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -591,9 +591,11 @@ jobs:
 
   validate-apple-services-macos:
     if: github.event_name == 'pull_request'
-    runs-on: macos-14
+    # WHY macos-15 (2026-11-05): GitHub retired the macos-14 image; every PR's run was cancelled
+    # with "The configuration 'macos-14-arm64-us-default' is not supported" before any step ran.
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 

@@ -49,10 +49,10 @@ jobs:
     # has broken — investigate, do not raise this.
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: "20"
+          node-version: "22"
       # Unquoted glob on purpose: the SHELL expands it, so node receives explicit
       # filenames and this works on every Node version. `node --test <dir>` works
       # only up to Node 20 (Node 21+ resolves a bare directory as a module and
@@ -65,12 +65,17 @@ jobs:
           # 1,000 API requests/hour per repository for Actions' GITHUB_TOKEN (not
           # 5,000 — that is a personal access token). http.mjs stops at 200 left.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # WHY via env: dispatch input text pasted straight into the script is
+          # interpreted by the shell; as an env var it stays plain data.
+          IN_SOURCE: ${{ inputs.source }}
+          IN_RESCAN: ${{ inputs.force_rescan }}
+          IN_MASS: ${{ inputs.allow_mass_retire }}
         run: |
-          RESCAN=""; if [ "${{ inputs.force_rescan }}" = "true" ]; then RESCAN="--force-rescan"; fi
-          MASS=""; if [ "${{ inputs.allow_mass_retire }}" = "true" ]; then MASS="--allow-mass-retire"; fi
-          SRC=""; if [ -n "${{ inputs.source }}" ]; then SRC="--source ${{ inputs.source }}"; fi
+          RESCAN=""; if [ "$IN_RESCAN" = "true" ]; then RESCAN="--force-rescan"; fi
+          MASS=""; if [ "$IN_MASS" = "true" ]; then MASS="--allow-mass-retire"; fi
+          SRC=""; if [ -n "$IN_SOURCE" ]; then SRC="--source $IN_SOURCE"; fi
           node scripts/catalog/build.mjs $SRC $RESCAN $MASS
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: catalog-report

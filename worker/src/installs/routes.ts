@@ -60,11 +60,11 @@ installRoutes.post("/installs", requireAuth, async (c) => {
     // for one of those would record NO installs and leave every vote refused with
     // "must install plugin before voting" — so unknown ids are dropped and the
     // response says how many. A malformed id still rejects the call, above.
-    const kept = await filterCatalogIds(c.env.DB, ids);
+    const kept = await filterCatalogIds(c.env.DB, ids, c.env);
     skipped = ids.length - kept.length;
     ids = kept;
   } else {
-    ids = [await requireCatalogId(c.env.DB, body.plugin_id)];
+    ids = [await requireCatalogId(c.env.DB, body.plugin_id, "plugin_id", c.env)];
   }
 
   const now = Math.floor(Date.now() / 1000);

@@ -17,7 +17,7 @@
 // - No CASE WHEN, dateDiff, CTEs, JOIN or UNION — use countIf/if and
 //   toUnixTimestamp arithmetic instead.
 // See: https://developers.cloudflare.com/analytics/analytics-engine/sql-reference/
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import type { HonoEnv } from "../types";
 import { requireAdminAuth } from "../auth/admin-middleware";
 import { runAnalyticsQuery } from "../lib/analytics-query";
@@ -28,6 +28,7 @@ import {
   historicalCiVersionClause,
   knownDevInClause,
   localTimestampExpr,
+  oneDayDevicesClause,
   OS_EXPR,
   PLATFORM_EXPR,
   platformClause,
@@ -54,6 +55,17 @@ function includeAdmins(query: string | undefined): boolean {
   return query === "1";
 }
 
+// The device filter every per-device chart uses: leaves out team/listed devices
+// (unless include_admins=1) and, with hide_one_day=1, devices seen on only one day.
+// WHY not on /countries or /regions: geography ignores every filter (see top).
+async function deviceFilter(c: Context<HonoEnv>): Promise<string> {
+  const admins = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const oneDay = await oneDayDevicesClause(c.env, c.req.query("hide_one_day"), (sql) =>
+    runAnalyticsQuery<{ device: string }>(c.env, sql)
+  );
+  return `${admins} ${oneDay}`.trim();
+}
+
 export const adminAnalyticsRoutes = new Hono<HonoEnv>();
 
 // WHY this is unconditional on row-count metrics: these exact versions are
@@ -72,7 +84,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
   const days = clampDays(c.req.query("days"), 30);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
@@ -97,7 +109,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
 adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
@@ -126,7 +138,7 @@ adminAnalyticsRoutes.get("/admin/analytics/installs", requireAdminAuth, async (c
   const days = Math.min(clampDays(c.req.query("days"), 90), NEW_DEVICE_HORIZON);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const rows = await runAnalyticsQuery<{ day: string; installs: number }>(
     c.env,
@@ -149,7 +161,7 @@ adminAnalyticsRoutes.get("/admin/analytics/versions", requireAdminAuth, async (c
   await requireAdminAccount(c);
   const days = clampDays(c.req.query("days"), 1);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
   const rows = await runAnalyticsQuery<{ version: string; devices: number }>(
@@ -166,7 +178,7 @@ adminAnalyticsRoutes.get("/admin/analytics/versions", requireAdminAuth, async (c
 adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
   const rows = await runAnalyticsQuery<{ platform: string; devices: number }>(
@@ -220,7 +232,7 @@ adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth,
   const days = clampDays(c.req.query("days"), 30);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
   const windowDays = local === "timestamp" ? days : days + 1;
@@ -246,7 +258,7 @@ adminAnalyticsRoutes.get("/admin/analytics/weekly", requireAdminAuth, async (c) 
   const windowDays = Math.min(90, weeks * 7 + 7);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
@@ -279,7 +291,7 @@ adminAnalyticsRoutes.get("/admin/analytics/retention", requireAdminAuth, async (
   const weeks = clampWeeks(c.req.query("weeks"), 8);
   const local = localTimestampExpr(c.req.query("tz_offset"));
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const sinceInstallDay = "toUnixTimestamp(last_seen) - toUnixTimestamp(toStartOfDay(first_seen))";
   const rows = await runAnalyticsQuery<{
@@ -314,7 +326,7 @@ adminAnalyticsRoutes.get("/admin/analytics/os", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const days = clampDays(c.req.query("days"), 30);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
   const rows = await runAnalyticsQuery<{ os: string; devices: number }>(
@@ -333,7 +345,7 @@ adminAnalyticsRoutes.get("/admin/analytics/new-by-os", requireAdminAuth, async (
   await requireAdminAccount(c);
   const days = Math.min(clampDays(c.req.query("days"), 30), NEW_DEVICE_HORIZON);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const rows = await runAnalyticsQuery<{ os: string; devices: number }>(
     c.env,
     `SELECT os, count() AS devices
@@ -354,7 +366,7 @@ adminAnalyticsRoutes.get("/admin/analytics/new-by-os", requireAdminAuth, async (
 adminAnalyticsRoutes.get("/admin/analytics/milestones", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const days = clampDays(c.req.query("days"), 90);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   // weekly=1 adds a week column (Sunday starts, like /weekly) for the Overview's journey table.
   const weekly = c.req.query("weekly") === "1";
@@ -414,7 +426,7 @@ adminAnalyticsRoutes.get("/admin/analytics/excluded", requireAdminAuth, async (c
 adminAnalyticsRoutes.get("/admin/analytics/lapsed", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
-  const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const filter = await deviceFilter(c);
   const platform = platformClause(c.req.query("platform"));
   const perDevice = `SELECT blob2, MAX(timestamp) AS last_seen
        FROM youcoded_app_events

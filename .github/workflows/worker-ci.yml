@@ -4,7 +4,7 @@ name: Worker CI
 # master and runs the tests as part of DEPLOYING, so a broken PR merged green
 # and failed at deploy time against production. Verified 2026-07-23: PRs #51-#55
 # all merged with an empty check rollup, four of them touching worker/. This
-# runs the same tests first. Node 20 + cache path mirror worker-deploy.yml.
+# runs the same tests first. Node 22 + cache path mirror worker-deploy.yml.
 on:
   pull_request:
     paths:
@@ -19,8 +19,8 @@ jobs:
       run:
         working-directory: worker
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
           cache: "npm"
