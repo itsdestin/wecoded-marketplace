@@ -613,6 +613,9 @@
 
   function setPath(obj, path, value) {
     const parts = path.split('.');
+    // WHY (code scanning, 2026-11): a "__proto__"/"constructor" segment would write onto every
+    // object in the page instead of this one. Paths come from the page's own markup today; refuse anyway.
+    if (parts.some((p) => p === '__proto__' || p === 'constructor' || p === 'prototype')) return;
     let cur = obj;
     for (let i = 0; i < parts.length - 1; i++) {
       if (!cur[parts[i]]) cur[parts[i]] = {};

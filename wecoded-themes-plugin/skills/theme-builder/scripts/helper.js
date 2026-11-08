@@ -52,11 +52,16 @@
       const selected = container ? container.querySelectorAll('.selected') : [];
       if (selected.length === 0) {
         indicator.textContent = 'Click an option above, then return to the terminal';
-      } else if (selected.length === 1) {
-        const label = selected[0].querySelector('h3, .content h3, .card-body h3')?.textContent?.trim() || selected[0].dataset.choice;
-        indicator.innerHTML = '<span class="selected-text">' + label + ' selected</span> — return to terminal to continue';
       } else {
-        indicator.innerHTML = '<span class="selected-text">' + selected.length + ' selected</span> — return to terminal to continue';
+        // WHY DOM nodes, not innerHTML (code scanning, 2026-11): the label is text read back off
+        // the page, so a concept title containing markup would otherwise be run as HTML.
+        const label = selected.length === 1
+          ? (selected[0].querySelector('h3, .content h3, .card-body h3')?.textContent?.trim() || selected[0].dataset.choice)
+          : String(selected.length);
+        const strong = document.createElement('span');
+        strong.className = 'selected-text';
+        strong.textContent = label + ' selected';
+        indicator.replaceChildren(strong, ' — return to terminal to continue');
       }
     }, 0);
   });
