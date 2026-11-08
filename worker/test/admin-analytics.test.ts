@@ -622,3 +622,28 @@ describe("analytics dashboard additions: systems, setup steps, exclusions, lapse
     expect(rows.map((r) => [r.day, r.platform, r.active])).toEqual([["2026-10-29", "android", 2], ["2026-10-29", "desktop", 7]]);
   });
 });
+
+// "Hide one-day devices" (2026-11-05): the Worker first asks for the one-day list,
+// then splices those hashes into the chart's query. Geography ignores it.
+describe("hide_one_day filter", () => {
+  const good = "c".repeat(64); // not the test env's KNOWN_DEV_DEVICES ("a"×64)
+  beforeEach(async () => {
+    await clearAuth();
+    // Every AE call answers with one valid hash and one that would break the SQL.
+    mockCfSql([{ device: good }, { device: "x') OR 1=1 --" }]);
+  });
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  it("leaves out one-day devices, drops non-hex values, and skips geography", async () => {
+    const token = await seedAdmin();
+    const dau = await sqlFor(token, "/admin/analytics/dau?hide_one_day=1");
+    expect(dau).toContain(`AND blob2 NOT IN ('${good}')`);
+    expect(dau).not.toContain("OR 1=1");
+
+    const plain = await sqlFor(token, "/admin/analytics/dau");
+    expect(plain).not.toContain(good);
+
+    const countries = await sqlFor(token, "/admin/analytics/countries?hide_one_day=1");
+    expect(countries).not.toContain(good);
+  });
+});
