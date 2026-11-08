@@ -647,3 +647,78 @@ describe("hide_one_day filter", () => {
     expect(countries).not.toContain(good);
   });
 });
+
+// The dashboard's "click a day" panel (Destin, 2026-11-08).
+describe("GET /admin/analytics/day", () => {
+  beforeEach(async () => { await clearAuth(); mockCfSql([{ devices: 2 }]); });
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  function allSql(): string[] {
+    return (globalThis.fetch as any).mock.calls.map((c: any[]) => c[1].body as string);
+  }
+
+  it("returns 401 without auth", async () => {
+    const res = await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05");
+    expect(res.status).toBe(401);
+  });
+
+  it("refuses a date that is not a real YYYY-MM-DD, without querying", async () => {
+    const token = await seedAdmin();
+    for (const bad of ["", "2026-02-30", "2026-11-05'--", "11/05/2026"]) {
+      const res = await SELF.fetch(`https://test.local/admin/analytics/day?date=${encodeURIComponent(bad)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(res.status, bad).toBe(400);
+    }
+    expect((globalThis.fetch as any).mock.calls.length).toBe(0);
+  });
+
+  it("bounds every query to that local day and returns totals plus the breakdown", async () => {
+    const token = await seedAdmin();
+    const res = await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05&tz_offset=-420", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<any>();
+    expect(body.date).toBe("2026-11-05");
+    expect(body.active).toBe(2);
+    expect(body.newDevices).toBe(2);
+    expect(Array.isArray(body.breakdown)).toBe(true);
+    const sqls = allSql();
+    expect(sqls.length).toBe(7);
+    for (const sql of sqls) {
+      expect(sql).toContain("toDateTime('2026-11-05 00:00:00')");
+      expect(sql).toContain("toDateTime('2026-11-06 00:00:00')");
+      expect(sql).toContain("(timestamp - INTERVAL '420' MINUTE)");
+      expect(sql).toContain("blob1 = 'heartbeat'");
+      expect(sql).toContain(`blob2 NOT IN ('${"a".repeat(64)}')`);
+    }
+    const breakdown = sqls.find((s) => s.includes("GROUP BY version, os, country, region"))!;
+    expect(breakdown).toContain("count(DISTINCT blob2) AS devices");
+    expect(breakdown).not.toMatch(/SELECT[^]*\bblob2 AS/);
+  });
+
+  it("applies platform, version and hide_test to the day, but not to new devices", async () => {
+    const token = await seedAdmin();
+    await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05&platform=mac&version=1.3.1&hide_test=1", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const sqls = allSql();
+    const fresh = sqls.find((s) => s.includes("first_seen"))!;
+    for (const sql of sqls) expect(sql).toContain("AND blob4 = 'desktop' AND blob5 = 'mac'");
+    for (const sql of sqls.filter((s) => s !== fresh)) {
+      expect(sql).toContain("AND blob3 = '1.3.1'");
+      expect(sql).toContain("NOT LIKE '%-releasetest'");
+    }
+    expect(fresh).not.toContain("blob3 = '1.3.1'");
+    expect(fresh).not.toContain("NOT LIKE");
+  });
+
+  it("drops invalid filters", async () => {
+    const token = await seedAdmin();
+    await SELF.fetch(`https://test.local/admin/analytics/day?date=2026-11-05&${INVALID_FILTERS}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    for (const sql of allSql()) expectNoRowFilters(sql);
+  });
+});
