@@ -178,8 +178,10 @@ describe("GET /admin/analytics/mau", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
-    const body = await res.json<{ mau: number }>();
-    expect(body).toEqual({ mau: 16 });
+    const body = await res.json<{ mau: number; days: number }>();
+    // WHY `days` is echoed: the Analytics page uses it to tell a server that follows
+    // the chosen range from an older one that always answers with 30 days.
+    expect(body).toEqual({ mau: 16, days: 30 });
     const sql = (globalThis.fetch as any).mock.calls[0][1].body as string;
     expect(sql).toContain("count(DISTINCT blob2) AS devices");
     expectNoRowFilters(sql);
@@ -201,6 +203,18 @@ describe("GET /admin/analytics/mau", () => {
   it("drops invalid params", async () => {
     const token = await seedAdmin();
     expectNoRowFilters(await sqlFor(token, `/admin/analytics/mau?${INVALID_FILTERS}`));
+  });
+
+  // The page's 7/30/90-day range drives this count (Destin, 2026-11-09).
+  it("follows ?days and echoes it, clamped to 1..90", async () => {
+    const token = await seedAdmin();
+    const res = await SELF.fetch("https://test.local/admin/analytics/mau?days=7", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(await res.json()).toEqual({ mau: 16, days: 7 });
+    expect((globalThis.fetch as any).mock.calls[0][1].body as string).toContain("INTERVAL '7' DAY");
+    expect(await sqlFor(token, "/admin/analytics/mau?days=9999")).toContain("INTERVAL '90' DAY");
+    expect(await sqlFor(token, "/admin/analytics/mau?days=1;DROP")).toContain("INTERVAL '30' DAY");
   });
 });
 
@@ -297,6 +311,11 @@ describe("GET /admin/analytics/countries", () => {
   it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/countries");
+    // A time window is not another dimension: ?days narrows the span and nothing else.
+    expect(plain).toContain("INTERVAL '30' DAY");
+    const week = await sqlFor(token, "/admin/analytics/countries?days=7");
+    expect(week).toBe(plain.replace("INTERVAL '30' DAY", "INTERVAL '7' DAY"));
+    expect(await sqlFor(token, "/admin/analytics/countries?days=7 OR 1=1")).toBe(plain);
     const filtered = await sqlFor(
       token,
       "/admin/analytics/countries?platform=android&version=1.0&hide_test=1&tz_offset=60"
@@ -340,6 +359,11 @@ describe("GET /admin/analytics/regions", () => {
   it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/regions");
+    // A time window is not another dimension: ?days narrows the span and nothing else.
+    expect(plain).toContain("INTERVAL '30' DAY");
+    const week = await sqlFor(token, "/admin/analytics/regions?days=7");
+    expect(week).toBe(plain.replace("INTERVAL '30' DAY", "INTERVAL '7' DAY"));
+    expect(await sqlFor(token, "/admin/analytics/regions?days=7 OR 1=1")).toBe(plain);
     const filtered = await sqlFor(
       token,
       "/admin/analytics/regions?platform=android&version=1.0&hide_test=1&tz_offset=60"

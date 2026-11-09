@@ -108,8 +108,12 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
   return c.json(rows);
 });
 
-// GET /admin/analytics/mau — rolling 30-day distinct devices.
+// GET /admin/analytics/mau?days=N — distinct devices over the last N days (default 30).
 // Params: platform, version, hide_test.
+// WHY `days` (Destin, 2026-11-09): the Analytics page's 7/30/90-day range now drives
+// every card, so "active devices" must follow it too. The answer echoes `days` so the
+// page can tell this server (ranged mau/countries/regions) from an older one that
+// would silently answer with 30 days whatever was asked.
 adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
@@ -117,13 +121,14 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => 
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ devices: number }>(
     c.env,
     `SELECT count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${platform} ${version} ${hideTest}`
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform} ${version} ${hideTest}`
   );
-  return c.json({ mau: rows[0]?.devices ?? 0 });
+  return c.json({ mau: rows[0]?.devices ?? 0, days });
 });
 
 // GET /admin/analytics/installs?days=N — derived from first-seen device per LOCAL day.
@@ -195,34 +200,39 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (
   return c.json(rows);
 });
 
-// GET /admin/analytics/countries — rolling 30-day top 20.
+// GET /admin/analytics/countries?days=N — top 20 over the last N days (default 30).
 // Deliberately ignores platform/version/hide_test/tz_offset: geography is never
 // cross-tabulated with other dimensions (fingerprint risk at low cell counts).
+// WHY `days` is allowed (Destin, 2026-11-09): the page's range drives every card. A
+// shorter span is only a time window, not another dimension, and reveals less than
+// the owner's one-day view (/day) already does.
 adminAnalyticsRoutes.get("/admin/analytics/countries", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ country: string; devices: number }>(
     c.env,
     `SELECT blob6 AS country, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter}
      GROUP BY country ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
 });
 
-// GET /admin/analytics/regions — rolling 30-day top 20 ISO 3166-2 regions.
-// Deliberately ignores every user dimension filter — see /countries.
+// GET /admin/analytics/regions?days=N — top 20 ISO 3166-2 regions over the last N days
+// (default 30). Deliberately ignores every user dimension filter — see /countries.
 adminAnalyticsRoutes.get("/admin/analytics/regions", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ region: string; devices: number }>(
     c.env,
     `SELECT blob7 AS region, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter}
      GROUP BY region ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
