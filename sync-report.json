@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-11-08T01:41:31.465Z",
+  "timestamp": "2026-11-10T23:37:14.029Z",
   "totalEntries": 369,
   "counts": {
-    "added": 2,
-    "updated": 25,
-    "unchanged": 304,
+    "added": 0,
+    "updated": 1,
+    "unchanged": 330,
     "deprecated": 0
   },
   "components": {
-    "extracted": 91,
+    "extracted": 68,
     "failed": [
       {
         "id": "xcode",
@@ -16,7 +16,7 @@
       }
     ],
     "truncated": [],
-    "startedAt": "2026-11-08T01:41:24.937Z",
-    "finishedAt": "2026-11-08T01:41:31.441Z"
+    "startedAt": "2026-11-10T23:37:12.528Z",
+    "finishedAt": "2026-11-10T23:37:13.868Z"
   }
 }
