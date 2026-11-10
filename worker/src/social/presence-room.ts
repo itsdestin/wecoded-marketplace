@@ -256,6 +256,16 @@ export class PresenceRoom {
           this.safeSend(ws, JSON.stringify({ type: "challenge-failed", target }));
           break;
         }
+        // WHY: both fields are passed on to the friend's app untouched, so they are
+        // checked here. Game names must be one we ship (an empty/missing one is what
+        // older apps send for the default game); the room code must be a short plain token.
+        const gt = data.gameType;
+        const gameOk = gt === undefined || gt === null || gt === "" || isVersusGame(gt);
+        const codeOk = typeof data.code === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(data.code);
+        if (!gameOk || !codeOk) {
+          this.safeSend(ws, JSON.stringify({ type: "challenge-failed", target }));
+          break;
+        }
         const msg = JSON.stringify({ type: "challenge", from: att.card, gameType: data.gameType, code: data.code });
         for (const conn of conns) this.safeSend(conn, msg);
         break;

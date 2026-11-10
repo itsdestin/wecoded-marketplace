@@ -114,9 +114,12 @@ export function localTimestampExpr(rawOffset: string | undefined): string {
     : `(timestamp - INTERVAL '${Math.abs(minutes)}' MINUTE)`;
 }
 
-// WHY these expressions (analytics audit, 2026-10-31): Android 1.3.1–1.3.3
-// checked in with platform "desktop", but a phone never fills the OS field and
-// a computer always does — so an empty OS means a phone, for old rows and new.
+// WHY these expressions: a phone never fills the OS field — the pre-1.3.1
+// Kotlin app sent "android" with it empty, and the app from the next release
+// on sends "android" with it empty again — so an empty OS means a phone.
+// CAVEAT (corrected 2026-11-02): phones on 1.3.1–1.3.3 ran the engine's Linux
+// build and sent "desktop" with OS "linux"; nothing in those rows tells them
+// apart from Linux computers, so they are counted as Linux.
 export const PLATFORM_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', 'desktop')";
 // Windows / Mac / Linux / Android, the same four the website's download buttons use.
 export const OS_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', blob5)";
@@ -146,4 +149,45 @@ export function versionClause(raw: string | undefined): string {
 export function hideTestClause(raw: string | undefined): string {
   if (raw !== "1") return "";
   return "AND blob3 NOT LIKE '%-releasetest' AND blob3 NOT LIKE '%-dev'";
+}
+
+// "Hide one-day devices" (Destin, 2026-11-05): devices whose every check-in fell
+// on a single UTC day, and that day is at least 2 days old (so today's and
+// yesterday's brand-new installs aren't hidden before they've had a chance to
+// come back). Returns "AND blob2 NOT IN (…)" or "".
+//
+// WHY two steps instead of one SQL statement: Analytics Engine has no JOIN and
+// no IN-subquery support we can rely on, so the Worker first asks for the list,
+// then splices it in — the same shape as the KNOWN_DEV_DEVICES list. The hashes
+// never leave the Worker (never returned, never logged).
+// WHY the hex check: blob2 is whatever a client sent, so a hash that isn't
+// exactly 64 hex chars is dropped rather than spliced into SQL.
+// WHY the 5-minute cache: the dashboard fires a dozen requests per load; this
+// keeps it to one extra query per load instead of one per chart.
+const ONE_DAY_TTL_MS = 5 * 60 * 1000;
+let oneDayCache: { at: number; clause: string } | null = null;
+
+export async function oneDayDevicesClause(
+  env: Env,
+  raw: string | undefined,
+  run: (sql: string) => Promise<Array<{ device: string }>>
+): Promise<string> {
+  if (raw !== "1") return "";
+  if (oneDayCache && Date.now() - oneDayCache.at < ONE_DAY_TTL_MS) return oneDayCache.clause;
+  const rows = await run(
+    `SELECT blob2 AS device FROM (
+       SELECT blob2, count(DISTINCT toDate(timestamp)) AS days, MAX(timestamp) AS last_seen
+       FROM youcoded_app_events
+       WHERE blob1 = 'heartbeat' ${cutoverClause(env)}
+       GROUP BY blob2
+     )
+     WHERE days = 1 AND last_seen < NOW() - INTERVAL '2' DAY`
+  );
+  const hashes = rows
+    .map((r) => String(r.device ?? "").toLowerCase())
+    .filter((h) => /^[a-f0-9]{64}$/.test(h))
+    .map((h) => `'${h}'`);
+  const clause = hashes.length ? `AND blob2 NOT IN (${hashes.join(",")})` : "";
+  oneDayCache = { at: Date.now(), clause };
+  return clause;
 }

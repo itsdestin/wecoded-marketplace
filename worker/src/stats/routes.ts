@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { HonoEnv } from "../types";
 import { bayesianAverage } from "./bayesian";
+import { cachedText } from "../lib/kv-cache";
 
 export const statsRoutes = new Hono<HonoEnv>();
 
@@ -12,21 +13,34 @@ interface ThemeAgg { likes: number; installs: number }
 // this one constant so the split is stated once.
 const THEME_ID_PREFIX = "theme:";
 
+// WHY a shared cached copy: this route is public, unauthenticated and runs four
+// whole-table scans, so a loop of requests could burn the day's database read
+// allowance. Everyone now shares one answer that is at most two minutes old.
+const DEFAULT_STATS_TTL_SEC = 120;
+
 statsRoutes.get("/stats", async (c) => {
-  const installRows = await c.env.DB
+  const ttl = c.env.STATS_CACHE_TTL_SEC !== undefined ? Number(c.env.STATS_CACHE_TTL_SEC) : DEFAULT_STATS_TTL_SEC;
+  const body = await cachedText(c.env.CATALOG_KV, "stats:v1", Number.isFinite(ttl) ? ttl : DEFAULT_STATS_TTL_SEC, () => computeStats(c.env.DB));
+  c.header("Cache-Control", "public, max-age=300");
+  c.header("Content-Type", "application/json");
+  return c.body(body);
+});
+
+async function computeStats(db: D1Database): Promise<string> {
+  const installRows = await db
     .prepare("SELECT plugin_id, COUNT(*) AS n FROM installs GROUP BY plugin_id")
     .all<{ plugin_id: string; n: number }>();
-  const ratingRows = await c.env.DB
+  const ratingRows = await db
     .prepare(
       `SELECT plugin_id, AVG(stars) AS avg_stars, COUNT(*) AS n
        FROM ratings WHERE hidden = 0 GROUP BY plugin_id`
     )
     .all<{ plugin_id: string; avg_stars: number; n: number }>();
-  const likeRows = await c.env.DB
+  const likeRows = await db
     .prepare("SELECT theme_id, COUNT(*) AS n FROM theme_likes GROUP BY theme_id")
     .all<{ theme_id: string; n: number }>();
   // Marketplace overhaul: one-tap votes. SUM over CASE keeps it one GROUP BY.
-  const thumbRows = await c.env.DB
+  const thumbRows = await db
     .prepare(
       `SELECT plugin_id,
               SUM(CASE WHEN vote = 1 THEN 1 ELSE 0 END) AS up,
@@ -75,10 +89,9 @@ statsRoutes.get("/stats", async (c) => {
     themes[r.theme_id] = entry;
   }
 
-  c.header("Cache-Control", "public, max-age=300");
-  return c.json({
+  return JSON.stringify({
     generated_at: Math.floor(Date.now() / 1000),
     plugins,
     themes,
   });
-});
+}

@@ -55,6 +55,26 @@ export interface Env {
   SITE_ANALYTICS_ENABLED?: string;
   SITE_ANALYTICS_SECRET?: string;
   SITE_CAMPAIGN_CAPACITY?: string;
+  // "1" = refuse sign-ins that are not bound to the starting computer (card #55).
+  // Leave unset until every supported app sends a loopback port; see auth/device-flow.ts.
+  REQUIRE_LOOPBACK_SIGNIN?: string;
+  // Phone alert channel for the hourly attack alarms (src/security/alarms.ts). Secret, pushed by CI
+  // from repo secret NTFY_TOPIC; unset -> alarms only go to the server log.
+  NTFY_TOPIC?: string;
+  // Optional overrides for the alarm thresholds (per hour). Unset -> the defaults in alarms.ts.
+  ALARM_SIGNIN_START_LIMIT?: string;
+  ALARM_NEW_SESSION_LIMIT?: string;
+  // Seconds GET /stats may be served from the KV copy (default 300). "0" disables
+  // the cache; tests set it so data changes show up at once.
+  STATS_CACHE_TTL_SEC?: string;
+  // Where the list of real theme names comes from (the community theme registry).
+  // Empty/unset -> theme names are only format-checked. Cached in KV for an hour.
+  THEME_REGISTRY_URL?: string;
+  // Comma-separated GitHub token scopes the admin X-GitHub-PAT path must carry
+  // (e.g. "repo"). Unset -> any token GitHub accepts for the admin's account, as before.
+  // DO NOT SET if an admin uses a fine-grained token: GitHub sends no scope header for those, so
+  // every one would be refused. Only classic tokens carry scopes.
+  ADMIN_PAT_REQUIRED_SCOPES?: string;
   // Workers rate-limiting binding (wrangler.toml [[ratelimits]]): per internet
   // address, per minute, for the public analytics write paths (app check-ins
   // and website visits). Optional: omitted in [env.test].

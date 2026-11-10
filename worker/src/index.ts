@@ -21,6 +21,8 @@ import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
 import { routePartykitRequest } from "partyserver";
+import { securityRoutes } from "./security/routes";
+import { checkAlarms, sendAlarms } from "./security/alarms";
 
 const app = new Hono<HonoEnv>();
 
@@ -135,8 +137,15 @@ app.onError((err, c) => {
   };
   if (err instanceof HTTPException) return siteCors(err.getResponse());
   const message = err instanceof Error ? err.message : "internal error";
+  // Full detail always goes to the server log.
   console.error("worker onError:", message);
-  return c.json({ ok: false, error: message }, 500);
+  // WHY generic for everyone else: raw database/runtime messages can name tables,
+  // columns or internal URLs. Only a signed-in caller on an /admin/ route (the
+  // analytics skill debugging Analytics Engine SQL) still gets the real text.
+  let userId: string | undefined;
+  try { userId = c.get("userId"); } catch { /* not set */ }
+  const detailOk = c.req.path.startsWith("/admin/") && Boolean(userId);
+  return c.json({ ok: false, error: detailOk ? message : "internal error" }, 500);
 });
 
 app.get("/health", (c) => c.json({ ok: true }));
@@ -149,6 +158,7 @@ app.route("/", statsRoutes);
 app.route("/", reportRoutes);
 app.route("/", feedbackRoutes);
 app.route("/", catalogRoutes);
+app.route("/", securityRoutes);
 app.route("/", appRoutes);
 app.route("/", socialRoutes);
 app.route("/", gameRoutes);
@@ -161,6 +171,9 @@ app.route("/", siteAnalyticsRoutes);
 // cron. The export shape changes from `app` to `{ fetch, scheduled }`, but
 // SELF.fetch (and Cloudflare's runtime) accept either shape, so HTTP routing is
 // unchanged. Cron trigger is declared in wrangler.toml [triggers].
+// Must match the hourly entry in wrangler.toml [triggers].
+const HOURLY_ALARM_CRON = "41 * * * *";
+
 export default {
   // WHY the games check runs BEFORE Hono: the CORS middleware above would try to
   // add headers to a WebSocket (101) response, which is immutable. The game
@@ -174,7 +187,14 @@ export default {
     }
     return app.fetch(req, env, ctx);
   },
-  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+  async scheduled(event: ScheduledController, env: Env): Promise<void> {
+    // WHY (security apparatus, 2026-11): the hourly trigger only runs the attack alarms
+    // (src/security/alarms.ts); the daily trigger keeps doing maintenance as before.
+    if (event.cron === HOURLY_ALARM_CRON) {
+      const alarms = await checkAlarms(env, Math.floor(Date.now() / 1000));
+      await sendAlarms(env, alarms);
+      return;
+    }
     await pruneExpired(env.DB, Math.floor(Date.now() / 1000));
     // Daily app totals kept past the 90-day analytics limit. Its own catch: a
     // failed analytics query must not mark the maintenance run as failed, and
