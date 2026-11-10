@@ -39,8 +39,11 @@ export async function issueTicket(
 
   const u = await db.prepare("SELECT display_name, handle FROM users WHERE id = ?")
     .bind(userId).first<{ display_name: string | null; handle: string | null }>();
-  // Handle is unique, so two different players can never share a shown name by accident.
-  const username = (u?.handle || u?.display_name || "Player").slice(0, 40);
+  // WHY display name first: it is the name the lobby, the challenge and the app's own "that message is mine"
+  // check already use for this player (the app's usePresence: display_name ?? login). Naming the player by handle
+  // here made the room disagree with the rest of the app about who is who. The room itself tells players apart
+  // by account id, never by this name.
+  const username = (u?.display_name || u?.handle || "Player").slice(0, 40);
 
   const ticket = randomToken(24);
   await db.prepare(

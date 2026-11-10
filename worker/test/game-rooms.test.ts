@@ -11,7 +11,7 @@ import { MAX_AGE_MS, IDLE_MS, MAX_MESSAGE_CHARS, RATE_MAX_MESSAGES } from "../sr
 type Sock = { ws: WebSocket; msgs: any[]; closed: Promise<{ code: number; reason: string }> };
 type Player = { token: string; username: string };
 
-// One signed-in test player per name; the shown name is the account handle.
+// One signed-in test player per name; login and handle are the same here, so the shown name is that name either way.
 const players = new Map<string, Player>();
 async function player(name: string): Promise<Player> {
   const hit = players.get(name);
