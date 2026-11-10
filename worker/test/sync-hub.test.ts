@@ -372,10 +372,13 @@ describe("sync hub — leases", () => {
     expect(relAgain.holder).toBeNull();
 
     // The session is genuinely free now — a different device can acquire it.
-    const reacq = await leaseOp(a, "acquire", "s1", "dev-b");
+    // WHY: a different device is a different connection (one connection = one lease identity).
+    const b = await connect(token, "Desktop-B");
+    await nextMessage(b, "hello");
+    const reacq = await leaseOp(b, "acquire", "s1", "dev-b");
     expect(reacq.ok).toBe(true);
     expect(reacq.holder.deviceId).toBe("dev-b");
-    a.close();
+    a.close(); b.close();
   });
 
   // Lazy expiry: the DO stamps expiresAt = server-now + 300s at acquire time and
@@ -678,5 +681,70 @@ describe("sync hub — device recency", () => {
     expect(typeof hello.lastSyncByDevice["machine-A"]).toBe("number");
     expect(typeof hello.lastSyncByDevice["machine-B"]).toBe("number");
     a.close(); b.close(); c.close();
+  });
+});
+
+// Card #124(c): a connection may only act under ONE lease identity, and a live
+// connection's identity can't be claimed by another connection.
+describe("sync hub — lease identity is tied to the connection", () => {
+  async function pair() {
+    const acct = await createTestAccount(); const token = await issueTestSession(acct);
+    const real = await connect(token, "Real"); await nextMessage(real, "hello");
+    const other = await connect(token, "Other"); await nextMessage(other, "hello");
+    return { token, real, other };
+  }
+  const silent = (ws: WebSocket) => expect(leaseOp(ws, "get", "s", "x", 150)).rejects.toThrow();
+
+  it("a second live connection cannot acquire, renew, release or force as another device", async () => {
+    const { real, other } = await pair();
+    expect((await leaseOp(real, "acquire", "s", "dev-real")).ok).toBe(true);
+    for (const op of ["acquire", "renew", "release", "force-acquire", "get", "takeover"]) {
+      await expect(leaseOp(other, op, "s", "dev-real", 150)).rejects.toThrow();
+    }
+    // the real holder's lease is untouched and still renewable
+    const r = await leaseOp(real, "renew", "s", "dev-real");
+    expect(r).toMatchObject({ ok: true, holder: { deviceId: "dev-real", device: "Real" } });
+    real.close(); other.close();
+  });
+
+  it("one connection cannot switch to a second lease identity after claiming one", async () => {
+    const { real, other } = await pair();
+    expect((await leaseOp(real, "acquire", "s1", "dev-real")).ok).toBe(true);
+    await expect(leaseOp(real, "acquire", "s2", "dev-other", 150)).rejects.toThrow();
+    // the other connection is free to use the identity the first one did not claim
+    expect((await leaseOp(other, "acquire", "s2", "dev-other")).ok).toBe(true);
+    // and the same connection keeps working under its own identity for many sessions
+    expect((await leaseOp(real, "acquire", "s3", "dev-real")).ok).toBe(true);
+    real.close(); other.close();
+  });
+
+  it("a genuine reconnect is not locked out once its old socket has gone quiet", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const { token, real } = await pair();
+      expect((await leaseOp(real, "acquire", "s", "dev-real")).ok).toBe(true);
+      const again = await connect(token, "Real"); await nextMessage(again, "hello");
+      // old socket still counts as live right after the drop -> refused
+      await expect(leaseOp(again, "renew", "s", "dev-real", 150)).rejects.toThrow();
+      vi.setSystemTime(Date.now() + 80_000); // old socket silent past two missed pings
+      expect(await leaseOp(again, "renew", "s", "dev-real")).toMatchObject({ ok: true });
+      // the ghost lost its claim: it cannot act as that device again while the new one is live
+      await expect(leaseOp(real, "release", "s", "dev-real", 150)).rejects.toThrow();
+      real.close(); again.close();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("a live holder's pings keep its identity protected", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const { token, real } = await pair();
+      await leaseOp(real, "acquire", "s", "dev-real");
+      vi.setSystemTime(Date.now() + 60_000);
+      real.send(JSON.stringify({ type: "ping" })); await nextMessage(real, "pong");
+      vi.setSystemTime(Date.now() + 60_000); // 120s since the claim, but only 60s since the ping
+      const intruder = await connect(token, "Intruder"); await nextMessage(intruder, "hello");
+      await expect(leaseOp(intruder, "force-acquire", "s", "dev-real", 150)).rejects.toThrow();
+      real.close(); intruder.close();
+    } finally { vi.useRealTimers(); }
   });
 });
