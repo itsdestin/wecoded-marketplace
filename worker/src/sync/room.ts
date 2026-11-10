@@ -13,15 +13,6 @@ interface Attachment {
   // Stable machineId (UUID) pinned to the socket at connect. Keys the per-device
   // sync-recency map; "" for old clients that connect without ?deviceId=.
   deviceId: string;
-  // WHY: the lease identity (per-install UUID) this socket has claimed. Set by its
-  // first valid lease frame and then fixed for the life of the socket, so one
-  // connection can never act as two different devices. Stored in the attachment
-  // (not in memory) so it survives the Durable Object going to sleep. Absent on
-  // sockets that have never sent a lease frame (all signal-only traffic).
-  leaseId?: string;
-  // WHY: last time this socket sent us anything (ms). Only kept up to date for
-  // sockets that hold a leaseId; lets us tell a live device from a dead leftover.
-  seenAt?: number;
 }
 
 // Signal kinds devices may relay. Phase 2 (leases/takeover) extends this list
@@ -53,12 +44,6 @@ interface LeaseRecord { deviceId: string; device: string; expiresAt: number; }
 // own room's storage without bound (the owner pays for that storage). Real use is a
 // handful of open sessions per account.
 export const MAX_LEASES_PER_ROOM = 200;
-// WHY: a lease identity already claimed by another socket is refused only while that
-// socket is demonstrably alive. Real clients ping every 30s, so 75s of silence means two
-// missed pings = a dead leftover (e.g. a dropped connection the server hasn't noticed
-// yet). That keeps a device that reconnects after a network drop from being locked out
-// of its own lease by its own ghost socket.
-const LEASE_IDENTITY_LIVE_MS = 75_000;
 const LEASE_TTL_MS = 300_000; // spec §3: 30s heartbeat, 300s expiry — ten missed beats
 
 export class SyncGroupRoom {
@@ -114,7 +99,6 @@ export class SyncGroupRoom {
     if (typeof message !== "string") return;
     let data: any;
     try { data = JSON.parse(message); } catch { return; }
-    this.touch(ws);
 
     if (data.type === "ping") {
       this.safeSend(ws, JSON.stringify({ type: "pong" }));
@@ -145,45 +129,6 @@ export class SyncGroupRoom {
    *  send through this. */
   private safeSend(sock: WebSocket, msg: string): void {
     try { sock.send(msg); } catch { /* peer closing */ }
-  }
-
-  // WHY: record "this socket is alive" for sockets that have claimed a lease identity.
-  // Throttled to once per 10s so a chatty socket doesn't rewrite its attachment on
-  // every frame. Never throws (no try/catch upstream).
-  private touch(ws: WebSocket): void {
-    try {
-      const att = ws.deserializeAttachment() as Attachment | null;
-      if (!att?.leaseId) return;
-      const now = Date.now();
-      if (att.seenAt !== undefined && now - att.seenAt < 10_000) return;
-      ws.serializeAttachment({ ...att, seenAt: now });
-    } catch { /* closing socket */ }
-  }
-
-  // WHY (card #124c): lease frames carry a self-declared deviceId, and any connection
-  // signed in to the account could previously send another device's id and acquire,
-  // renew, release or force that device's session lease. Now each connection is tied
-  // to ONE lease identity (first valid frame wins) and a second live connection may
-  // not claim an identity another live connection already holds. Returns false = drop
-  // the frame silently (no reply): real clients treat "no answer" as hub-unreachable
-  // and keep working, so an honest device is never told it lost a session by mistake.
-  private claimLeaseIdentity(ws: WebSocket, att: Attachment, leaseId: string, now: number): boolean {
-    if (att.leaseId !== undefined) return att.leaseId === leaseId;
-    const stale: WebSocket[] = [];
-    for (const other of this.state.getWebSockets()) {
-      if (other === ws) continue;
-      const o = other.deserializeAttachment() as Attachment | null;
-      if (!o || o.leaseId !== leaseId) continue;
-      if (o.seenAt !== undefined && now - o.seenAt < LEASE_IDENTITY_LIVE_MS) return false; // live holder
-      stale.push(other);
-    }
-    // The previous owner of this identity has gone quiet: this socket takes over, and the
-    // ghost loses its claim (if it ever wakes up it must win the claim again).
-    for (const g of stale) {
-      try { g.serializeAttachment({ ...(g.deserializeAttachment() as Attachment), leaseId: undefined, seenAt: undefined }); } catch { /* closing */ }
-    }
-    ws.serializeAttachment({ ...att, leaseId, seenAt: now } satisfies Attachment);
-    return true;
   }
 
   private async relaySignal(sender: WebSocket, data: any): Promise<void> {
@@ -281,9 +226,6 @@ export class SyncGroupRoom {
         deviceId === '.' || deviceId === '..' ||
         typeof data.transferNonce !== 'string' ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.transferNonce))) return;
-
-    // Identity binding runs after all shape checks so junk frames can't claim an identity.
-    if (!this.claimLeaseIdentity(ws, att, deviceId, Date.now())) return;
 
     const key = `lease:${sessionId}`;
     // Server time — spec §18 clock-skew rule: clients never compute expiry, so a
