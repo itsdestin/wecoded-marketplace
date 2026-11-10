@@ -97,8 +97,42 @@ interface PendingResult {
   firstReportAt: number; // ms; the clock the RESULT_TIMEOUT_MS window runs on
 }
 
+// WHY (card #43b): game-result / game-forfeit had no cap, so one signed-in account looping
+// them could fill this single shared room's storage and slow everyone's online/offline
+// status. An honest client sends ONE result per finished match (useMatchReport sends once
+// per match id) and no client sends forfeits at all, so even a rapid-fire rematch game
+// finishing a match every 10 seconds stays far below this. Counted per ACCOUNT (not per
+// socket) so opening extra connections doesn't multiply the allowance.
+// WHY a switch and not a deletion: the handler below is kept for the day the app has a
+// real forfeit feature. Turn this on ONLY together with proof that the match started
+// (the server saw both players in it) — see card #43.
+const FORFEITS_ENABLED: boolean = false;
+const GAME_MSG_LIMIT = 30;
+const GAME_MSG_WINDOW_MS = 5 * 60 * 1000;
+
 export class PresenceRoom {
   private friendCache = new Map<string, Set<string>>();
+  // WHY in memory rather than the Cache-API helper (checkRateLimit) the HTTP routes use:
+  // that helper does a storage round trip per call, which would itself be the slowdown we
+  // are preventing. A counter in memory costs nothing. It resets if the room is evicted,
+  // but a flood keeps the room awake, so a flooder can't use that to escape the cap.
+  private gameMsgCounts = new Map<string, { windowStart: number; count: number }>();
+
+  /** true = allowed. Fixed window per account; excess is dropped by the caller. */
+  private allowGameMessage(userId: string, now = Date.now()): boolean {
+    const e = this.gameMsgCounts.get(userId);
+    if (!e || now - e.windowStart >= GAME_MSG_WINDOW_MS) {
+      if (this.gameMsgCounts.size > 1000) {
+        // Keep the map from growing without bound: forget accounts whose window ended.
+        for (const [k, v] of this.gameMsgCounts) if (now - v.windowStart >= GAME_MSG_WINDOW_MS) this.gameMsgCounts.delete(k);
+      }
+      this.gameMsgCounts.set(userId, { windowStart: now, count: 1 });
+      return true;
+    }
+    if (e.count >= GAME_MSG_LIMIT) return false;
+    e.count++;
+    return true;
+  }
 
   constructor(private state: DurableObjectState, private env: Env) {
     // The edge answers matching pings AND stamps getWebSocketAutoResponseTimestamp
@@ -279,10 +313,23 @@ export class PresenceRoom {
       }
       // Games §6.2: "here is how MY side of that match ended."
       case "game-result":
+        // Over the cap: drop quietly. No reply (a reply per spam frame would just be more
+        // work), no close (the socket also carries this user's presence).
+        if (!this.allowGameMessage(att.userId)) break;
         await this.handleGameResult(ws, att, data);
         break;
       // Games §6.3: "my opponent left and never came back."
       case "game-forfeit":
+        if (!this.allowGameMessage(att.userId)) break;
+        // WHY (card #43, Destin 2026-11-10): switched off. A forfeit only proved the
+        // opponent was offline NOW, never that a match took place, so a modified app
+        // could record a permanent win against any offline friend. No released app
+        // sends this message, so nobody loses anything. The same answer goes to every
+        // claim, before any friend or presence check, so it reveals nothing.
+        if (!FORFEITS_ENABLED) {
+          this.rejectReport(ws, data.game, data.match_id, String(data.opponent ?? ""), "forfeits-off");
+          break;
+        }
         await this.handleGameForfeit(ws, att, data);
         break;
     }

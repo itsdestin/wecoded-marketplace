@@ -181,7 +181,8 @@ describe("PresenceRoom — hidden mode (incognito)", () => {
       const frames = record(wsA);
       const match = `M-forfeit-${opponentConnectedHidden ? "hidden" : "absent"}-${Date.now() % 1000000}`;
       wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-      await nextMessage(wsA, "game-record");
+      // Forfeits are switched off (card #43), so the answer is a refusal either way.
+      await nextMessage(wsA, "game-result-rejected");
       await sleep(100);
       wsA.close(); wsB?.close();
       // Ids and the match id differ between the two runs; everything else must match.

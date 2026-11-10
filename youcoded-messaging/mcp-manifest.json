@@ -3,7 +3,7 @@
     {
       "name": "gmessages",
       "auto": true,
-      "platforms": ["darwin", "linux", "win32"],
+      "platforms": ["win32"],
       "command": "${PACKAGE_DIR}/mcp-servers/gmessages/gmessages",
       "args": [],
       "env": {}
