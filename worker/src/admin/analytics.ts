@@ -8,6 +8,10 @@
 // region (blob7) stay single-dimension — /countries and /regions ignore every
 // user dimension filter (include_admins remains a device-debug override), and
 // no other route filters or groups by them.
+// EXCEPTION (Destin, 2026-11-08): /day — the owner's one-day drill-down —
+// groups one day's devices by version × system × country × region, because
+// he asked to see "which regions or countries those versions were from" for a
+// specific day. Still counts only (count(DISTINCT blob2)); no hash leaves.
 //
 // SQL dialect: Cloudflare Analytics Engine uses a narrow SQL subset — NOT
 // full ClickHouse. Quirks learned the hard way (422 responses):
@@ -104,8 +108,12 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
   return c.json(rows);
 });
 
-// GET /admin/analytics/mau — rolling 30-day distinct devices.
+// GET /admin/analytics/mau?days=N — distinct devices over the last N days (default 30).
 // Params: platform, version, hide_test.
+// WHY `days` (Destin, 2026-11-09): the Analytics page's 7/30/90-day range now drives
+// every card, so "active devices" must follow it too. The answer echoes `days` so the
+// page can tell this server (ranged mau/countries/regions) from an older one that
+// would silently answer with 30 days whatever was asked.
 adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
@@ -113,13 +121,14 @@ adminAnalyticsRoutes.get("/admin/analytics/mau", requireAdminAuth, async (c) => 
   const platform = platformClause(c.req.query("platform"));
   const version = versionClause(c.req.query("version"));
   const hideTest = hideTestClause(c.req.query("hide_test"));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ devices: number }>(
     c.env,
     `SELECT count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter} ${platform} ${version} ${hideTest}`
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter} ${platform} ${version} ${hideTest}`
   );
-  return c.json({ mau: rows[0]?.devices ?? 0 });
+  return c.json({ mau: rows[0]?.devices ?? 0, days });
 });
 
 // GET /admin/analytics/installs?days=N — derived from first-seen device per LOCAL day.
@@ -191,34 +200,39 @@ adminAnalyticsRoutes.get("/admin/analytics/platforms", requireAdminAuth, async (
   return c.json(rows);
 });
 
-// GET /admin/analytics/countries — rolling 30-day top 20.
+// GET /admin/analytics/countries?days=N — top 20 over the last N days (default 30).
 // Deliberately ignores platform/version/hide_test/tz_offset: geography is never
 // cross-tabulated with other dimensions (fingerprint risk at low cell counts).
+// WHY `days` is allowed (Destin, 2026-11-09): the page's range drives every card. A
+// shorter span is only a time window, not another dimension, and reveals less than
+// the owner's one-day view (/day) already does.
 adminAnalyticsRoutes.get("/admin/analytics/countries", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ country: string; devices: number }>(
     c.env,
     `SELECT blob6 AS country, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter}
      GROUP BY country ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
 });
 
-// GET /admin/analytics/regions — rolling 30-day top 20 ISO 3166-2 regions.
-// Deliberately ignores every user dimension filter — see /countries.
+// GET /admin/analytics/regions?days=N — top 20 ISO 3166-2 regions over the last N days
+// (default 30). Deliberately ignores every user dimension filter — see /countries.
 adminAnalyticsRoutes.get("/admin/analytics/regions", requireAdminAuth, async (c) => {
   await requireAdminAccount(c);
   const cutover = cutoverClause(c.env);
   const filter = adminFilterClause(c.env, includeAdmins(c.req.query("include_admins")));
+  const days = clampDays(c.req.query("days"), 30);
   const rows = await runAnalyticsQuery<{ region: string; devices: number }>(
     c.env,
     `SELECT blob7 AS region, count(DISTINCT blob2) AS devices
      FROM youcoded_app_events
-     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '30' DAY ${filter}
+     WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND timestamp > NOW() - INTERVAL '${days}' DAY ${filter}
      GROUP BY region ORDER BY devices DESC LIMIT 20`
   );
   return c.json(rows);
@@ -244,6 +258,93 @@ adminAnalyticsRoutes.get("/admin/analytics/active-by-version", requireAdminAuth,
      GROUP BY day, version ORDER BY day`
   );
   return c.json(rows);
+});
+
+// Returns the strict YYYY-MM-DD and the following day for a real calendar date,
+// or null. WHY strict: both strings are interpolated into SQL literals.
+export function dayBounds(raw: string | undefined): { start: string; next: string } | null {
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const t = Date.parse(raw + "T00:00:00Z");
+  if (!Number.isFinite(t) || new Date(t).toISOString().slice(0, 10) !== raw) return null;
+  return { start: raw, next: new Date(t + 86_400_000).toISOString().slice(0, 10) };
+}
+
+// GET /admin/analytics/day?date=YYYY-MM-DD — everything about ONE local day,
+// for the dashboard's "click a day" panel. Params: tz_offset, platform,
+// version, hide_test, hide_one_day, include_admins.
+// Returns { date, active, newDevices, newBySystem, milestones, versions, systems,
+// countries, regions, breakdown } where breakdown = [{version, os, country, region, devices}].
+// WHY newBySystem + milestones (Destin, 2026-11-09: "expanded detail metrics are vital"):
+// the panel sets that day's new devices per system beside the website's download
+// clicks per platform, and shows which setup steps were reached that day.
+// WHY separate totals instead of summing `breakdown`: a device that updated
+// or travelled mid-day sits in two breakdown rows; each total counts it once.
+// WHY newDevices ignores version/hide_test: same as /installs (a version row
+// filter would redefine "first seen").
+adminAnalyticsRoutes.get("/admin/analytics/day", requireAdminAuth, async (c) => {
+  await requireAdminAccount(c);
+  const bounds = dayBounds(c.req.query("date"));
+  if (!bounds) return c.json({ error: "date must be YYYY-MM-DD" }, 400);
+  const local = localTimestampExpr(c.req.query("tz_offset"));
+  const cutover = cutoverClause(c.env);
+  const filter = await deviceFilter(c);
+  const platform = platformClause(c.req.query("platform"));
+  const version = versionClause(c.req.query("version"));
+  const hideTest = hideTestClause(c.req.query("hide_test"));
+  const inDay = `${local} >= toDateTime('${bounds.start} 00:00:00') AND ${local} < toDateTime('${bounds.next} 00:00:00')`;
+  const where = `WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND ${inDay} ${filter} ${platform} ${version} ${hideTest}`;
+  const q = <T>(sql: string) => runAnalyticsQuery<T>(c.env, sql);
+  const [total, versions, systems, countries, regions, breakdown, fresh, newBySystem, milestones] = await Promise.all([
+    q<{ devices: number }>(`SELECT count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where}`),
+    q<{ version: string; devices: number }>(`SELECT blob3 AS version, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY version ORDER BY devices DESC`),
+    q<{ os: string; devices: number }>(`SELECT ${OS_EXPR} AS os, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY os ORDER BY devices DESC`),
+    q<{ country: string; devices: number }>(`SELECT blob6 AS country, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY country ORDER BY devices DESC`),
+    q<{ region: string; devices: number }>(`SELECT blob7 AS region, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY region ORDER BY devices DESC`),
+    q<{ version: string; os: string; country: string; region: string; devices: number }>(
+      `SELECT blob3 AS version, ${OS_EXPR} AS os, blob6 AS country, blob7 AS region, count(DISTINCT blob2) AS devices
+       FROM youcoded_app_events ${where}
+       GROUP BY version, os, country, region ORDER BY devices DESC LIMIT 500`
+    ),
+    q<{ devices: number }>(
+      `SELECT count() AS devices FROM (
+         SELECT blob2, MIN(${local}) AS first_seen
+         FROM youcoded_app_events
+         WHERE blob1 = 'heartbeat' ${cutover} ${filter} ${platform}
+         GROUP BY blob2
+       )
+       WHERE first_seen >= toDateTime('${bounds.start} 00:00:00') AND first_seen < toDateTime('${bounds.next} 00:00:00')`
+    ),
+    // Same first-seen rule as `fresh`, split by system (as /new-by-os does over a range).
+    q<{ os: string; devices: number }>(
+      `SELECT os, count() AS devices FROM (
+         SELECT blob2, ${OS_EXPR} AS os, MIN(${local}) AS first_seen
+         FROM youcoded_app_events
+         WHERE blob1 = 'heartbeat' ${cutover} ${filter} ${platform}
+         GROUP BY blob2, os
+       )
+       WHERE first_seen >= toDateTime('${bounds.start} 00:00:00') AND first_seen < toDateTime('${bounds.next} 00:00:00')
+       GROUP BY os ORDER BY devices DESC`
+    ),
+    // One-time setup steps reported that day (same shape as /milestones).
+    q<{ milestone: string; devices: number }>(
+      `SELECT blob9 AS milestone, count(DISTINCT blob2) AS devices
+       FROM youcoded_app_events
+       WHERE blob1 = 'milestone' AND ${inDay} ${filter} ${platform}
+       GROUP BY milestone ORDER BY devices DESC`
+    ),
+  ]);
+  return c.json({
+    date: bounds.start,
+    active: Number(total[0]?.devices ?? 0),
+    newDevices: Number(fresh[0]?.devices ?? 0),
+    newBySystem,
+    milestones,
+    versions,
+    systems,
+    countries,
+    regions,
+    breakdown,
+  });
 });
 
 // GET /admin/analytics/weekly?weeks=12 — distinct devices per LOCAL week

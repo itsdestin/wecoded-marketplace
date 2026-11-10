@@ -178,8 +178,10 @@ describe("GET /admin/analytics/mau", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
-    const body = await res.json<{ mau: number }>();
-    expect(body).toEqual({ mau: 16 });
+    const body = await res.json<{ mau: number; days: number }>();
+    // WHY `days` is echoed: the Analytics page uses it to tell a server that follows
+    // the chosen range from an older one that always answers with 30 days.
+    expect(body).toEqual({ mau: 16, days: 30 });
     const sql = (globalThis.fetch as any).mock.calls[0][1].body as string;
     expect(sql).toContain("count(DISTINCT blob2) AS devices");
     expectNoRowFilters(sql);
@@ -201,6 +203,18 @@ describe("GET /admin/analytics/mau", () => {
   it("drops invalid params", async () => {
     const token = await seedAdmin();
     expectNoRowFilters(await sqlFor(token, `/admin/analytics/mau?${INVALID_FILTERS}`));
+  });
+
+  // The page's 7/30/90-day range drives this count (Destin, 2026-11-09).
+  it("follows ?days and echoes it, clamped to 1..90", async () => {
+    const token = await seedAdmin();
+    const res = await SELF.fetch("https://test.local/admin/analytics/mau?days=7", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(await res.json()).toEqual({ mau: 16, days: 7 });
+    expect((globalThis.fetch as any).mock.calls[0][1].body as string).toContain("INTERVAL '7' DAY");
+    expect(await sqlFor(token, "/admin/analytics/mau?days=9999")).toContain("INTERVAL '90' DAY");
+    expect(await sqlFor(token, "/admin/analytics/mau?days=1;DROP")).toContain("INTERVAL '30' DAY");
   });
 });
 
@@ -297,6 +311,11 @@ describe("GET /admin/analytics/countries", () => {
   it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/countries");
+    // A time window is not another dimension: ?days narrows the span and nothing else.
+    expect(plain).toContain("INTERVAL '30' DAY");
+    const week = await sqlFor(token, "/admin/analytics/countries?days=7");
+    expect(week).toBe(plain.replace("INTERVAL '30' DAY", "INTERVAL '7' DAY"));
+    expect(await sqlFor(token, "/admin/analytics/countries?days=7 OR 1=1")).toBe(plain);
     const filtered = await sqlFor(
       token,
       "/admin/analytics/countries?platform=android&version=1.0&hide_test=1&tz_offset=60"
@@ -340,6 +359,11 @@ describe("GET /admin/analytics/regions", () => {
   it("ignores every user dimension filter", async () => {
     const token = await seedAdmin();
     const plain = await sqlFor(token, "/admin/analytics/regions");
+    // A time window is not another dimension: ?days narrows the span and nothing else.
+    expect(plain).toContain("INTERVAL '30' DAY");
+    const week = await sqlFor(token, "/admin/analytics/regions?days=7");
+    expect(week).toBe(plain.replace("INTERVAL '30' DAY", "INTERVAL '7' DAY"));
+    expect(await sqlFor(token, "/admin/analytics/regions?days=7 OR 1=1")).toBe(plain);
     const filtered = await sqlFor(
       token,
       "/admin/analytics/regions?platform=android&version=1.0&hide_test=1&tz_offset=60"
@@ -645,5 +669,90 @@ describe("hide_one_day filter", () => {
 
     const countries = await sqlFor(token, "/admin/analytics/countries?hide_one_day=1");
     expect(countries).not.toContain(good);
+  });
+});
+
+// The dashboard's "click a day" panel (Destin, 2026-11-08).
+describe("GET /admin/analytics/day", () => {
+  beforeEach(async () => { await clearAuth(); mockCfSql([{ devices: 2 }]); });
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  function allSql(): string[] {
+    return (globalThis.fetch as any).mock.calls.map((c: any[]) => c[1].body as string);
+  }
+
+  it("returns 401 without auth", async () => {
+    const res = await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05");
+    expect(res.status).toBe(401);
+  });
+
+  it("refuses a date that is not a real YYYY-MM-DD, without querying", async () => {
+    const token = await seedAdmin();
+    for (const bad of ["", "2026-02-30", "2026-11-05'--", "11/05/2026"]) {
+      const res = await SELF.fetch(`https://test.local/admin/analytics/day?date=${encodeURIComponent(bad)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(res.status, bad).toBe(400);
+    }
+    expect((globalThis.fetch as any).mock.calls.length).toBe(0);
+  });
+
+  it("bounds every query to that local day and returns totals plus the breakdown", async () => {
+    const token = await seedAdmin();
+    const res = await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05&tz_offset=-420", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<any>();
+    expect(body.date).toBe("2026-11-05");
+    expect(body.active).toBe(2);
+    expect(body.newDevices).toBe(2);
+    expect(Array.isArray(body.breakdown)).toBe(true);
+    const sqls = allSql();
+    expect(sqls.length).toBe(9);
+    expect(Array.isArray(body.newBySystem)).toBe(true);
+    expect(Array.isArray(body.milestones)).toBe(true);
+    // The setup-steps query reads milestone events; every other one reads check-ins only.
+    const steps = sqls.filter((s) => s.includes("blob1 = 'milestone'"));
+    expect(steps.length).toBe(1);
+    expect(steps[0]).toContain("count(DISTINCT blob2) AS devices");
+    for (const sql of sqls) {
+      expect(sql).toContain("toDateTime('2026-11-05 00:00:00')");
+      expect(sql).toContain("toDateTime('2026-11-06 00:00:00')");
+      expect(sql).toContain("(timestamp - INTERVAL '420' MINUTE)");
+      if (sql !== steps[0]) expect(sql).toContain("blob1 = 'heartbeat'");
+      expect(sql).toContain(`blob2 NOT IN ('${"a".repeat(64)}')`);
+    }
+    const breakdown = sqls.find((s) => s.includes("GROUP BY version, os, country, region"))!;
+    expect(breakdown).toContain("count(DISTINCT blob2) AS devices");
+    expect(breakdown).not.toMatch(/SELECT[^]*\bblob2 AS/);
+  });
+
+  it("applies platform, version and hide_test to the day, but not to new devices", async () => {
+    const token = await seedAdmin();
+    await SELF.fetch("https://test.local/admin/analytics/day?date=2026-11-05&platform=mac&version=1.3.1&hide_test=1", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const sqls = allSql();
+    // First-seen and setup-step queries ignore version/test-build filters, like /installs and /milestones.
+    const fresh = sqls.filter((s) => s.includes("first_seen") || s.includes("blob1 = 'milestone'"));
+    expect(fresh.length).toBe(3);
+    for (const sql of sqls) expect(sql).toContain("AND blob4 = 'desktop' AND blob5 = 'mac'");
+    for (const sql of sqls.filter((s) => !fresh.includes(s))) {
+      expect(sql).toContain("AND blob3 = '1.3.1'");
+      expect(sql).toContain("NOT LIKE '%-releasetest'");
+    }
+    for (const sql of fresh) {
+      expect(sql).not.toContain("blob3 = '1.3.1'");
+      expect(sql).not.toContain("NOT LIKE");
+    }
+  });
+
+  it("drops invalid filters", async () => {
+    const token = await seedAdmin();
+    await SELF.fetch(`https://test.local/admin/analytics/day?date=2026-11-05&${INVALID_FILTERS}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    for (const sql of allSql()) expectNoRowFilters(sql);
   });
 });
