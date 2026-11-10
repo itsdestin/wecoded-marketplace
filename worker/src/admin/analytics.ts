@@ -272,8 +272,11 @@ export function dayBounds(raw: string | undefined): { start: string; next: strin
 // GET /admin/analytics/day?date=YYYY-MM-DD — everything about ONE local day,
 // for the dashboard's "click a day" panel. Params: tz_offset, platform,
 // version, hide_test, hide_one_day, include_admins.
-// Returns { date, active, newDevices, versions, systems, countries, regions,
-// breakdown } where breakdown = [{version, os, country, region, devices}].
+// Returns { date, active, newDevices, newBySystem, milestones, versions, systems,
+// countries, regions, breakdown } where breakdown = [{version, os, country, region, devices}].
+// WHY newBySystem + milestones (Destin, 2026-11-09: "expanded detail metrics are vital"):
+// the panel sets that day's new devices per system beside the website's download
+// clicks per platform, and shows which setup steps were reached that day.
 // WHY separate totals instead of summing `breakdown`: a device that updated
 // or travelled mid-day sits in two breakdown rows; each total counts it once.
 // WHY newDevices ignores version/hide_test: same as /installs (a version row
@@ -291,7 +294,7 @@ adminAnalyticsRoutes.get("/admin/analytics/day", requireAdminAuth, async (c) => 
   const inDay = `${local} >= toDateTime('${bounds.start} 00:00:00') AND ${local} < toDateTime('${bounds.next} 00:00:00')`;
   const where = `WHERE blob1 = 'heartbeat' ${cutover} ${historicalCi} AND ${inDay} ${filter} ${platform} ${version} ${hideTest}`;
   const q = <T>(sql: string) => runAnalyticsQuery<T>(c.env, sql);
-  const [total, versions, systems, countries, regions, breakdown, fresh] = await Promise.all([
+  const [total, versions, systems, countries, regions, breakdown, fresh, newBySystem, milestones] = await Promise.all([
     q<{ devices: number }>(`SELECT count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where}`),
     q<{ version: string; devices: number }>(`SELECT blob3 AS version, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY version ORDER BY devices DESC`),
     q<{ os: string; devices: number }>(`SELECT ${OS_EXPR} AS os, count(DISTINCT blob2) AS devices FROM youcoded_app_events ${where} GROUP BY os ORDER BY devices DESC`),
@@ -311,11 +314,31 @@ adminAnalyticsRoutes.get("/admin/analytics/day", requireAdminAuth, async (c) => 
        )
        WHERE first_seen >= toDateTime('${bounds.start} 00:00:00') AND first_seen < toDateTime('${bounds.next} 00:00:00')`
     ),
+    // Same first-seen rule as `fresh`, split by system (as /new-by-os does over a range).
+    q<{ os: string; devices: number }>(
+      `SELECT os, count() AS devices FROM (
+         SELECT blob2, ${OS_EXPR} AS os, MIN(${local}) AS first_seen
+         FROM youcoded_app_events
+         WHERE blob1 = 'heartbeat' ${cutover} ${filter} ${platform}
+         GROUP BY blob2, os
+       )
+       WHERE first_seen >= toDateTime('${bounds.start} 00:00:00') AND first_seen < toDateTime('${bounds.next} 00:00:00')
+       GROUP BY os ORDER BY devices DESC`
+    ),
+    // One-time setup steps reported that day (same shape as /milestones).
+    q<{ milestone: string; devices: number }>(
+      `SELECT blob9 AS milestone, count(DISTINCT blob2) AS devices
+       FROM youcoded_app_events
+       WHERE blob1 = 'milestone' AND ${inDay} ${filter} ${platform}
+       GROUP BY milestone ORDER BY devices DESC`
+    ),
   ]);
   return c.json({
     date: bounds.start,
     active: Number(total[0]?.devices ?? 0),
     newDevices: Number(fresh[0]?.devices ?? 0),
+    newBySystem,
+    milestones,
     versions,
     systems,
     countries,

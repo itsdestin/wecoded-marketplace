@@ -709,12 +709,18 @@ describe("GET /admin/analytics/day", () => {
     expect(body.newDevices).toBe(2);
     expect(Array.isArray(body.breakdown)).toBe(true);
     const sqls = allSql();
-    expect(sqls.length).toBe(7);
+    expect(sqls.length).toBe(9);
+    expect(Array.isArray(body.newBySystem)).toBe(true);
+    expect(Array.isArray(body.milestones)).toBe(true);
+    // The setup-steps query reads milestone events; every other one reads check-ins only.
+    const steps = sqls.filter((s) => s.includes("blob1 = 'milestone'"));
+    expect(steps.length).toBe(1);
+    expect(steps[0]).toContain("count(DISTINCT blob2) AS devices");
     for (const sql of sqls) {
       expect(sql).toContain("toDateTime('2026-11-05 00:00:00')");
       expect(sql).toContain("toDateTime('2026-11-06 00:00:00')");
       expect(sql).toContain("(timestamp - INTERVAL '420' MINUTE)");
-      expect(sql).toContain("blob1 = 'heartbeat'");
+      if (sql !== steps[0]) expect(sql).toContain("blob1 = 'heartbeat'");
       expect(sql).toContain(`blob2 NOT IN ('${"a".repeat(64)}')`);
     }
     const breakdown = sqls.find((s) => s.includes("GROUP BY version, os, country, region"))!;
@@ -728,14 +734,18 @@ describe("GET /admin/analytics/day", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const sqls = allSql();
-    const fresh = sqls.find((s) => s.includes("first_seen"))!;
+    // First-seen and setup-step queries ignore version/test-build filters, like /installs and /milestones.
+    const fresh = sqls.filter((s) => s.includes("first_seen") || s.includes("blob1 = 'milestone'"));
+    expect(fresh.length).toBe(3);
     for (const sql of sqls) expect(sql).toContain("AND blob4 = 'desktop' AND blob5 = 'mac'");
-    for (const sql of sqls.filter((s) => s !== fresh)) {
+    for (const sql of sqls.filter((s) => !fresh.includes(s))) {
       expect(sql).toContain("AND blob3 = '1.3.1'");
       expect(sql).toContain("NOT LIKE '%-releasetest'");
     }
-    expect(fresh).not.toContain("blob3 = '1.3.1'");
-    expect(fresh).not.toContain("NOT LIKE");
+    for (const sql of fresh) {
+      expect(sql).not.toContain("blob3 = '1.3.1'");
+      expect(sql).not.toContain("NOT LIKE");
+    }
   });
 
   it("drops invalid filters", async () => {
