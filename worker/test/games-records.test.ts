@@ -313,3 +313,50 @@ describe("GET /games/records", () => {
     expect(res.status).toBe(401);
   });
 });
+
+// Card #43(b): game-result / game-forfeit are capped per account.
+describe("game message rate limit", () => {
+  it("drops a flood without closing the socket, hurting presence, or blocking honest play", async () => {
+    const { a, b, wsA, wsB, match } = await twoPlayers("flood");
+    let closed = false;
+    wsA.addEventListener("close", () => { closed = true; });
+    // 200 junk-but-valid-shaped reports, each for a different match id: before the cap each
+    // one parked a storage slot in the shared room.
+    for (let i = 0; i < 200; i++) wsA.send(result("chess", `FLOOD-${match}-${i}`, b.userId, "win"));
+    wsA.send(JSON.stringify({ type: "ping" }));
+    await nextMessage(wsA, "pong");
+    // The pong comes back before the slower report handlers finish (they check friendship
+    // in the database first), so wait until the slot count stops changing.
+    let mine = 0, stable = 0;
+    for (let i = 0; i < 60 && stable < 5; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      const n = await runInDurableObject(presenceStub(), async (_i, state) => {
+        const slots = await state.storage.list({ prefix: "result:" });
+        return [...slots.keys()].filter((k) => k.includes(`FLOOD-${match}`)).length;
+      });
+      stable = n === mine ? stable + 1 : 0; mine = n;
+    }
+    expect(mine).toBe(30); // capped, not 200
+    expect(closed).toBe(false);
+    // presence still works for this account after the flood
+    wsA.send(JSON.stringify({ type: "status", status: "in-game" }));
+    wsA.send(JSON.stringify({ type: "ping" }));
+    await nextMessage(wsA, "pong");
+    // the other player is not limited by A's flood
+    const pending = nextMessage(wsB, "game-result-pending");
+    wsB.send(result("chess", `${match}-honest`, a.userId, "win"));
+    expect(await pending).toMatchObject({ opponent: a.userId });
+    wsA.close(); wsB.close();
+  });
+
+  it("a normal run of matches is never limited", async () => {
+    const { a, b, wsA, wsB, match } = await twoPlayers("honest");
+    for (let i = 0; i < 20; i++) {
+      const rec = nextMessage(wsA, "game-record");
+      wsA.send(result("chess", `${match}-${i}`, b.userId, "win"));
+      wsB.send(result("chess", `${match}-${i}`, a.userId, "loss"));
+      expect(await rec).toMatchObject({ source: "attested" });
+    }
+    wsA.close(); wsB.close();
+  });
+});
