@@ -179,6 +179,10 @@ export class RelayRoom extends Server {
     let reason: { code: number; text: string } | null = null;
     if (now >= created + MAX_AGE_MS) reason = { code: CLOSE_EXPIRED, text: "Room closed: 6 hour limit reached" };
     else if (now >= this.lastActivity + IDLE_MS) reason = { code: CLOSE_IDLE, text: "Room closed: no activity for 30 minutes" };
+    // WHY an empty room also counts as idle (independent review, 2026-11-10): once both players leave, the room is
+    // unloaded from memory, and this alarm wakes a fresh copy whose lastActivity is "now". It then never looked idle
+    // and an abandoned room lingered, waking every 30 minutes, until the 6 hour limit.
+    else if ([...this.getConnections()].length === 0) reason = { code: CLOSE_IDLE, text: "Room closed: no activity for 30 minutes" };
 
     if (!reason) {
       // Activity happened since the alarm was set: check again at the new deadline.
