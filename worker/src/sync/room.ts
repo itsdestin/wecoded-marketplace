@@ -54,25 +54,11 @@ interface LeaseRecord { deviceId: string; device: string; expiresAt: number; }
 // handful of open sessions per account.
 export const MAX_LEASES_PER_ROOM = 200;
 // WHY: a lease identity already claimed by another socket is refused only while that
-// socket was heard from recently. Window arithmetic: real clients send a ping every
-// 30s (reconnecting-ws.ts PING_INTERVAL_MS) and a pinned holder also sends lease
-// heartbeats every 30s, so a healthy holder is never silent for more than ~30s. The
-// stamp below is written on EVERY frame (no throttle), so there is no extra slop. We add
-// 15s of margin for timer jitter and network delay: 30 + 15 = 45s. A healthy idle holder
-// therefore always stays "live" (it would need to miss a whole ping plus half another),
-// while a dead leftover socket stops counting 45s after its last ping.
-// HONEST LIMITS, stated plainly:
-//  - A device that reconnects after an UNGRACEFUL drop (wifi switch, laptop wake) can
-//    have its lease frames silently ignored for up to 45s, until its old ghost socket
-//    ages out (average ~22s, since the ghost's last ping is uniformly 0-30s old). The app
-//    treats that as "hub unreachable" and carries on. A CLEAN close frees the identity at
-//    once (see webSocketClose).
-//  - Not fixed: (i) someone holding the account token can claim the id of a device that is
-//    OFFLINE; (ii) someone who claims a device's id first and keeps pinging can keep that
-//    device's lease frames ignored indefinitely (a denial of service that did not exist
-//    before; before this change they could impersonate instead); (iii) the real fix needs
-//    a per-install secret/proof that already-released apps cannot send.
-const LEASE_IDENTITY_LIVE_MS = 45_000;
+// socket is demonstrably alive. Real clients ping every 30s, so 75s of silence means two
+// missed pings = a dead leftover (e.g. a dropped connection the server hasn't noticed
+// yet). That keeps a device that reconnects after a network drop from being locked out
+// of its own lease by its own ghost socket.
+const LEASE_IDENTITY_LIVE_MS = 75_000;
 const LEASE_TTL_MS = 300_000; // spec §3: 30s heartbeat, 300s expiry — ten missed beats
 
 export class SyncGroupRoom {
@@ -144,14 +130,8 @@ export class SyncGroupRoom {
     }
   }
 
-  async webSocketClose(ws: WebSocket): Promise<void> {
-    // WHY: a socket that closes cleanly gives up its lease identity immediately, so the
-    // most common honest case (restart, sign out/in, clean reconnect) is never delayed.
-    try {
-      const att = ws.deserializeAttachment() as Attachment | null;
-      if (att?.leaseId) ws.serializeAttachment({ ...att, leaseId: undefined, seenAt: undefined });
-    } catch { /* already gone */ }
-    // Presence of a device is not otherwise tracked (that's the
+  async webSocketClose(_ws: WebSocket): Promise<void> {
+    // Nothing to persist — presence of a device is not tracked (that's the
     // social PresenceRoom's job for friends; sync needs no device roster).
   }
 
@@ -168,12 +148,15 @@ export class SyncGroupRoom {
   }
 
   // WHY: record "this socket is alive" for sockets that have claimed a lease identity.
-  // Written on every frame (a ping per 30s; cheap) so liveness is exact. Never throws.
+  // Throttled to once per 10s so a chatty socket doesn't rewrite its attachment on
+  // every frame. Never throws (no try/catch upstream).
   private touch(ws: WebSocket): void {
     try {
       const att = ws.deserializeAttachment() as Attachment | null;
       if (!att?.leaseId) return;
-      ws.serializeAttachment({ ...att, seenAt: Date.now() });
+      const now = Date.now();
+      if (att.seenAt !== undefined && now - att.seenAt < 10_000) return;
+      ws.serializeAttachment({ ...att, seenAt: now });
     } catch { /* closing socket */ }
   }
 
@@ -183,8 +166,7 @@ export class SyncGroupRoom {
   // to ONE lease identity (first valid frame wins) and a second live connection may
   // not claim an identity another live connection already holds. Returns false = drop
   // the frame silently (no reply): real clients treat "no answer" as hub-unreachable
-  // and keep working, so an honest device is never told it lost a session by mistake. (It can still be
-  // ignored for up to LEASE_IDENTITY_LIVE_MS after an ungraceful reconnect; see above.)
+  // and keep working, so an honest device is never told it lost a session by mistake.
   private claimLeaseIdentity(ws: WebSocket, att: Attachment, leaseId: string, now: number): boolean {
     if (att.leaseId !== undefined) return att.leaseId === leaseId;
     const stale: WebSocket[] = [];

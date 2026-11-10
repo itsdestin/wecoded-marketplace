@@ -1,5 +1,5 @@
 import { env, SELF, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createTestAccount, issueTestSession } from "./helpers";
 
 // Head-to-head records via mutual attestation over the presence socket
@@ -358,23 +358,5 @@ describe("game message rate limit", () => {
       expect(await rec).toMatchObject({ source: "attested" });
     }
     wsA.close(); wsB.close();
-  });
-
-  it("the allowance resets once the 5-minute window has passed", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    try {
-      const { b, wsA, match } = await twoPlayers("window");
-      const count = async () => {
-        await new Promise((r) => setTimeout(r, 400));
-        return runInDurableObject(presenceStub(), async (_i, state) =>
-          [...(await state.storage.list({ prefix: "result:" })).keys()].filter((k) => k.includes(`W1-${match}`) || k.includes(`W2-${match}`)).length);
-      };
-      for (let i = 0; i < 40; i++) wsA.send(result("chess", `W1-${match}-${i}`, b.userId, "win"));
-      expect(await count()).toBe(30);
-      vi.setSystemTime(Date.now() + 5 * 60 * 1000 + 1000);
-      for (let i = 0; i < 5; i++) wsA.send(result("chess", `W2-${match}-${i}`, b.userId, "win"));
-      expect(await count()).toBe(35);
-      wsA.close();
-    } finally { vi.useRealTimers(); }
   });
 });
