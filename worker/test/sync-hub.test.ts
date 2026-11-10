@@ -726,7 +726,7 @@ describe("sync hub — lease identity is tied to the connection", () => {
       const again = await connect(token, "Real"); await nextMessage(again, "hello");
       // old socket still counts as live right after the drop -> refused
       await expect(leaseOp(again, "renew", "s", "dev-real", 150)).rejects.toThrow();
-      vi.setSystemTime(Date.now() + 80_000); // old socket silent past two missed pings
+      vi.setSystemTime(Date.now() + 50_000); // old socket silent past ping interval + margin (45s)
       expect(await leaseOp(again, "renew", "s", "dev-real")).toMatchObject({ ok: true });
       // the ghost lost its claim: it cannot act as that device again while the new one is live
       await expect(leaseOp(real, "release", "s", "dev-real", 150)).rejects.toThrow();
@@ -739,12 +739,63 @@ describe("sync hub — lease identity is tied to the connection", () => {
     try {
       const { token, real } = await pair();
       await leaseOp(real, "acquire", "s", "dev-real");
-      vi.setSystemTime(Date.now() + 60_000);
+      vi.setSystemTime(Date.now() + 40_000);
       real.send(JSON.stringify({ type: "ping" })); await nextMessage(real, "pong");
-      vi.setSystemTime(Date.now() + 60_000); // 120s since the claim, but only 60s since the ping
+      vi.setSystemTime(Date.now() + 40_000); // 80s since the claim, but only 40s since the ping
       const intruder = await connect(token, "Intruder"); await nextMessage(intruder, "hello");
       await expect(leaseOp(intruder, "force-acquire", "s", "dev-real", 150)).rejects.toThrow();
       real.close(); intruder.close();
     } finally { vi.useRealTimers(); }
+  });
+
+  const NONCE = "3db07e20-1244-4a1b-85bf-bde2db925e41";
+
+  it("refuses a nonce takeover and a conditional force sent under someone else's identity", async () => {
+    const { real, other } = await pair();
+    await leaseOp(real, "acquire", "s", "dev-real");
+    const noEvent = expect(nextMessage(real, "lease-event", 150)).rejects.toThrow();
+    other.send(JSON.stringify({ type: "lease", op: "takeover", sessionId: "s", deviceId: "dev-real", transferNonce: NONCE, reqId: "n1" }));
+    await noEvent;
+    // conditional force "as" the holder itself (expected holder must differ, so use a third id
+    // that the other socket never claimed legitimately: it claims dev-other first)
+    expect((await leaseOp(other, "acquire", "s2", "dev-other")).ok).toBe(true);
+    await expect(leaseOp(other, "force-acquire-if-holder", "s", "dev-real", 150, "dev-x")).rejects.toThrow();
+    await expect(leaseOp(real, "force-acquire-if-holder", "s", "dev-other", 150, "dev-real")).rejects.toThrow();
+    expect(await leaseOp(real, "get", "s", "dev-real")).toMatchObject({ holder: { deviceId: "dev-real" } });
+    real.close(); other.close();
+  });
+
+  it("an invalid frame does not pin an identity", async () => {
+    const { real, other } = await pair();
+    // junk: bad op type, empty session, overlong id — all rejected before any claim
+    other.send(JSON.stringify({ type: "lease", op: 5, sessionId: "s", deviceId: "dev-real", reqId: "j1" }));
+    other.send(JSON.stringify({ type: "lease", op: "acquire", sessionId: "", deviceId: "dev-real", reqId: "j2" }));
+    other.send(JSON.stringify({ type: "lease", op: "acquire", sessionId: "s", deviceId: "x".repeat(200), reqId: "j3" }));
+    other.send(JSON.stringify({ type: "lease", op: "force-acquire-if-holder", sessionId: "..", deviceId: "dev-real", reqId: "j4" }));
+    // the real device can still claim its id, and the junk sender can still use its own
+    expect((await leaseOp(real, "acquire", "s", "dev-real")).ok).toBe(true);
+    expect((await leaseOp(other, "acquire", "s9", "dev-other")).ok).toBe(true);
+    real.close(); other.close();
+  });
+
+  it("a clean close followed by an immediate reconnect gets the identity at once", async () => {
+    const { token, real } = await pair();
+    expect((await leaseOp(real, "acquire", "s", "dev-real")).ok).toBe(true);
+    real.close();
+    await new Promise((r) => setTimeout(r, 100));
+    const again = await connect(token, "Real"); await nextMessage(again, "hello");
+    expect(await leaseOp(again, "renew", "s", "dev-real")).toMatchObject({ ok: true, holder: { deviceId: "dev-real" } });
+    again.close();
+  });
+
+  it("KNOWN GAP: a same-account client that claims an OFFLINE device's id first can act as it", async () => {
+    // Documented, not fixed: identities are self-declared, so with the real device offline
+    // anything signed in to the account can claim its id. A real fix needs a per-install proof.
+    const acct = await createTestAccount(); const token = await issueTestSession(acct);
+    const attacker = await connect(token, "Attacker"); await nextMessage(attacker, "hello");
+    expect((await leaseOp(attacker, "acquire", "s", "dev-real")).ok).toBe(true);
+    const real = await connect(token, "Real"); await nextMessage(real, "hello");
+    await expect(leaseOp(real, "renew", "s", "dev-real", 150)).rejects.toThrow(); // real device now ignored
+    attacker.close(); real.close();
   });
 });
