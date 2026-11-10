@@ -14,6 +14,7 @@
 //     a phishing campaign or someone hammering the sign-in;
 //   - networks that hit the per-network sign-in cap (ip_bucket rows >= START cap): bots;
 //   - new login sessions in the last hour above NEW_SESSION_LIMIT: mass account access;
+//   - game-room tickets issued in the last hour above the ticket limit: someone churning rooms;
 //   - ANY new session for an admin account (ADMIN_USER_IDS): like Google's "new sign-in"
 //     notice. Destin signing in himself also triggers it, which is the point: one he did not
 //     do is the alarm.
@@ -24,6 +25,7 @@ export interface AlarmEnv {
   ADMIN_USER_IDS?: string;
   ALARM_SIGNIN_START_LIMIT?: string;
   ALARM_NEW_SESSION_LIMIT?: string;
+  ALARM_GAME_TICKET_LIMIT?: string;
 }
 
 export interface Alarm {
@@ -41,6 +43,8 @@ export interface Alarm {
 const DEFAULT_START_LIMIT = 100;
 const DEFAULT_SESSION_LIMIT = 50;
 // Must match auth/routes.ts START_MAX_PER_BUCKET / START_WINDOW_SEC: a network that reached it.
+// A real player asks for a ticket once per match or reconnect; 300 an hour is far past honest play.
+const DEFAULT_TICKET_LIMIT = 300;
 const CAPPED_BUCKET_MIN = 10;
 const CAPPED_NETWORKS_LIMIT = 3;
 
@@ -76,6 +80,16 @@ export async function checkAlarms(env: AlarmEnv, now: number): Promise<Alarm[]> 
   if ((sessions?.n ?? 0) >= sessionLimit) {
     alarms.push({ key: "session-burst", priority: "high", title: "Unusual number of new logins on the YouCoded server",
       detail: `${sessions?.n} new sessions in the last hour (limit ${sessionLimit})` });
+  }
+
+  // WHY (game rooms): every join needs a ticket, so tickets issued per hour is the natural
+  // measure of room abuse; the table already exists for the join check, so no new storage.
+  const tickets = await env.DB.prepare("SELECT COUNT(*) AS n FROM game_tickets WHERE created_at > ?")
+    .bind(since).first<{ n: number }>();
+  const ticketLimit = limit(env.ALARM_GAME_TICKET_LIMIT, DEFAULT_TICKET_LIMIT);
+  if ((tickets?.n ?? 0) >= ticketLimit) {
+    alarms.push({ key: "game-ticket-burst", priority: "default", title: "Unusual game-room activity on the YouCoded server",
+      detail: `${tickets?.n} game-room tickets issued in the last hour (limit ${ticketLimit})` });
   }
 
   const admins = (env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);

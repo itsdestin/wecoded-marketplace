@@ -28,6 +28,8 @@ export async function pruneExpired(db: D1Database, now: number): Promise<void> {
     db.prepare("DELETE FROM site_daily WHERE day < date(?, 'unixepoch', '-89 days')").bind(now),
     db.prepare("DELETE FROM site_daily_domains WHERE day < date(?, 'unixepoch', '-89 days')").bind(now),
     db.prepare("DELETE FROM site_daily_budget WHERE day < date(?, 'unixepoch', '-89 days')").bind(now),
+    // WHY a day: tickets live 60 s, but used/expired rows are kept a day as the alarm and rate-limit counter.
+    db.prepare("DELETE FROM game_tickets WHERE created_at < ?").bind(now - 86400),
     // WHY health reports a persisted successful sweep rather than assuming cron ran.
     db.prepare("INSERT INTO site_analytics_health(id,last_sweep_at,last_sweep_ok,last_sweep_error) VALUES(1,?,1,NULL) ON CONFLICT(id) DO UPDATE SET last_sweep_at=excluded.last_sweep_at,last_sweep_ok=1,last_sweep_error=NULL").bind(now),
     ]);

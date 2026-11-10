@@ -64,6 +64,7 @@ export interface Env {
   // Optional overrides for the alarm thresholds (per hour). Unset -> the defaults in alarms.ts.
   ALARM_SIGNIN_START_LIMIT?: string;
   ALARM_NEW_SESSION_LIMIT?: string;
+  ALARM_GAME_TICKET_LIMIT?: string;
   // Seconds GET /stats may be served from the KV copy (default 300). "0" disables
   // the cache; tests set it so data changes show up at once.
   STATS_CACHE_TTL_SEC?: string;

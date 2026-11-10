@@ -76,3 +76,19 @@ describe("hourly security alarms", () => {
     expect(await sendAlarms({ DB: env.DB }, [alarm], fake)).toBe(0);
   });
 });
+
+describe("game-room ticket alarm", () => {
+  it("raises when tickets issued in the last hour reach the limit, ignoring older ones", async () => {
+    const t = Math.floor(Date.now() / 1000);
+    const stmts = [];
+    for (let i = 0; i < 3; i++) {
+      stmts.push(env.DB.prepare("INSERT INTO game_tickets (ticket_hash, user_id, username, game, room, created_at, expires_at) VALUES (?, 'u', 'u', 'chess', 'ROOMAA', ?, ?)")
+        .bind(`h${i}`, t - 30, t + 30));
+    }
+    stmts.push(env.DB.prepare("INSERT INTO game_tickets (ticket_hash, user_id, username, game, room, created_at, expires_at) VALUES ('old', 'u', 'u', 'chess', 'ROOMAA', ?, ?)")
+      .bind(t - 7200, t - 7100));
+    await env.DB.batch(stmts);
+    expect((await checkAlarms({ DB: env.DB, ALARM_GAME_TICKET_LIMIT: "3" }, t)).map((a) => a.key)).toContain("game-ticket-burst");
+    expect((await checkAlarms({ DB: env.DB, ALARM_GAME_TICKET_LIMIT: "4" }, t)).map((a) => a.key)).not.toContain("game-ticket-burst");
+  });
+});
