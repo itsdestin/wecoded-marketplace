@@ -103,6 +103,10 @@ interface PendingResult {
 // per match id) and no client sends forfeits at all, so even a rapid-fire rematch game
 // finishing a match every 10 seconds stays far below this. Counted per ACCOUNT (not per
 // socket) so opening extra connections doesn't multiply the allowance.
+// WHY a switch and not a deletion: the handler below is kept for the day the app has a
+// real forfeit feature. Turn this on ONLY together with proof that the match started
+// (the server saw both players in it) — see card #43.
+const FORFEITS_ENABLED: boolean = false;
 const GAME_MSG_LIMIT = 30;
 const GAME_MSG_WINDOW_MS = 5 * 60 * 1000;
 
@@ -317,6 +321,15 @@ export class PresenceRoom {
       // Games §6.3: "my opponent left and never came back."
       case "game-forfeit":
         if (!this.allowGameMessage(att.userId)) break;
+        // WHY (card #43, Destin 2026-11-10): switched off. A forfeit only proved the
+        // opponent was offline NOW, never that a match took place, so a modified app
+        // could record a permanent win against any offline friend. No released app
+        // sends this message, so nobody loses anything. The same answer goes to every
+        // claim, before any friend or presence check, so it reveals nothing.
+        if (!FORFEITS_ENABLED) {
+          this.rejectReport(ws, data.game, data.match_id, String(data.opponent ?? ""), "forfeits-off");
+          break;
+        }
         await this.handleGameForfeit(ws, att, data);
         break;
     }

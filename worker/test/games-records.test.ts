@@ -219,49 +219,39 @@ describe("head-to-head attestation (§6.2)", () => {
   });
 });
 
-describe("forfeits (§6.3)", () => {
-  it("refuses a single report while the opponent is still connected", async () => {
+// Card #43 (Destin, 2026-11-10): forfeits are switched off on the server. Every claim gets
+// the same refusal and nothing is recorded — including the case that used to succeed.
+describe("forfeits (§6.3) are switched off", () => {
+  it("refuses a claim while the opponent is still connected", async () => {
     const { b, wsA, wsB, match } = await twoPlayers("forfeit-live");
     const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await rejected).toMatchObject({ reason: "opponent-still-connected" });
+    expect(await rejected).toMatchObject({ reason: "forfeits-off" });
     expect(await matchRows(match)).toHaveLength(0);
     wsA.close(); wsB.close();
   });
 
-  it("accepts it once the presence room independently sees the opponent gone", async () => {
-    const { a, b, wsA, wsB, match } = await twoPlayers("forfeit-gone");
-
-    // Wait for the room's OWN offline signal rather than assuming the close
-    // landed — this is the state the forfeit claim is checked against.
+  it("refuses a claim once the opponent is gone, and records no win", async () => {
+    const { b, wsA, wsB, match } = await twoPlayers("forfeit-gone");
     const left = nextMessage(wsA, "user-left");
     wsB.close(1000, "bye");
     expect((await left).id).toBe(b.userId);
 
-    const rec = nextMessage(wsA, "game-record");
+    const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await rec).toMatchObject({ source: "forfeit", record: { wins: 1, losses: 0 } });
-
-    const rows = await matchRows(match);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ winner: a.userId, source: "forfeit" });
-
-    // Retrying the forfeit does not stack a second win.
-    const again = nextMessage(wsA, "game-record");
-    wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await again).toMatchObject({ source: "already-recorded" });
-    expect(await matchRows(match)).toHaveLength(1);
+    expect(await rejected).toMatchObject({ reason: "forfeits-off" });
+    expect(await matchRows(match)).toHaveLength(0);
     wsA.close();
   });
 
-  it("cannot be claimed against a non-friend", async () => {
+  it("gives a non-friend claim the same refusal", async () => {
     const a = await createTestAccount();
-    const stranger = await createTestAccount(); // never connects, so "gone" is trivially true
+    const stranger = await createTestAccount();
     const wsA = await connect(await issueTestSession(a));
     await nextMessage(wsA, "presence");
     const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: "FF-STRANGER", opponent: stranger.userId }));
-    expect((await rejected).reason).toBe("not-friends");
+    expect((await rejected).reason).toBe("forfeits-off");
     expect(await matchRows("FF-STRANGER")).toHaveLength(0);
     wsA.close();
   });
