@@ -20,7 +20,9 @@ import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
+import { routePartykitRequest } from "partyserver";
 import { securityRoutes } from "./security/routes";
+import { isRoomCode, redeemTicket } from "./games/tickets";
 import { checkAlarms, sendAlarms } from "./security/alarms";
 
 const app = new Hono<HonoEnv>();
@@ -174,7 +176,37 @@ app.route("/", siteAnalyticsRoutes);
 const HOURLY_ALARM_CRON = "41 * * * *";
 
 export default {
-  fetch: app.fetch,
+  // WHY the games check runs BEFORE Hono: the CORS middleware above would try to
+  // add headers to a WebSocket (101) response, which is immutable. The game
+  // rooms (/parties/connectfour/<room>, /parties/chess/<room>) are matched here
+  // first; anything else (including a non-matching /parties/... path) falls
+  // through to the normal router untouched, so no existing route is affected.
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (new URL(req.url).pathname.startsWith("/parties/")) {
+      const res = await routePartykitRequest(req, env as unknown as Cloudflare.Env, {
+        // WHY here: sign-in is checked BEFORE the request reaches (or wakes) a room.
+        // Browsers cannot send headers on a WebSocket, so the app sends a one-time ticket
+        // (POST /games/ticket) as ?ticket=. The room learns who the player is from the
+        // headers set below, which we overwrite, so a client cannot forge them.
+        async onBeforeConnect(request, lobby) {
+          if (!isRoomCode(lobby.name)) return new Response("invalid room code", { status: 400 });
+          const url = new URL(request.url);
+          const player = await redeemTicket(env.DB, url.searchParams.get("ticket"), lobby.party, lobby.name, Math.floor(Date.now() / 1000));
+          if (!player) return new Response("sign-in ticket missing, expired or not for this room", { status: 401 });
+          const headers = new Headers(request.headers);
+          headers.set("X-Room-User-Id", player.userId);
+          headers.set("X-Room-Username", encodeURIComponent(player.username));
+          // The ticket stays in the address but is already spent, so it is worthless.
+          return new Request(request, { headers });
+        },
+        // WHY: a plain GET used to wake (and create) a room for any made-up name. Answer the
+        // same "Not implemented" the room gave, without touching a Durable Object at all.
+        onBeforeRequest() { return new Response("Not implemented", { status: 404 }); },
+      });
+      if (res) return res;
+    }
+    return app.fetch(req, env, ctx);
+  },
   async scheduled(event: ScheduledController, env: Env): Promise<void> {
     // WHY (security apparatus, 2026-11): the hourly trigger only runs the attack alarms
     // (src/security/alarms.ts); the daily trigger keeps doing maintenance as before.
@@ -202,3 +234,5 @@ export { PresenceRoom } from "./social/presence-room";
 // SyncGroupRoom must also be exported from the entrypoint so the runtime can
 // instantiate it for the SYNC_HUB binding (SyncHub §6).
 export { SyncGroupRoom } from "./sync/room";
+// Versus-game relay rooms (replace the dead hosted-PartyKit rooms, 2026-11-01).
+export { ConnectFourRoom, ChessRoom } from "./games/relay-room";

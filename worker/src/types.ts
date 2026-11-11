@@ -8,6 +8,10 @@ export interface Env {
   // metadata-only "space-updated" signals between a user's own devices so
   // pulls happen instantly instead of waiting for the 120s poll (SyncHub §6).
   SYNC_HUB: DurableObjectNamespace;
+  // Versus-game relay rooms. Binding names are what partyserver turns into the
+  // URL name (CONNECTFOUR -> /parties/connectfour/<room>), so do not rename.
+  CONNECTFOUR: DurableObjectNamespace;
+  CHESS: DurableObjectNamespace;
   // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
   // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
   APP_ANALYTICS?: AnalyticsEngineDataset;
@@ -60,6 +64,7 @@ export interface Env {
   // Optional overrides for the alarm thresholds (per hour). Unset -> the defaults in alarms.ts.
   ALARM_SIGNIN_START_LIMIT?: string;
   ALARM_NEW_SESSION_LIMIT?: string;
+  ALARM_GAME_TICKET_LIMIT?: string;
   // Seconds GET /stats may be served from the KV copy (default 300). "0" disables
   // the cache; tests set it so data changes show up at once.
   STATS_CACHE_TTL_SEC?: string;

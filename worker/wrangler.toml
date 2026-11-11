@@ -59,6 +59,11 @@ simple = { limit = 20, period = 60 }
 bindings = [
   { name = "PRESENCE", class_name = "PresenceRoom" },
   { name = "SYNC_HUB", class_name = "SyncGroupRoom" },
+  # Versus-game relay rooms. WHY these exact binding names: partyserver builds the
+  # URL from the binding name (CONNECTFOUR -> /parties/connectfour/<room>), and
+  # the app asks for party "connectfour" / "chess".
+  { name = "CONNECTFOUR", class_name = "ConnectFourRoom" },
+  { name = "CHESS", class_name = "ChessRoom" },
 ]
 
 # DO class registration — required once per new class. SQLite-backed
@@ -71,6 +76,11 @@ new_sqlite_classes = ["PresenceRoom"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["SyncGroupRoom"]
+
+# Versus-game relay rooms moved here from hosted PartyKit (shut down 2026-10-23).
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["ConnectFourRoom", "ChessRoom"]
 
 [vars]
 # Set to the deploy timestamp of the device-id-keyed client (version N) once
@@ -130,6 +140,8 @@ migrations_dir = "migrations"
 bindings = [
   { name = "PRESENCE", class_name = "PresenceRoom" },
   { name = "SYNC_HUB", class_name = "SyncGroupRoom" },
+  { name = "CONNECTFOUR", class_name = "ConnectFourRoom" },
+  { name = "CHESS", class_name = "ChessRoom" },
 ]
 
 # Env config is NOT inherited, so the catalog KV binding is mirrored here too —
