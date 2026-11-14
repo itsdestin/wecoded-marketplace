@@ -56,7 +56,7 @@ describe("finding 4: per-device roster limits, and the first statement must be f
     await skew(room, 3_600_001);
     expect((await rosterRename(conns[0]!)).h.op).toBe("ok");
   });
-  it("a device may have at most 512 statements in total, however slowly it writes them", async () => {
+  it("a device may have at most ROSTER_MAX_PER_SIGNER (256) statements in total, however slowly it writes them", async () => {
     const { conns, room, devices } = await makeSet(["a", "b"]);
     await inRoom(room, (r) => { for (let i = 0; i < ROSTER_MAX_PER_SIGNER - 6; i++) (r as any).q(`INSERT INTO rentries(id,signer,kind,target,t) VALUES(?,?,?,?,?)`, randomHex(32), devices[0]!.dev, "rename", devices[0]!.dev, 1); });
     for (let i = 0; i < 5; i++) expect((await rosterRename(conns[0]!)).h.op).toBe("ok");

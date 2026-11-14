@@ -465,8 +465,10 @@ describe("misc", () => {
     expect((await conns[0]!.call({ op: "usage" })).h.op).toBe("usage-result");
   });
   it("caps the number of devices in a set", async () => {
-    const { conns } = await makeSet(["a"]);
-    for (let i = 0; i < 15; i++) expect((await rosterAdd(conns[0]!, (await newDevice()).signKey)).h.op).toBe("ok");
+    // Several signers add (one device may sign only MAX_ADMISSIONS_PER_SIGNER adds, third review).
+    const { conns } = await makeSet(["a", "b", "c", "d", "e"]);
+    let n = 5;
+    for (let i = 0; n < 16; i++) { expect((await rosterAdd(conns[1 + (i % 4)]!, (await newDevice()).signKey)).h.op).toBe("ok"); n++; } // a has used all its admissions on b..e
     expect((await rosterAdd(conns[0]!, (await newDevice()).signKey)).h.reason).toBe("too-many-devices");
   });
 });

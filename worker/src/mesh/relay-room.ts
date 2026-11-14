@@ -25,7 +25,7 @@ import {
   RATE_MAX_MESSAGES, RATE_WINDOW_MS, REGISTER_MAX_BYTES, ROOM_HEX, SESSION_HEX, SET_CAP_BYTES,
   CLOSE_MEET_ENDED, CLOSE_MEET_REFUSED, MEET_HEX, MEET_JOIN_DEADLINE_MS, MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_MESSAGES,
   MEET_MAX_HOST_MESSAGE_BYTES, MEET_MAX_MESSAGE_BYTES, MEET_MAX_OPEN_PER_DEVICE, MEET_MAX_OPEN_PER_ROOM, MEET_MAX_SOCKETS, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_DEVICE_HOUR, MEET_OPENS_PER_ROOM_HOUR, MEET_RATE_MAX_MESSAGES,
-  FIRST_STATEMENT_SKEW_MS, ROSTER_MAX_PER_SIGNER, ROSTER_MAX_PER_SIGNER_HOUR, ROSTER_MAX_SEEN,
+  FIRST_STATEMENT_SKEW_MS, MAX_ADMISSIONS_PER_SIGNER, MAX_KNOWN_KEYS, ROSTER_MAX_PER_SIGNER, ROSTER_MAX_PER_SIGNER_HOUR, ROSTER_MAX_SEEN,
   CONTROL_FRAME_TTL_MS, CONTROL_GROUPS, CONTROL_RESERVE_FRACTION, OTHER_GROUP_MAX_BYTES, OTHER_WRITER_MAX_BYTES, OTHER_WRITER_MAX_FRAMES,
   ROSTER_WRITER_MAX_BYTES, ROSTER_WRITER_MAX_FRAMES, isControlGroup,
   SET_IDLE_ERASE_MS, SIG_HEX, UNAUTH_DEADLINE_MS, UNAUTH_MAX_MESSAGE_BYTES, UNAUTH_MIN_AGE_MS, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
@@ -68,12 +68,13 @@ export interface MeshLimits {
   otherGroupBytes: number; otherWriterBytes: number; otherWriterFrames: number; rosterWriterBytes: number; rosterWriterFrames: number;
 }
 
-/** What happens when two devices remove each other at once and neither removal cites the other (the app's "mutual removal").
- *  'both': both end up removed (the default: the relay cannot tell which one is the honest one, so neither is trusted).
- *  'first-admitted': the device admitted to the set earlier survives, the later one is removed, and the other removal is refused.
- *  ONE small swappable function so the rule can be changed without touching the statement checks. */
-export type MutualPolicy = "both" | "first-admitted";
-export function mutualRemovalWinner(): MutualPolicy { return "both"; }
+/** WHY the relay has NO mutual-removal policy (third review, finding 8): the app decides what two simultaneous removals mean (and may change its
+ *  rule, or later void a removal); a relay setting that could disagree would leave a device the app keeps banned here for good. So the relay
+ *  enforces only what CURRENT members signed, in the one conservative reading: both removals stand, because a ban here only ever reduces who may
+ *  connect and never grants anyone anything. KNOWN LIMIT: a removal the app later judges void leaves that device banned at the relay. */
+
+/** Most statement ids the ancestry walk will visit (a log is capped at 8192 entries); named so a test can prove the bound exists. */
+export const ANCESTRY_WALK_LIMIT = 8192;
 
 const TEXT = new TextEncoder();
 // Same cap as MAX_HEADER_BYTES for a meeting message's header (kept as its own name so a meeting header could be tightened alone).
@@ -92,7 +93,6 @@ export class MeshRelayRoom {
   // Not state: replaceable by tests, rebuilt from env on every construction.
   limits: MeshLimits = { setCap: SET_CAP_BYTES, prePairCap: PRE_PAIR_CAP_BYTES, maxGroups: MAX_GROUPS, maxFrame: MAX_FRAME_BYTES, outWindowBytes: OUT_WINDOW_BYTES,
     otherGroupBytes: OTHER_GROUP_MAX_BYTES, otherWriterBytes: OTHER_WRITER_MAX_BYTES, otherWriterFrames: OTHER_WRITER_MAX_FRAMES, rosterWriterBytes: ROSTER_WRITER_MAX_BYTES, rosterWriterFrames: ROSTER_WRITER_MAX_FRAMES };
-  mutualWinner: () => MutualPolicy = mutualRemovalWinner;
   createLimiter: CreateLimiter | undefined;
   now: () => number = () => Date.now();
   // Read from env on construction; a test may replace it. Decides whether a missing/failed limiter refuses (anything but test-open).
@@ -565,10 +565,10 @@ export class MeshRelayRoom {
     if (!g) return this.send(ws, { op: "frames-end", ...idf, g: h.g, more: false, empty: true });
     if (h.seq < Number(g.released_through)) return this.send(ws, { op: "gap", ...idf, g: h.g, through: Number(g.released_through) });
     let sent = 0, last = h.seq, more = false;
-    for (const r of this.sql.exec(`SELECT seq, sz, b FROM frames WHERE g=? AND seq>? ORDER BY seq`, h.g, h.seq)) {
+    for (const r of this.sql.exec(`SELECT seq, sz, b, w FROM frames WHERE g=? AND seq>? ORDER BY seq`, h.g, h.seq)) {
       const sz = Number(r.sz);
       if (sent + sz > FETCH_PAGE_BYTES && sent > 0) { more = true; break; }
-      this.send(ws, { op: "frame", ...idf, g: h.g, seq: Number(r.seq) }, new Uint8Array(r.b as ArrayBuffer));
+      this.send(ws, { op: "frame", ...idf, g: h.g, seq: Number(r.seq), w: r.w === null || r.w === undefined ? null : String(r.w) }, new Uint8Array(r.b as ArrayBuffer));
       sent += sz; last = Number(r.seq);
     }
     this.chargeOut(ws, sent);
@@ -715,7 +715,6 @@ export class MeshRelayRoom {
     if (Number(tally.n) >= ROSTER_MAX_PER_SIGNER) return refuse("too-many-entries");
     if (Number(tally.h) >= ROSTER_MAX_PER_SIGNER_HOUR) return refuse("roster-rate-limited");
     const first = Number(this.q(`SELECT count(*) n FROM rentries`)[0]!.n) === 0;
-    let mutual = false;
     if (first && signerWasRemoved) return refuse("signer-removed");
     if (first) {
       // WHY a fresh date on the first statement (review 15, idle-erase replay): after an idle erase the room is empty again, and the first
@@ -739,7 +738,6 @@ export class MeshRelayRoom {
         // (b) its target is the device that signed that removal. Anything else is the removed device acting on the set: refused.
         const removal = this.q(`SELECT id, signer FROM rentries WHERE kind='remove' AND target=? ORDER BY t DESC LIMIT 1`, signer)[0];
         if (!removal || visited.has(String(removal.id)) || String(removal.signer) !== target) return refuse("signer-removed");
-        mutual = true;
       }
     }
 
@@ -751,6 +749,11 @@ export class MeshRelayRoom {
       const existing = this.q(`SELECT removed FROM roster WHERE dev=?`, target)[0];
       if (existing) return refuse(Number(existing.removed) === 1 ? "banned" : "already-member");
       if (this.activeDevices().length >= MAX_DEVICES) return refuse("too-many-devices");
+      // WHY (third review, finding 2, N7): ghosts. Charged to the VERIFIED SIGNER only (the signature was checked above), so one device's admissions
+      // can never use up another's, and a set can never name more keys than MAX_KNOWN_KEYS in its lifetime (removed devices keep their ban row).
+      const admitted = Number(this.q(`SELECT count(*) n FROM rentries WHERE signer=? AND kind='add' AND t>0`, signer)[0]!.n);
+      if (admitted >= MAX_ADMISSIONS_PER_SIGNER) return refuse("too-many-admissions");
+      if (this.rosterRowCount() >= MAX_KNOWN_KEYS) return refuse("too-many-keys");
       this.q(`INSERT INTO roster(dev,sign_key,added_at,removed) VALUES(?,?,?,0)`, target, targetKey, this.now());
       this.q(`INSERT INTO rintro(dev,entry) VALUES(?,?)`, target, entry);
       this.recordEntry(entry, signer, kind, target, seen);
@@ -765,14 +768,6 @@ export class MeshRelayRoom {
     if (Number(row.removed) === 1) {
       this.recordEntry(entry, signer, kind, target, seen);
       return this.send(ws, { op: "ok", ...idf });
-    }
-    if (mutual && this.mutualWinner() === "first-admitted") {
-      // The earlier-admitted device survives. Admission order is the relay's own admission time (ties broken by device id, so it is deterministic).
-      const mine = this.q(`SELECT added_at FROM roster WHERE dev=?`, signer)[0]!;
-      const signerEarlier = Number(mine.added_at) < Number(row.added_at) || (Number(mine.added_at) === Number(row.added_at) && signer < target);
-      if (!signerEarlier) return refuse("mutual-removal-lost");
-      // The signer was admitted first, so ITS removal of the target stands and the target's earlier removal of it is undone (it was only a concurrent act).
-      this.q(`UPDATE roster SET removed=0 WHERE dev=?`, signer);
     }
     this.recordEntry(entry, signer, kind, target, seen);
     this.q(`UPDATE roster SET removed=1 WHERE dev=?`, target);
@@ -813,7 +808,7 @@ export class MeshRelayRoom {
   private ancestry(seen: string[]): Set<string> {
     const visited = new Set<string>();
     const stack = [...seen];
-    while (stack.length && visited.size <= 8192) {
+    while (stack.length && visited.size <= ANCESTRY_WALK_LIMIT) {
       const id = stack.pop() as string;
       if (visited.has(id)) continue;
       visited.add(id);

@@ -196,27 +196,5 @@ describe("concurrent removal at the relay (mutual removal, default: both removed
     expect((await rosterRemove(c, devices[0]!.dev, { signer: devices[1]!, corruptSig: true })).h.reason).toBe("bad-signature");
     expect((await active(room)).length).toBe(2);
   });
-  describe("'first-admitted' variant (the swappable rule)", () => {
-    const setAdmission = (room: string, a: Device, b: Device) => inRoom(room, (r) => {
-      (r as any).q(`UPDATE roster SET added_at=1000 WHERE dev=?`, a.dev);
-      (r as any).q(`UPDATE roster SET added_at=2000 WHERE dev=?`, b.dev);
-      r.mutualWinner = () => "first-admitted";
-    });
-    it("later-admitted B was removed by A, B's counter-removal of the earlier A is refused", async () => {
-      const { room, devices, conns } = await trio();
-      const [a, , c] = conns as [Conn, Conn, Conn];
-      await setAdmission(room, devices[0]!, devices[1]!);
-      await rosterRemove(a, devices[1]!.dev);
-      expect((await rosterRemove(c, devices[0]!.dev, { signer: devices[1]! })).h).toMatchObject({ op: "refused", reason: "mutual-removal-lost" });
-      expect(await active(room)).toEqual([devices[0]!.dev, devices[2]!.dev].sort());
-    });
-    it("earlier-admitted A was removed first by B, A's counter-removal wins: A is restored, B removed", async () => {
-      const { room, devices, conns } = await trio();
-      const [, b, c] = conns as [Conn, Conn, Conn];
-      await setAdmission(room, devices[0]!, devices[1]!);
-      expect((await rosterRemove(b, devices[0]!.dev)).h.op).toBe("ok");
-      expect((await rosterRemove(c, devices[1]!.dev, { signer: devices[0]! })).h.op).toBe("ok");
-      expect(await active(room)).toEqual([devices[0]!.dev, devices[2]!.dev].sort());
-    });
-  });
+  // The relay's 'first-admitted' variant was REMOVED in the third round (it carried an opinion the app could contradict); see mesh-relay-review3.test.ts.
 });
