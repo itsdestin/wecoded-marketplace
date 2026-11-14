@@ -24,6 +24,7 @@ import { routePartykitRequest } from "partyserver";
 import { securityRoutes } from "./security/routes";
 import { isRoomCode, redeemTicket } from "./games/tickets";
 import { checkAlarms, sendAlarms } from "./security/alarms";
+import { handleMeshRelayRequest } from "./mesh/routes";
 
 const app = new Hono<HonoEnv>();
 
@@ -205,6 +206,11 @@ export default {
       });
       if (res) return res;
     }
+    // Mesh relay: flag-gated (MESH_RELAY_ENABLED), answers null when off so the router 404s as usual.
+    if (new URL(req.url).pathname.startsWith("/mesh/relay/")) {
+      const res = await handleMeshRelayRequest(req, env);
+      if (res) return res;
+    }
     return app.fetch(req, env, ctx);
   },
   async scheduled(event: ScheduledController, env: Env): Promise<void> {
@@ -236,3 +242,5 @@ export { PresenceRoom } from "./social/presence-room";
 export { SyncGroupRoom } from "./sync/room";
 // Versus-game relay rooms (replace the dead hosted-PartyKit rooms, 2026-11-01).
 export { ConnectFourRoom, ChessRoom } from "./games/relay-room";
+// Mesh relay room (inert unless MESH_RELAY_ENABLED = "1"; see src/mesh/routes.ts).
+export { MeshRelayRoom } from "./mesh/relay-room";

@@ -14,6 +14,8 @@ declare global {
       KNOWN_DEV_DEVICES?: string;
       PRESENCE: DurableObjectNamespace;
       SYNC_HUB: DurableObjectNamespace;
+      MESH_RELAY_ENABLED?: string;
+      MESH_RELAY: DurableObjectNamespace;
       CATALOG_INGEST_TOKEN?: string;
       CATALOG_ENABLED?: string;
       CATALOG_KV?: KVNamespace;

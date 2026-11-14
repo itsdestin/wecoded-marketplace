@@ -64,6 +64,9 @@ bindings = [
   # the app asks for party "connectfour" / "chess".
   { name = "CONNECTFOUR", class_name = "ConnectFourRoom" },
   { name = "CHESS", class_name = "ChessRoom" },
+  # Mesh relay: one object per device set. Class is registered (migration v4) but unreachable
+  # while MESH_RELAY_ENABLED = "0" below.
+  { name = "MESH_RELAY", class_name = "MeshRelayRoom" },
 ]
 
 # DO class registration — required once per new class. SQLite-backed
@@ -82,6 +85,12 @@ new_sqlite_classes = ["SyncGroupRoom"]
 tag = "v3"
 new_sqlite_classes = ["ConnectFourRoom", "ChessRoom"]
 
+# Mesh relay (sealed-frame mailbox between one user's devices). Registering the class is inert:
+# no route reaches it until the flag below is "1".
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["MeshRelayRoom"]
+
 [vars]
 # Set to the deploy timestamp of the device-id-keyed client (version N) once
 # version N is the dominant client. Until then, leave empty — analytics
@@ -91,6 +100,10 @@ CUTOVER_TIMESTAMP = ""
 # handle by falling back to index.json — the way to stop a bad ingest run from
 # reaching every device without writing and deploying code under pressure.
 CATALOG_ENABLED = "1"
+# Mesh relay kill switch. MUST stay "0" in production: this Worker deploys automatically from master, and
+# the relay may only go live deliberately, after an independent review (test/mesh-relay-gate.test.ts pins
+# this value). With "0" every /mesh/relay/* path is a plain 404 and no Durable Object is created.
+MESH_RELAY_ENABLED = "0"
 # WHY: owner authorized activation after enabling the edge rate-limit rule.
 # Signing remains a CI-provisioned secret, never a public [vars] placeholder.
 SITE_ANALYTICS_ENABLED = "1"
@@ -142,6 +155,7 @@ bindings = [
   { name = "SYNC_HUB", class_name = "SyncGroupRoom" },
   { name = "CONNECTFOUR", class_name = "ConnectFourRoom" },
   { name = "CHESS", class_name = "ChessRoom" },
+  { name = "MESH_RELAY", class_name = "MeshRelayRoom" },
 ]
 
 # Env config is NOT inherited, so the catalog KV binding is mirrored here too —
@@ -189,6 +203,8 @@ STATS_CACHE_TTL_SEC = "0"
 # seeding the KV copy (key "theme-registry:slugs") instead.
 THEME_REGISTRY_URL = ""
 REQUIRE_LOOPBACK_SIGNIN = "0"
+# Relay routes are ON in the test environment only (production is "0" at the top of this file).
+MESH_RELAY_ENABLED = "1"
 
 # Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
 # are injected as secrets by CI (see .github/workflows/worker-deploy.yml).

@@ -12,6 +12,13 @@ export interface Env {
   // URL name (CONNECTFOUR -> /parties/connectfour/<room>), so do not rename.
   CONNECTFOUR: DurableObjectNamespace;
   CHESS: DurableObjectNamespace;
+  // Mesh relay (src/mesh/). OPTIONAL and gated: routes exist only when MESH_RELAY_ENABLED is
+  // exactly "1" ("0" in production wrangler.toml, "1" in [env.test]); otherwise every relay path is a 404
+  // and no Durable Object is created. MESH_ALLOWED_ROOMS (comma-separated room ids) optionally
+  // restricts a test relay to named sets.
+  MESH_RELAY?: DurableObjectNamespace;
+  MESH_RELAY_ENABLED?: string;
+  MESH_ALLOWED_ROOMS?: string;
   // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
   // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
   APP_ANALYTICS?: AnalyticsEngineDataset;
