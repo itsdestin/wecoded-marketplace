@@ -69,6 +69,45 @@ export function relayAuthMessage(aud: string, roomHex: string, nonceHex: string,
   return concat(enc.encode(L + "relay-auth\0"), head(5, entries.length), ...entries.flat());
 }
 
+// ---- Signed roster statement (review finding 8). A current member signs a small statement that a device was
+// added or removed. WHY a statement and not the app's whole roster entry: an `add` entry carries the new device's
+// NAME and platform, and the relay must never learn those (it sees opaque ids and public keys only; the pairing rig
+// asserts it). The statement names the entry by its id, so it is bound to one real roster entry, and carries exactly
+// what the relay's rules need: who signs, who is added/removed, the entry's `seen` ids (its stated ancestry).
+//   signed = LABEL+"relay-roster\0" || canonicalCBOR{ kind, room, signer, target, targetKey|null, entry, seen[], at }
+// The app builds the same bytes with its full CBOR encoder; known-answer vectors (test/mesh-roster-vectors.json here,
+// tests/mesh/mesh-roster-vectors.json there, kept byte-identical by a drift test) pin the two together.
+export interface RosterStatement { kind: "add" | "remove"; room: string; signer: string; target: string; targetKey: string | null; entry: string; seen: string[]; at: number }
+function uintItem(n: number): Uint8Array {
+  // Shortest form, as the deterministic encoding requires. `at` is a millisecond clock: below 2^53.
+  if (n < 24) return Uint8Array.of(n);
+  if (n < 0x100) return Uint8Array.of(24, n);
+  if (n < 0x10000) return Uint8Array.of(25, n >> 8, n & 0xff);
+  if (n < 0x100000000) return Uint8Array.of(26, (n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff);
+  const out = new Uint8Array(9);
+  out[0] = 27;
+  new DataView(out.buffer).setBigUint64(1, BigInt(n));
+  return out;
+}
+export function rosterStatementMessage(s: RosterStatement): Uint8Array {
+  const entries: Array<[Uint8Array, Uint8Array]> = [
+    [cborItem("kind"), cborItem(s.kind)],
+    [cborItem("room"), cborItem(hexToBytes(s.room))],
+    [cborItem("signer"), cborItem(hexToBytes(s.signer))],
+    [cborItem("target"), cborItem(hexToBytes(s.target))],
+    [cborItem("targetKey"), s.targetKey === null ? Uint8Array.of(0xf6) : cborItem(hexToBytes(s.targetKey))],
+    [cborItem("entry"), cborItem(hexToBytes(s.entry))],
+    [cborItem("seen"), concat(head(4, s.seen.length), ...s.seen.map((x) => cborItem(hexToBytes(x))))],
+    [cborItem("at"), uintItem(s.at)],
+  ];
+  entries.sort((a, b) => {
+    const n = Math.min(a[0].length, b[0].length);
+    for (let i = 0; i < n; i++) { const d = (a[0][i] as number) - (b[0][i] as number); if (d) return d; }
+    return a[0].length - b[0].length;
+  });
+  return concat(enc.encode(L + "relay-roster\0"), head(5, entries.length), ...entries.flat());
+}
+
 /** Ed25519 verify that can never throw: a malformed key or signature is simply "no". */
 export async function verifyEd25519(pubKeyHex: string, message: Uint8Array, sigHex: string): Promise<boolean> {
   try {

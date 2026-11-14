@@ -9,7 +9,7 @@
 // WHY THIS RUNS BEFORE THE HONO ROUTER (same reason as the games rooms in index.ts): the CORS
 // middleware would try to add headers to a WebSocket (101) response, which is immutable.
 import type { Env } from "../types";
-import { CLOSE_VERSION_REFUSED, MESH_MIN_PROTOCOL_VERSION, MESH_PROTOCOL_VERSION, ROOM_HEX, isHex } from "./protocol";
+import { CLOSE_VERSION_REFUSED, MEET_HEX, MESH_MIN_PROTOCOL_VERSION, MESH_PROTOCOL_VERSION, ROOM_HEX, isHex } from "./protocol";
 
 const PATH = /^\/mesh\/relay\/([^/]+)$/;
 
@@ -93,11 +93,63 @@ export async function handleMeshRelayRequest(req: Request, env: Env): Promise<Re
   const stub = env.MESH_RELAY.get(env.MESH_RELAY.idFromName(room));
   const fwd = new Request("https://mesh-relay.internal/connect", req);
   // WHY set (not append) and delete first: the room object trusts these headers; only this code may write them.
-  for (const k of ["X-Mesh-Room", "X-Mesh-Aud", "X-Mesh-Ip"]) fwd.headers.delete(k);
+  for (const k of ["X-Mesh-Room", "X-Mesh-Aud", "X-Mesh-Ip", "X-Mesh-Kind", "X-Mesh-Meet"]) fwd.headers.delete(k);
   fwd.headers.set("X-Mesh-Room", room);
   // The name the device must have dialled; it signs it into the challenge answer (T5 C9).
   fwd.headers.set("X-Mesh-Aud", url.host);
   // Used only for the per-address set-creation limit and then discarded from the socket's state.
   fwd.headers.set("X-Mesh-Ip", req.headers.get("CF-Connecting-IP") ?? "");
+  return stub.fetch(fwd);
+}
+
+const MEET_PATH = /^\/mesh\/meet\/([^/]+)$/;
+
+/** Rooms named in MESH_ALLOWED_ROOMS (well-formed ones only, at most 8: each costs one object call per join). */
+function allowedRoomList(env: Pick<Env, "MESH_ALLOWED_ROOMS">): string[] {
+  return (env.MESH_ALLOWED_ROOMS ?? "").split(",").map((s) => s.trim()).filter((s) => isHex(s, ROOM_HEX)).slice(0, 8);
+}
+
+/** The pairing meeting point's front door (/mesh/meet/<id>): same flag, same mode gating, same per-address limiter as the
+ *  relay, and the cheap checks all run BEFORE any meeting object is created or woken.
+ *
+ *  WHO CAN REACH A MEETING in each mode (the new device that is joining is in NO room yet, so it cannot be checked
+ *  against an allow-list; the OPENER can, and that is where the gate sits):
+ *    off         unreachable (404, nothing touched).
+ *    allowlist   the id must have been opened by an authenticated member of an allow-listed room. The front asks each
+ *                allow-listed room object (they exist already; at most 8) "did you open this id, still live?" and only
+ *                then touches the meeting object. A stranger guessing ids creates nothing (404, same as any unknown path).
+ *    test-open   any well-formed id reaches its object, which still refuses an id nobody opened (and wipes itself). The
+ *                limiter is optional here, as for rooms. Set only in [env.test].
+ *  In every mode the meeting object itself is created only by `meet-open` on a member's room socket. */
+export async function handleMeshMeetRequest(req: Request, env: Env): Promise<Response | null> {
+  if (!meshRelayEnabled(env) || !env.MESH_RELAY) return null;
+  const m = MEET_PATH.exec(new URL(req.url).pathname);
+  if (!m) return null;
+  const id = m[1]!;
+  if (!isHex(id, MEET_HEX)) return null;
+  if (req.method !== "GET" || req.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("expected a websocket upgrade", { status: 426 });
+  const url = new URL(req.url);
+  const vRaw = url.searchParams.get("v");
+  const v = vRaw !== null && /^\d{1,6}$/.test(vRaw) ? Number(vRaw) : NaN;
+  if (!(v >= MESH_MIN_PROTOCOL_VERSION && v <= MESH_PROTOCOL_VERSION)) return null; // a refused version reveals nothing and creates nothing
+  const mode = meshMode(env);
+  const ip = req.headers.get("CF-Connecting-IP") ?? "";
+  const gate = await limiterAllows(env.EVENT_RATE_LIMITER as RelayLimiter | undefined, mode, `mesh-meet:${ip || "unknown"}`);
+  if (gate === "limited") return new Response("too many connections from this address", { status: 429 });
+  if (gate === "unavailable") return new Response("relay unavailable", { status: 503 });
+  if (mode === "allowlist") {
+    let opened = false;
+    for (const room of allowedRoomList(env)) {
+      try {
+        const res = await env.MESH_RELAY.get(env.MESH_RELAY.idFromName(room)).fetch(new Request("https://mesh-relay.internal/meet-check", { headers: { "X-Mesh-Kind": "meet-check", "X-Mesh-Meet": id } }));
+        if (res.status === 200) { opened = true; break; }
+      } catch { /* a room that errors admits nothing */ }
+    }
+    if (!opened) return null;
+  }
+  const stub = env.MESH_RELAY.get(env.MESH_RELAY.idFromName(`meet:${id}`));
+  const fwd = new Request("https://mesh-relay.internal/meet", req);
+  for (const k of ["X-Mesh-Room", "X-Mesh-Aud", "X-Mesh-Ip", "X-Mesh-Kind", "X-Mesh-Meet"]) fwd.headers.delete(k);
+  fwd.headers.set("X-Mesh-Kind", "meet");
   return stub.fetch(fwd);
 }

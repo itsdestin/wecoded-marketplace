@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { env, runInDurableObject } from "cloudflare:test";
 import { describe, it, expect, vi } from "vitest";
-import { Conn, bytesOf, holdHeader, makeSet, newDevice, inRoom, stubFor } from "./mesh-helpers";
+import { Conn, bytesOf, holdHeader, makeSet, newDevice, inRoom, stubFor, rosterAdd, rosterRemove } from "./mesh-helpers";
 import { MAX_MESSAGE_BYTES, packMessage } from "../src/mesh/protocol";
 import type { MeshRelayRoom } from "../src/mesh/relay-room";
 
@@ -69,7 +69,7 @@ describe("replay and forgery", () => {
 
   it("a removed device cannot use a stolen live socket's authority for anything", async () => {
     const { room, devices, conns } = await makeSet(["a", "b"]);
-    await conns[0]!.call({ op: "roster-remove", dev: devices[1]!.dev });
+    await rosterRemove(conns[0]!, devices[1]!.dev);
     expect((await conns[1]!.waitClosed()).code).toBe(4003);
     const c = await Conn.open(room);
     expect((await c.auth(devices[1]!)).h.r).toBe("removed");
@@ -173,8 +173,8 @@ describe("malformed input", () => {
   it("well-framed messages with hostile field values never crash the relay or close it with an internal error", async () => {
     const { room, devices } = await makeSet(["a", "b"]);
     const weird: unknown[] = [null, true, false, 0, -1, 1.5, 2 ** 60, NaN, "", "x".repeat(5000), "ff".repeat(32), ["a"], { a: 1 }, [[[[]]]]];
-    const ops = ["hold", "fetch-after", "received", "drop-group", "reg-get", "reg-list", "reg-set", "presence", "pass", "beat", "roster-add", "roster-remove", "usage", "does-not-exist"];
-    const fields = ["g", "key", "seq", "through", "n", "from", "session", "to", "dev", "signKey", "expectToken", "sinceRev", "line", "id", "v", "sig"];
+    const ops = ["hold", "fetch-after", "received", "drop-group", "reg-get", "reg-list", "reg-set", "presence", "pass", "beat", "roster-put", "meet-open", "usage", "does-not-exist"];
+    const fields = ["g", "key", "seq", "through", "n", "from", "session", "to", "dev", "signKey", "m", "kind", "signer", "target", "targetKey", "entry", "seen", "at", "expectToken", "sinceRev", "line", "id", "v", "sig"];
     for (const op of ops) {
       const c = await Conn.open(room);
       await c.auth(devices[0]!);
@@ -218,9 +218,9 @@ describe("the relay never logs frame bodies, keys or full ids", () => {
       await conns[0]!.call(holdHeader(devices[1]!, "g", 2) as any, body);                 // forged
       conns[1]!.sendRaw(new Uint8Array(40).fill(0xee));                                      // malformed
       await conns[1]!.waitClosed();
-      await conns[0]!.call({ op: "roster-remove", dev: devices[1]!.dev });
+      await rosterRemove(conns[0]!, devices[1]!.dev);
       const bad = await Conn.open(room); await bad.auth(devices[1]!);                        // removed device returns
-      conns[0]!.send({ op: "roster-remove", dev: devices[0]!.dev });                         // erase path logs its one line
+      await rosterRemove(conns[0]!, devices[0]!.dev, { noReply: true });                         // erase path logs its one line
       await conns[0]!.waitClosed();
       await new Promise((r) => setTimeout(r, 50));
       const logged = spies.flatMap((s) => s.mock.calls.map((c) => c.map(String).join(" "))).join("\n");

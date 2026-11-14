@@ -24,7 +24,7 @@ import { routePartykitRequest } from "partyserver";
 import { securityRoutes } from "./security/routes";
 import { isRoomCode, redeemTicket } from "./games/tickets";
 import { checkAlarms, sendAlarms } from "./security/alarms";
-import { handleMeshRelayRequest } from "./mesh/routes";
+import { handleMeshMeetRequest, handleMeshRelayRequest } from "./mesh/routes";
 
 const app = new Hono<HonoEnv>();
 
@@ -230,6 +230,11 @@ export default {
     // Mesh relay: flag-gated (MESH_RELAY_ENABLED), answers null when off so the router 404s as usual.
     if (new URL(req.url).pathname.startsWith("/mesh/relay/")) {
       const res = await handleMeshRelayRequest(req, env);
+      if (res) return res;
+    }
+    // Pairing meeting point: same flag and gating (src/mesh/routes.ts handleMeshMeetRequest).
+    if (new URL(req.url).pathname.startsWith("/mesh/meet/")) {
+      const res = await handleMeshMeetRequest(req, env);
       if (res) return res;
     }
     return app.fetch(req, env, ctx);

@@ -1,6 +1,6 @@
 import { env, runInDurableObject, listDurableObjectIds } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
-import { Conn, HOST, bytesOf, holdHeader, makeSet, newDevice, sign, inRoom, stubFor } from "./mesh-helpers";
+import { Conn, HOST, bytesOf, holdHeader, makeSet, newDevice, sign, inRoom, stubFor, rosterAdd, rosterRemove } from "./mesh-helpers";
 import { relayAuthMessage, bytesToHex } from "../src/mesh/auth";
 import { MAX_FRAME_BYTES, MESH_PROTOCOL_VERSION } from "../src/mesh/protocol";
 import type { MeshRelayRoom } from "../src/mesh/relay-room";
@@ -267,7 +267,7 @@ describe("storage accounting and ceilings", () => {
     const first = await a.auth(d, { firstDevice: true });
     expect(first.h.usage).toMatchObject({ cap: 100 * 1024 * 1024, paired: false });
     const second = await newDevice();
-    expect((await a.call({ op: "roster-add", signKey: second.signKey })).h.op).toBe("ok");
+    expect((await rosterAdd(a, second.signKey)).h.op).toBe("ok");
     const u = (await a.call({ op: "usage" })).h.usage;
     expect(u).toMatchObject({ cap: 900 * 1024 * 1024, paired: true });
   });
@@ -412,13 +412,13 @@ describe("device removal", () => {
   it("closes the removed device's connection, refuses its return, and bans re-adding it", async () => {
     const { room, devices, conns } = await makeSet(["a", "b", "c"]);
     const [a, b, c] = conns as [Conn, Conn, Conn];
-    expect((await a.call({ op: "roster-remove", dev: devices[2]!.dev })).h.op).toBe("ok");
+    expect((await rosterRemove(a, devices[2]!.dev)).h.op).toBe("ok");
     expect((await c.waitClosed()).code).toBe(4003);
     expect((await b.waitFor((m) => m.h.op === "roster-changed" && m.h.change === "removed")).h).toMatchObject({ dev: devices[2]!.dev });
     const back = await Conn.open(room);
     expect((await back.auth(devices[2]!)).h.r).toBe("removed");
     expect((await back.waitClosed()).code).toBe(4003);
-    expect((await a.call({ op: "roster-add", signKey: devices[2]!.signKey })).h.reason).toBe("banned");
+    expect((await rosterAdd(a, devices[2]!.signKey)).h.reason).toBe("banned");
   });
 
   it("refuses a removed device's frames even on a socket the close has not reached yet", async () => {
@@ -438,14 +438,14 @@ describe("device removal", () => {
     await a.call({ op: "received", g: "g1", through: 1 });
     await b.call({ op: "received", g: "g1", through: 1 });
     expect((await a.call({ op: "usage" })).h.usage.bytes).toBe(500); // c has said nothing: still held
-    await a.call({ op: "roster-remove", dev: devices[2]!.dev });
+    await rosterRemove(a, devices[2]!.dev);
     expect((await a.call({ op: "usage" })).h.usage.bytes).toBe(0);
   });
 
   it("refuses to remove an unknown device; removing the last device erases the set", async () => {
     const { room, devices, conns } = await makeSet(["a"]);
-    expect((await conns[0]!.call({ op: "roster-remove", dev: "ee".repeat(16) })).h.reason).toBe("not-found");
-    conns[0]!.send({ op: "roster-remove", dev: devices[0]!.dev });
+    expect((await rosterRemove(conns[0]!, "ee".repeat(16))).h.reason).toBe("not-found");
+    await rosterRemove(conns[0]!, devices[0]!.dev, { noReply: true });
     // the removed device is closed with 4003 (that close lands first); the set is then wiped
     expect((await conns[0]!.waitClosed()).code).toBe(4003);
     // WHY refused now (review finding 7): the room id is retired once every device was removed, so a removed first
@@ -463,7 +463,7 @@ describe("misc", () => {
   });
   it("caps the number of devices in a set", async () => {
     const { conns } = await makeSet(["a"]);
-    for (let i = 0; i < 15; i++) expect((await conns[0]!.call({ op: "roster-add", signKey: (await newDevice()).signKey })).h.op).toBe("ok");
-    expect((await conns[0]!.call({ op: "roster-add", signKey: (await newDevice()).signKey })).h.reason).toBe("too-many-devices");
+    for (let i = 0; i < 15; i++) expect((await rosterAdd(conns[0]!, (await newDevice()).signKey)).h.op).toBe("ok");
+    expect((await rosterAdd(conns[0]!, (await newDevice()).signKey)).h.reason).toBe("too-many-devices");
   });
 });

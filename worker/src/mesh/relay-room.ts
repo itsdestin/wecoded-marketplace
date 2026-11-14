@@ -23,10 +23,12 @@ import {
   MAX_MESSAGE_BYTES, MAX_REGISTERS, MAX_SESSIONS_PER_DEVICE, MAX_SOCKETS, MAX_UNAUTH_SOCKETS, MESH_MIN_PROTOCOL_VERSION,
   MESH_PROTOCOL_VERSION, NEARLY_FULL_FRACTION, NONCE_HEX, OUT_WINDOW_BYTES, PRE_PAIR_CAP_BYTES, RATE_MAX_HOLDS,
   RATE_MAX_MESSAGES, RATE_WINDOW_MS, REGISTER_MAX_BYTES, ROOM_HEX, SESSION_HEX, SET_CAP_BYTES,
+  CLOSE_MEET_ENDED, CLOSE_MEET_REFUSED, MEET_HEX, MEET_JOIN_DEADLINE_MS, MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_MESSAGES,
+  MEET_MAX_MESSAGE_BYTES, MEET_MAX_OPEN_PER_ROOM, MEET_MAX_SOCKETS, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_HOUR, MEET_RATE_MAX_MESSAGES,
   SET_IDLE_ERASE_MS, SIG_HEX, UNAUTH_DEADLINE_MS, UNAUTH_MAX_MESSAGE_BYTES, UNAUTH_MIN_AGE_MS, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
   type MeshFill, type MeshUsage,
 } from "./protocol";
-import { deviceIdFor, isEd25519Point, randomHex, relayAuthMessage, roomIdFor, verifyEd25519 } from "./auth";
+import { deviceIdFor, isEd25519Point, randomHex, relayAuthMessage, roomIdFor, rosterStatementMessage, verifyEd25519 } from "./auth";
 import { limiterAllows, meshMode, type MeshMode } from "./routes";
 
 /** The only logging in the relay. Event name + 8-character room prefix, nothing else. */
@@ -47,12 +49,29 @@ interface Att {
   issuedAt: number;
   ip: string;           // only for the set-creation limiter; dropped when auth completes
   lastBeat: number;     // highest beat number seen on this socket
+  // ---- pairing meeting point sockets only (the same class serves both; a meeting object is named "meet:<id>") ----
+  meet?: boolean;
+  role?: "" | "host" | "guest"; // "" until meet-join
+  gen?: number;         // guest connection number (the host tells guests apart by it)
+  lastN?: number;       // highest meet-relay number seen on this socket (replay / duplicate refusal)
+  at?: number;          // when it joined
+  sent?: boolean;       // a guest has sent its first message (until then it holds the slot only MEET_JOIN_DEADLINE_MS)
 }
 
 /** Tunable per instance so tests can exercise ceilings without writing 900 MiB. */
 export interface MeshLimits { setCap: number; prePairCap: number; maxGroups: number; maxFrame: number; outWindowBytes: number }
 
 const TEXT = new TextEncoder();
+// Same cap as MAX_HEADER_BYTES for a meeting message's header (kept as its own name so a meeting header could be tightened alone).
+const MAX_HEADER_BYTES_MEET = 1024;
+
+/** Compares two strings without stopping at the first difference (the host ticket is a secret). */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
 
 export class MeshRelayRoom {
   private sql: SqlStorage;
@@ -98,6 +117,14 @@ export class MeshRelayRoom {
     this.q(`CREATE TABLE IF NOT EXISTS senders(dev TEXT, session TEXT, last_n INTEGER NOT NULL, last_at INTEGER NOT NULL, PRIMARY KEY(dev,session)) WITHOUT ROWID`);
     // No declared type on v: it holds both numbers and the room id text.
     this.q(`CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v) WITHOUT ROWID`);
+    // Signed roster changes the relay has accepted (review finding 8): just ids, so the relay can check a new statement's
+    // stated ancestry. rseen = the statement's `seen` list; rintro = the entry that introduced each device.
+    this.q(`CREATE TABLE IF NOT EXISTS rentries(id TEXT PRIMARY KEY, signer TEXT NOT NULL, kind TEXT NOT NULL, target TEXT NOT NULL) WITHOUT ROWID`);
+    this.q(`CREATE TABLE IF NOT EXISTS rseen(id TEXT NOT NULL, sid TEXT NOT NULL, PRIMARY KEY(id,sid)) WITHOUT ROWID`);
+    this.q(`CREATE TABLE IF NOT EXISTS rintro(dev TEXT PRIMARY KEY, entry TEXT NOT NULL) WITHOUT ROWID`);
+    // Pairing meetings this ROOM has opened (opened only by an authenticated member). The meeting id itself is the key; the
+    // meeting object holds the actual pipe. Kept for an hour so the per-room hourly cap can count them.
+    this.q(`CREATE TABLE IF NOT EXISTS meets(m TEXT PRIMARY KEY, created INTEGER NOT NULL, expires INTEGER NOT NULL) WITHOUT ROWID`);
   }
 
   private ensureInit(): void { if (!this.tablesReady) { this.init(); this.tablesReady = true; } }
@@ -125,7 +152,14 @@ export class MeshRelayRoom {
 
   // ---------------------------------------------------------------- connect
   async fetch(request: Request): Promise<Response> {
+    // Internal, non-socket calls between objects (and from the front door). X-Mesh-Kind is deleted from every client
+    // request by routes.ts before it is forwarded, so only this code's own calls can carry it.
+    const kind = request.headers.get("X-Mesh-Kind");
+    if (kind === "meet-create") return await this.meetCreate(request);
+    if (kind === "meet-check") return this.meetCheck(request.headers.get("X-Mesh-Meet") ?? "");
+    if (kind === "meet-gone") return this.meetGone(request.headers.get("X-Mesh-Meet") ?? "");
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("expected websocket", { status: 426 });
+    if (kind === "meet") return await this.meetConnect();
     this.ensureInit(); // after an abandoned-object erase the tables are rebuilt here, before anything reads them
     // These headers are set by routes.ts, which overwrites anything a client sent.
     const room = request.headers.get("X-Mesh-Room");
@@ -228,6 +262,8 @@ export class MeshRelayRoom {
     try {
       // Only binary frames are part of the protocol; the platform answers the text "ping" itself.
       if (typeof message === "string") return this.close(ws, CLOSE_BAD_MESSAGE, "binary messages only");
+      // Meeting-point sockets have their own, much tighter rules and never touch the room's tables.
+      if (this.att(ws)?.meet === true) return await this.meetMessage(ws, message);
       // WHY size before anything else: refuse before doing any work on a huge message.
       if (message.byteLength > MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
       // WHY (finding 12): before authentication the only valid message is a small auth answer; refuse anything bigger at once.
@@ -260,8 +296,8 @@ export class MeshRelayRoom {
         case "presence": return this.send(ws, { op: "presence-result", ...this.idOf(h), devices: this.onlineDevices() });
         case "pass": return this.pass(ws, a, h, m.payload);
         case "beat": return this.beat(ws, a, h);
-        case "roster-add": return await this.rosterAdd(ws, a, h);
-        case "roster-remove": return await this.rosterRemove(ws, a, h);
+        case "roster-put": return await this.rosterPut(ws, a, h);
+        case "meet-open": return await this.meetOpen(ws, a, h);
         case "usage": return this.send(ws, { op: "usage-result", ...this.idOf(h), usage: this.usage() });
         // Unknown ops are answered, not punished: a newer app may speak an op this relay lacks.
         default: return this.send(ws, { op: "error", ...this.idOf(h), reason: "unknown-op" });
@@ -276,6 +312,7 @@ export class MeshRelayRoom {
   async webSocketClose(ws: WebSocket): Promise<void> {
     const a = this.att(ws);
     this.close(ws, 1000, "closed");
+    if (a?.meet === true) return await this.meetSocketGone(a);
     if (a && a.authed) {
       // WHY (finding 3): the last time a device was here counts as activity, so a device that stayed connected for
       // weeks and then left starts a fresh 90-day window instead of looking idle since its first connect.
@@ -403,6 +440,10 @@ export class MeshRelayRoom {
     this.metaSet("total_bytes", this.totalBytes() + size);
     this.noteSender(a.dev, session, n, now, !sender);
     this.send(ws, { op: "stored", ...idf, g, seq, fill: this.fillOf(this.totalBytes()) });
+    // Doorbell: tell the OTHER connected members something is waiting, so they fetch now instead of at their next
+    // reconnect. WHY only (group, seq): the bell must carry nothing a member cannot already see in a `stored` reply; the
+    // group name and the number are what a fetch needs and what T7 already counts as visible to the relay. Never the body or its size.
+    this.broadcast({ op: "doorbell", g, seq }, { exceptDev: a.dev });
     for (const r of released) this.broadcast({ op: "released", g: r.g, throughSeq: r.through });
   }
 
@@ -556,36 +597,81 @@ export class MeshRelayRoom {
     this.broadcast({ op: "beat", from: a.dev, n: h.n }, { exceptDev: a.dev });
   }
 
-  // ---------------------------------------------------------------- roster (public keys only)
-  private async rosterAdd(ws: WebSocket, a: Att, h: Record<string, unknown>): Promise<void> {
+  // ---------------------------------------------------------------- roster (public keys only, signed changes)
+  /** WHY signed (review finding 8): the old plain add/remove let ANY connected device add keys or remove the owner's first
+   *  device. Now a change is accepted only as a statement signed by a CURRENT member (see auth.ts rosterStatementMessage),
+   *  checked against the stored public key. What a server with no secrets can check of the app verifier's rules, it checks:
+   *   - the signature, under the signer's stored key, over a message that names this room (no cross-room replay);
+   *   - the signer is a current member now, and never accepts a statement whose ancestry contains the signer's own removal;
+   *   - the statement's stated ancestry (`seen`) leads back to the entry that introduced the signer (a member signs against
+   *     a history that includes its own admission);
+   *   - an `add` never overwrites a device id already present, never re-adds a removed one (ban), names a real curve point
+   *     whose id derives from it; a statement id is single use.
+   *  What it cannot check: the entry's content (names, agreement keys), which devices verify among themselves, and
+   *  ancestry through entries the relay never heard of (renames are not put here yet; see the design notes). */
+  private async rosterPut(ws: WebSocket, a: Att, h: Record<string, unknown>): Promise<void> {
     const idf = this.idOf(h);
-    // WHY a curve check, not just 64 hex characters (finding 13): a non-key would hold one of the 16 slots forever.
-    if (!isHex(h.signKey, KEY_HEX) || !(await isEd25519Point(h.signKey))) return this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
-    const dev = await deviceIdFor(h.signKey);
-    // Re-read after the await (other messages may have run meanwhile).
-    const existing = this.q(`SELECT removed FROM roster WHERE dev=?`, dev)[0];
-    if (existing) return this.send(ws, { op: "refused", ...idf, reason: Number(existing.removed) === 1 ? "banned" : "already-member" });
-    if (this.activeDevices().length >= MAX_DEVICES) return this.send(ws, { op: "refused", ...idf, reason: "too-many-devices" });
-    this.q(`INSERT INTO roster(dev,sign_key,added_at,removed) VALUES(?,?,?,0)`, dev, h.signKey, this.now());
-    // The second device lifts the pre-pairing allowance to the full ceiling (T7 abuse protection 1).
-    if (this.activeDevices().length >= 2) this.metaSet("paired", 1);
-    this.broadcast({ op: "roster-changed", change: "added", dev }, { exceptDev: a.dev });
-    this.send(ws, { op: "ok", ...idf, dev } as object);
-  }
-  private async rosterRemove(ws: WebSocket, a: Att, h: Record<string, unknown>): Promise<void> {
-    const idf = this.idOf(h);
-    if (!isHex(h.dev, DEVICE_HEX)) return this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
-    const row = this.q(`SELECT removed FROM roster WHERE dev=?`, h.dev)[0];
-    if (!row || Number(row.removed) === 1) return this.send(ws, { op: "refused", ...idf, reason: "not-found" });
-    const dev = h.dev;
-    this.q(`UPDATE roster SET removed=1 WHERE dev=?`, dev);
+    const refuse = (reason: string) => this.send(ws, { op: "refused", ...idf, reason });
+    const seenRaw = h.seen;
+    if ((h.kind !== "add" && h.kind !== "remove") || !isHex(h.signer, DEVICE_HEX) || !isHex(h.target, DEVICE_HEX) || !isHex(h.entry, 64) || !isHex(h.sig, SIG_HEX) || !isCount(h.at)
+      || !Array.isArray(seenRaw) || seenRaw.length < 1 || seenRaw.length > 16 || !seenRaw.every((x) => isHex(x, 64)) || new Set(seenRaw).size !== seenRaw.length) return refuse("bad-header");
+    const kind = h.kind, signer = h.signer, target = h.target, entry = h.entry, seen = seenRaw as string[];
+    let targetKey: string | null = null;
+    if (kind === "add") {
+      // WHY a curve check and the id derivation (finding 13 and C2): a non-key would hold one of the 16 slots forever.
+      if (!isHex(h.targetKey, KEY_HEX) || !(await isEd25519Point(h.targetKey)) || (await deviceIdFor(h.targetKey)) !== target) return refuse("bad-header");
+      targetKey = h.targetKey;
+    } else if (h.targetKey !== undefined && h.targetKey !== null) return refuse("bad-header");
+
+    const signerRow = this.q(`SELECT sign_key, removed FROM roster WHERE dev=?`, signer)[0];
+    if (!signerRow) return refuse("not-a-member");
+    if (Number(signerRow.removed) === 1) return refuse("signer-removed");
+    const msg = rosterStatementMessage({ kind, room: a.room, signer, target, targetKey, entry, seen, at: h.at });
+    if (!(await verifyEd25519(String(signerRow.sign_key), msg, h.sig))) return refuse("bad-signature");
+
+    // ---- everything below runs without another await, so the checks and the writes see the same state ----
+    const again = this.q(`SELECT removed FROM roster WHERE dev=?`, signer)[0];
+    if (!again || Number(again.removed) === 1) return refuse("signer-removed");
+    if (this.q(`SELECT 1 FROM rentries WHERE id=?`, entry)[0]) return refuse("duplicate");
+    const first = Number(this.q(`SELECT count(*) n FROM rentries`)[0]!.n) === 0;
+    if (first) {
+      // The room's first statement: the only member is the creator, and it names its own genesis entry (which the relay
+      // never saw) as its sole ancestry. That id is recorded as the creator's introduction.
+      if (this.activeDevices().length !== 1 || this.activeDevices()[0] !== signer || seen.length !== 1) return refuse("bad-ancestry");
+      this.q(`INSERT INTO rentries(id,signer,kind,target) VALUES(?,?,?,?)`, seen[0], signer, "add", signer);
+      this.q(`INSERT INTO rintro(dev,entry) VALUES(?,?)`, signer, seen[0]);
+    } else {
+      const intro = this.q(`SELECT entry FROM rintro WHERE dev=?`, signer)[0];
+      if (!intro) return refuse("bad-ancestry");
+      const visited = this.ancestry(seen);
+      if (!visited.has(String(intro.entry))) return refuse("bad-ancestry");
+      for (const r of this.q(`SELECT id FROM rentries WHERE kind='remove' AND target=?`, signer)) if (visited.has(String(r.id))) return refuse("signer-knew-removal");
+    }
+
+    if (kind === "add") {
+      const existing = this.q(`SELECT removed FROM roster WHERE dev=?`, target)[0];
+      if (existing) return refuse(Number(existing.removed) === 1 ? "banned" : "already-member");
+      if (this.activeDevices().length >= MAX_DEVICES) return refuse("too-many-devices");
+      this.q(`INSERT INTO roster(dev,sign_key,added_at,removed) VALUES(?,?,?,0)`, target, targetKey, this.now());
+      this.q(`INSERT INTO rintro(dev,entry) VALUES(?,?)`, target, entry);
+      this.recordEntry(entry, signer, kind, target, seen);
+      // The second device lifts the pre-pairing allowance to the full ceiling (T7 abuse protection 1).
+      if (this.activeDevices().length >= 2) this.metaSet("paired", 1);
+      this.broadcast({ op: "roster-changed", change: "added", dev: target }, { exceptDev: a.dev });
+      return this.send(ws, { op: "ok", ...idf, dev: target } as object);
+    }
+    const row = this.q(`SELECT removed FROM roster WHERE dev=?`, target)[0];
+    if (!row || Number(row.removed) === 1) return refuse("not-found");
+    this.recordEntry(entry, signer, kind, target, seen);
+    this.q(`UPDATE roster SET removed=1 WHERE dev=?`, target);
     // Its acknowledgements must not count for or against dropping frames any more.
-    this.q(`DELETE FROM recv WHERE dev=?`, dev);
-    this.q(`DELETE FROM senders WHERE dev=?`, dev);
-    // Close every connection it has, including the one that asked if it removed itself.
-    for (const { ws: w, a: wa } of this.authedSockets()) if (wa.dev === dev) this.close(w, CLOSE_DEVICE_REMOVED, "device removed");
-    this.broadcast({ op: "roster-changed", change: "removed", dev }, { exceptDev: dev });
-    if (dev !== a.dev) this.send(ws, { op: "ok", ...idf });
+    this.q(`DELETE FROM recv WHERE dev=?`, target);
+    this.q(`DELETE FROM senders WHERE dev=?`, target);
+    // Close every connection it has, including the one that asked if it removed itself. WHY (review: "a removed device's
+    // socket is closed and it cannot re-add itself"): its row is now removed=1, so its later statements die at "signer-removed".
+    for (const { ws: w, a: wa } of this.authedSockets()) if (wa.dev === target) this.close(w, CLOSE_DEVICE_REMOVED, "device removed");
+    this.broadcast({ op: "roster-changed", change: "removed", dev: target }, { exceptDev: target });
+    if (target !== a.dev) this.send(ws, { op: "ok", ...idf });
     // An empty roster erases the set at once (design 5.6).
     if (this.activeDevices().length === 0) return await this.eraseAsync("emptied");
     // Removal can complete other devices' acknowledgement sets: re-run the drop rule for held groups.
@@ -593,6 +679,199 @@ export class MeshRelayRoom {
       const m = this.q(`SELECT count(*) n, min(through) m FROM recv WHERE g=? AND dev IN (SELECT dev FROM roster WHERE removed=0)`, g.g)[0]!;
       if (Number(m.n) >= this.activeDevices().length) this.dropReceived(String(g.g), Number(m.m));
     }
+  }
+  private recordEntry(id: string, signer: string, kind: string, target: string, seen: string[]): void {
+    this.q(`INSERT INTO rentries(id,signer,kind,target) VALUES(?,?,?,?)`, id, signer, kind, target);
+    for (const s of seen) this.q(`INSERT OR IGNORE INTO rseen(id,sid) VALUES(?,?)`, id, s);
+  }
+  /** Every entry id reachable from `seen` through the statements the relay has accepted (bounded: a log is capped at 8192). */
+  private ancestry(seen: string[]): Set<string> {
+    const visited = new Set<string>();
+    const stack = [...seen];
+    while (stack.length && visited.size <= 8192) {
+      const id = stack.pop() as string;
+      if (visited.has(id)) continue;
+      visited.add(id);
+      for (const r of this.q(`SELECT sid FROM rseen WHERE id=?`, id)) stack.push(String(r.sid));
+    }
+    return visited;
+  }
+
+  // ---------------------------------------------------------------- pairing meeting point (T5 C10, threat model P-3, P-9)
+  // WHAT: a short-lived pipe between exactly two parties: the existing device (host) and the device being added (guest).
+  // The relay learns nothing it needs: every message is opaque PAKE bytes or sealed. IT NEVER TOUCHES THE CODE: the meeting
+  // id is SHA-256 of the typed code's random MEETING part, and the secret part is independent of it, so seeing the id gives
+  // the relay no way to test guesses of the secret offline (the only test is online, against the host, 3 tries per code).
+  // WHO MAY OPEN ONE: only an authenticated member of a room the relay admits (so in allowlist mode, only an allow-listed
+  // room), through `meet-open` on that room's socket. A brand-new device that is in no room needs no permission: it can only
+  // JOIN a meeting that already exists, and joining creates nothing.
+  // WHERE IT LIVES: a Durable Object of this same class named "meet:<id>" (no new binding), erased on close or expiry.
+  private async meetOpen(ws: WebSocket, a: Att, h: Record<string, unknown>): Promise<void> {
+    const idf = this.idOf(h);
+    if (!isHex(h.m, MEET_HEX)) return void this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
+    if (!this.env.MESH_RELAY) return void this.send(ws, { op: "refused", ...idf, reason: "unavailable" });
+    const now = this.now();
+    // Fail closed on limits: the counts are read before anything is created.
+    this.q(`DELETE FROM meets WHERE created<?`, now - 3_600_000);
+    if (Number(this.q(`SELECT count(*) n FROM meets WHERE expires>?`, now)[0]!.n) >= MEET_MAX_OPEN_PER_ROOM) return void this.send(ws, { op: "refused", ...idf, reason: "too-many-meetings" });
+    if (Number(this.q(`SELECT count(*) n FROM meets`)[0]!.n) >= MEET_OPENS_PER_HOUR) return void this.send(ws, { op: "refused", ...idf, reason: "rate-limited" });
+    if (this.q(`SELECT 1 FROM meets WHERE m=?`, h.m)[0]) return void this.send(ws, { op: "refused", ...idf, reason: "meeting-exists" });
+    // Reserve the slot BEFORE the await, so two quick opens cannot both pass the count.
+    this.q(`INSERT INTO meets(m,created,expires) VALUES(?,?,?)`, h.m, now, now + MEET_LIFETIME_MS);
+    let ticket: string | null = null;
+    try {
+      // The meeting remembers which room opened it, so it can tell that room when it ends (its concurrency slot is then freed).
+      const res = await this.env.MESH_RELAY.get(this.env.MESH_RELAY.idFromName(`meet:${h.m}`)).fetch(new Request("https://mesh-relay.internal/meet-create", { headers: { "X-Mesh-Kind": "meet-create", "X-Mesh-Room": a.room, "X-Mesh-Meet": h.m } }));
+      if (res.ok) ticket = String(((await res.json()) as { ticket?: string }).ticket ?? "") || null;
+    } catch { ticket = null; }
+    if (!ticket) { this.q(`DELETE FROM meets WHERE m=?`, h.m); return void this.send(ws, { op: "refused", ...idf, reason: "meeting-exists" }); }
+    this.send(ws, { op: "meet-opened", ...idf, m: h.m, ticket, ttlMs: MEET_LIFETIME_MS });
+  }
+  /** Answered to the front door in allowlist mode: "did one of YOUR members open this meeting, and is it still live?" */
+  private meetCheck(m: string): Response {
+    this.ensureInit();
+    const live = isHex(m, MEET_HEX) && !!this.q(`SELECT 1 FROM meets WHERE m=? AND expires>?`, m, this.now())[0];
+    return new Response(null, { status: live ? 200 : 404 });
+  }
+  /** A meeting this room opened has ended: it stops counting as open (the hourly count keeps it, so ending early cannot reset the allowance). */
+  private meetGone(m: string): Response {
+    this.ensureInit();
+    if (isHex(m, MEET_HEX)) this.q(`UPDATE meets SET expires=MIN(expires,?) WHERE m=?`, this.now(), m);
+    return new Response(null, { status: 204 });
+  }
+  /** Meeting object: created exactly once, by the room that opened it. A second create (squatting on an id) is refused. */
+  private async meetCreate(request: Request): Promise<Response> {
+    this.ensureInit();
+    if (this.metaNum("meet_created", 0) !== 0) return new Response("exists", { status: 409 });
+    const now = this.now();
+    const ticket = randomHex(16);
+    this.metaSet("meet_created", now);
+    this.metaSet("meet_ticket", ticket);
+    const opener = request.headers.get("X-Mesh-Room");
+    const mid = request.headers.get("X-Mesh-Meet");
+    if (isHex(opener, ROOM_HEX) && isHex(mid, MEET_HEX)) { this.metaSet("meet_room", opener); this.metaSet("meet_id", mid); }
+    await this.state.storage.setAlarm(now + MEET_LIFETIME_MS);
+    return Response.json({ ticket });
+  }
+  private meetOpenSockets(role?: "host" | "guest"): Array<{ ws: WebSocket; a: Att }> {
+    const out: Array<{ ws: WebSocket; a: Att }> = [];
+    for (const ws of this.state.getWebSockets()) {
+      if (ws.readyState !== WebSocket.READY_STATE_OPEN) continue;
+      const a = this.att(ws);
+      if (a?.meet === true && (!role || a.role === role)) out.push({ ws, a });
+    }
+    return out;
+  }
+  /** A socket to the meeting. Nothing is stored for an id that was never opened (and the object wipes itself again). */
+  private async meetConnect(): Promise<Response> {
+    this.ensureInit();
+    const created = this.metaNum("meet_created", 0);
+    const now = this.now();
+    if (!created) { await this.wipeEmpty(); return new Response("not found", { status: 404 }); }
+    if (now - created >= MEET_LIFETIME_MS) { await this.meetEnd("expired"); return new Response("not found", { status: 404 }); }
+    if (this.meetOpenSockets().length >= MEET_MAX_SOCKETS) return new Response("meeting busy", { status: 503 });
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
+    this.state.acceptWebSocket(server);
+    server.serializeAttachment({ authed: false, dev: "", room: "", aud: "", nonce: null, issuedAt: now, ip: "", lastBeat: 0, meet: true, role: "", lastN: 0, at: now } satisfies Att);
+    await this.armAt(now + MEET_JOIN_DEADLINE_MS);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+  private async meetMessage(ws: WebSocket, message: ArrayBuffer): Promise<void> {
+    if (!this.tablesReady) return this.close(ws, CLOSE_MEET_ENDED, "meeting over");
+    // Header cap + payload cap; anything bigger is closed before it is parsed.
+    if (message.byteLength > 4 + MAX_HEADER_BYTES_MEET + MEET_MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
+    if (this.flood(ws, this.recent, MEET_RATE_MAX_MESSAGES)) return this.close(ws, CLOSE_TOO_FAST, "too many messages");
+    const m = unpackMessage(message);
+    if (!m.ok) return this.close(ws, CLOSE_BAD_MESSAGE, "malformed message");
+    const a = this.att(ws) as Att;
+    const h = m.header;
+    const created = this.metaNum("meet_created", 0);
+    if (!created || this.now() - created >= MEET_LIFETIME_MS) return await this.meetEnd("expired");
+    if (m.op === "meet-join") return this.meetJoin(ws, a, h);
+    if (a.role !== "host" && a.role !== "guest") return this.close(ws, CLOSE_NOT_AUTHED, "join first");
+    if (m.op === "meet-close") return await this.meetEnd("closed");
+    if (m.op !== "meet-relay") return this.close(ws, CLOSE_BAD_MESSAGE, "unknown message");
+    // Strictly rising numbers per socket: a repeated or older number is a replay or a retry and is dropped, not forwarded.
+    if (!isCount(h.n) || h.n < 1) return this.close(ws, CLOSE_BAD_MESSAGE, "bad number");
+    if (h.n <= (a.lastN ?? 0)) return void this.send(ws, { op: "refused", ...this.idOf(h), reason: "replay" });
+    if (m.payload.byteLength === 0 || m.payload.byteLength > MEET_MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
+    const bytes = this.metaNum("meet_bytes", 0) + m.payload.byteLength;
+    const msgs = this.metaNum("meet_msgs", 0) + 1;
+    // The whole meeting is tiny (threat model P-9): past the total the meeting simply ends and is erased.
+    if (bytes > MEET_MAX_TOTAL_BYTES || msgs > MEET_MAX_MESSAGES) return await this.meetEnd("limit");
+    const peer = this.meetOpenSockets(a.role === "host" ? "guest" : "host")[0];
+    if (!peer) return void this.send(ws, { op: "refused", ...this.idOf(h), reason: "peer-absent" });
+    this.metaSet("meet_bytes", bytes);
+    this.metaSet("meet_msgs", msgs);
+    ws.serializeAttachment({ ...a, lastN: h.n, sent: true } satisfies Att);
+    // `gen` ties every message to one guest connection, so the host never mixes two strangers' exchanges.
+    this.send(peer.ws, { op: "meet-relay", from: a.role, gen: a.role === "guest" ? (a.gen ?? 0) : (peer.a.gen ?? 0), n: h.n }, m.payload);
+  }
+  private meetJoin(ws: WebSocket, a: Att, h: Record<string, unknown>): void {
+    const idf = this.idOf(h);
+    if (a.role === "host" || a.role === "guest") return this.close(ws, CLOSE_BAD_MESSAGE, "already joined");
+    const refuse = (reason: string) => { this.send(ws, { op: "refused", ...idf, reason }); this.close(ws, CLOSE_MEET_REFUSED, reason); };
+    const now = this.now();
+    if (h.role === "host") {
+      // The ticket is what opening returned to the member who opened the meeting; a guest never has it.
+      const ticket = this.metaText("meet_ticket");
+      if (typeof h.ticket !== "string" || !ticket || !constantTimeEqual(h.ticket, ticket)) return refuse("bad-ticket");
+      if (this.meetOpenSockets("host").length > 0) return refuse("host-taken");
+      ws.serializeAttachment({ ...a, role: "host", at: now } satisfies Att);
+      return void this.send(ws, { op: "meet-joined", ...idf, role: "host", gen: 0, peer: this.meetOpenSockets("guest").length > 0 });
+    }
+    if (h.role !== "guest") return refuse("bad-role");
+    // Exactly two parties: one guest at a time. A second guest while one holds the slot is refused, not queued.
+    if (this.meetOpenSockets("guest").length > 0) return refuse("busy");
+    const connects = this.metaNum("meet_guests", 0);
+    if (connects >= MEET_MAX_GUEST_CONNECTS) return refuse("full");
+    const gen = connects + 1;
+    this.metaSet("meet_guests", gen);
+    ws.serializeAttachment({ ...a, role: "guest", gen, at: now, sent: false } satisfies Att);
+    const hostUp = this.meetOpenSockets("host")[0];
+    this.send(ws, { op: "meet-joined", ...idf, role: "guest", gen, peer: !!hostUp });
+    if (hostUp) this.send(hostUp.ws, { op: "meet-peer", state: "on", gen });
+  }
+  private async meetSocketGone(a: Att): Promise<void> {
+    if (!this.tablesReady) return;
+    if (a.role === "host") return await this.meetEnd("host-left"); // nobody to pair with and nothing worth keeping
+    if (a.role === "guest") { const host = this.meetOpenSockets("host")[0]; if (host) this.send(host.ws, { op: "meet-peer", state: "off", gen: a.gen ?? 0 }); }
+  }
+  /** Close every socket, say why, and erase everything: after this the object holds nothing. */
+  private async meetEnd(why: string): Promise<void> {
+    if (!this.tablesReady) return;
+    const opener = this.metaText("meet_room");
+    const mid = this.metaText("meet_id");
+    if (opener && mid && this.env.MESH_RELAY) {
+      try { await this.env.MESH_RELAY.get(this.env.MESH_RELAY.idFromName(opener)).fetch(new Request("https://mesh-relay.internal/meet-gone", { headers: { "X-Mesh-Kind": "meet-gone", "X-Mesh-Meet": mid } })); } catch { /* the room's own expiry still frees the slot */ }
+    }
+    for (const ws of this.state.getWebSockets()) {
+      if (this.att(ws)?.meet !== true) continue;
+      this.send(ws, { op: "meet-ended", why });
+      this.close(ws, CLOSE_MEET_ENDED, why);
+    }
+    await this.wipeEmpty();
+    meshLog("meet-ended", null);
+  }
+  /** Storage and alarm gone, tables rebuilt only if something asks again (ensureInit). */
+  private async wipeEmpty(): Promise<void> {
+    await this.state.storage.deleteAll();
+    await this.state.storage.deleteAlarm();
+    this.tablesReady = false;
+  }
+  private async meetAlarm(created: number): Promise<void> {
+    const now = this.now();
+    if (now - created >= MEET_LIFETIME_MS) return await this.meetEnd("expired");
+    let next = created + MEET_LIFETIME_MS;
+    for (const { ws, a } of this.meetOpenSockets()) {
+      // A socket that has not said who it is, or a guest that holds the slot without ever sending, is let go.
+      const pending = a.role === "" || (a.role === "guest" && a.sent !== true);
+      if (!pending) continue;
+      const due = (a.role === "" ? a.issuedAt : (a.at ?? a.issuedAt)) + MEET_JOIN_DEADLINE_MS;
+      if (now >= due) this.close(ws, CLOSE_MEET_REFUSED, "no message in time"); else next = Math.min(next, due);
+    }
+    await this.state.storage.setAlarm(Math.max(now + 250, next));
   }
 
   // ---------------------------------------------------------------- lifetimes: 30-day groups, 90-day erase, abandoned objects
@@ -609,6 +888,9 @@ export class MeshRelayRoom {
   async alarm(): Promise<void> {
     this.ensureInit();
     const now = this.now();
+    // A meeting object has its own, short life and no roster; it must never reach the room rules below.
+    const meetCreated = this.metaNum("meet_created", 0);
+    if (meetCreated > 0) return await this.meetAlarm(meetCreated);
     // 1. Unauthenticated sockets past their short deadline close here, not only when someone else connects (finding 5).
     let nextUnauth: number | null = null;
     for (const w of this.state.getWebSockets()) {

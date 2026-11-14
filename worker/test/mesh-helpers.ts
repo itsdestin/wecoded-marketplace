@@ -3,7 +3,7 @@
 // challenge with WebCrypto Ed25519, independently of the relay's own code except for id hashing.
 import { SELF, env, runInDurableObject } from "cloudflare:test";
 import { packMessage, unpackMessage } from "../src/mesh/protocol";
-import { bytesToHex, deviceIdFor, hexToBytes, relayAuthMessage, roomIdFor } from "../src/mesh/auth";
+import { bytesToHex, deviceIdFor, hexToBytes, relayAuthMessage, roomIdFor, rosterStatementMessage, randomHex } from "../src/mesh/auth";
 import type { MeshRelayRoom } from "../src/mesh/relay-room";
 
 export const HOST = "test.local";
@@ -24,6 +24,8 @@ export async function sign(d: Device, msg: Uint8Array): Promise<string> {
 export interface Msg { h: any; payload: Uint8Array }
 
 export class Conn {
+  /** The device this connection signed in as (set by auth()); roster helpers sign as it. */
+  as: Device | null = null;
   inbox: Msg[] = [];
   private taken = 0;
   closeInfo: { code: number; reason: string } | null = null;
@@ -44,6 +46,13 @@ export class Conn {
     const res = await SELF.fetch(`https://${HOST}/mesh/relay/${room}${opts.query ?? "?v=1"}`, { headers: { Upgrade: "websocket", ...(opts.headers ?? {}) } });
     if (res.status !== 101) throw new Error(`upgrade refused: ${res.status}`);
     return new Conn(res.webSocket!, room);
+  }
+
+  /** Open a socket to a pairing meeting point (/mesh/meet/<id>). */
+  static async openMeet(id: string, opts: { query?: string; headers?: Record<string, string> } = {}): Promise<Conn> {
+    const res = await SELF.fetch(`https://${HOST}/mesh/meet/${id}${opts.query ?? "?v=1"}`, { headers: { Upgrade: "websocket", ...(opts.headers ?? {}) } });
+    if (res.status !== 101) throw new Error(`upgrade refused: ${res.status}`);
+    return new Conn(res.webSocket!, id);
   }
 
   send(h: object, payload?: Uint8Array | null): void { this.ws.send(packMessage(h, payload)); }
@@ -84,10 +93,47 @@ export class Conn {
     const msg = relayAuthMessage(opts.aud ?? ch.h.aud, opts.room ?? this.room, ch.h.nonce, as.dev);
     let sig = await sign(as, msg);
     if (opts.corruptSig) sig = (sig[0] === "0" ? "1" : "0") + sig.slice(1);
+    this.as = as;
     this.send({ op: "auth", v: opts.v ?? 1, dev: as.dev, sig, ...(opts.firstDevice ? { signKey: as.signKey } : {}), id: "auth" });
     return this.waitFor((m) => m.h.op === "auth-result" || m.h.op === "version-refused");
   }
 }
+
+// ---- Signed roster changes. The relay accepts only statements signed by a current member whose stated ancestry leads back to
+// its own admission, so this ledger plays the app: it invents a genesis entry id for a room's first statement and then tracks
+// each device's latest entry id as that device's `seen`. Keyed by room, which is random per test.
+const ledger = new Map<string, { genesis: string | null; last: Map<string, string> }>();
+const led = (room: string) => { let l = ledger.get(room); if (!l) { l = { genesis: null, last: new Map() }; ledger.set(room, l); } return l; };
+
+export interface PutOpts { signer?: Device; seen?: string[]; entry?: string; room?: string; corruptSig?: boolean; noReply?: boolean; at?: number; kind?: "add" | "remove" }
+/** Build, sign and send a roster-put from `c`'s device (or `opts.signer`). Resolves with the relay's reply. */
+export async function rosterPut(c: Conn, kind: "add" | "remove", target: { dev: string; signKey?: string }, opts: PutOpts = {}): Promise<Msg> {
+  const signer = opts.signer ?? c.as;
+  if (!signer) throw new Error("rosterPut: connection has not authenticated");
+  const room = opts.room ?? c.room;
+  const l = led(room);
+  let seen = opts.seen;
+  if (!seen) {
+    if (l.genesis === null) { l.genesis = randomHex(32); l.last.set(signer.dev, l.genesis); }
+    seen = [l.last.get(signer.dev) ?? l.genesis];
+  }
+  const entry = opts.entry ?? randomHex(32);
+  const at = opts.at ?? Date.now();
+  const targetKey = kind === "add" ? (target.signKey as string) : null;
+  const msg = rosterStatementMessage({ kind, room, signer: signer.dev, target: target.dev, targetKey, entry, seen, at });
+  let sig = await sign(signer, msg);
+  if (opts.corruptSig) sig = (sig[0] === "0" ? "1" : "0") + sig.slice(1);
+  const header = { op: "roster-put", kind, signer: signer.dev, target: target.dev, ...(targetKey ? { targetKey } : {}), entry, seen, at, sig };
+  if (opts.noReply) { c.send(header); return { h: { op: "sent" }, payload: new Uint8Array(0) }; }
+  const r = await c.call(header as any);
+  if (r.h.op === "ok") { l.last.set(signer.dev, entry); if (kind === "add") l.last.set(target.dev, entry); }
+  return r;
+}
+export const rosterAdd = async (c: Conn, target: Device | string, opts: PutOpts = {}): Promise<Msg> => {
+  const signKey = typeof target === "string" ? target : target.signKey;
+  return rosterPut(c, "add", { dev: typeof target === "string" ? await deviceIdFor(signKey).catch(() => "00".repeat(16)) : target.dev, signKey }, opts);
+};
+export const rosterRemove = (c: Conn, dev: string, opts: PutOpts = {}): Promise<Msg> => rosterPut(c, "remove", { dev }, opts);
 
 /** Set up a set: first device creates it, the rest are added and connect. Returns connections by name. */
 export async function makeSet(names: string[]): Promise<{ room: string; devices: Device[]; conns: Conn[] }> {
@@ -98,7 +144,7 @@ export async function makeSet(names: string[]): Promise<{ room: string; devices:
   if (r.h.r !== "ok") throw new Error("setup: first device refused: " + JSON.stringify(r.h));
   const conns = [first];
   for (const d of devices.slice(1)) {
-    const add = await first.call({ op: "roster-add", signKey: d.signKey });
+    const add = await rosterAdd(first, d);
     if (add.h.op !== "ok") throw new Error("setup: add refused " + JSON.stringify(add.h));
     const c = await Conn.open(room);
     const ar = await c.auth(d);
@@ -125,3 +171,17 @@ export const stubFor = (room: string) => env.MESH_RELAY.get(env.MESH_RELAY.idFro
 // WHY the cast: runInDurableObject's own generics recurse too deeply for the class type.
 export const inRoom = <T>(room: string, fn: (r: MeshRelayRoom) => T | Promise<T>): Promise<T> =>
   (runInDurableObject as any)(stubFor(room), (inst: any) => fn(inst as MeshRelayRoom));
+
+/** A fresh meeting id (what the app derives from the typed code's meeting part) and the member's `meet-open` for it. */
+export const newMeetId = (): string => randomHex(32);
+export async function openMeeting(member: Conn, m = newMeetId()): Promise<{ m: string; ticket: string; reply: Msg }> {
+  const reply = await member.call({ op: "meet-open", m });
+  return { m, ticket: String(reply.h.ticket ?? ""), reply };
+}
+/** Connect to a meeting and say who you are. Resolves with the connection and the relay's first answer. */
+export async function joinMeeting(m: string, role: "host" | "guest", ticket?: string): Promise<{ c: Conn; first: Msg }> {
+  const c = await Conn.openMeet(m);
+  c.send({ op: "meet-join", role, ...(ticket ? { ticket } : {}) });
+  const first = await c.waitFor((x) => x.h.op === "meet-joined" || x.h.op === "refused");
+  return { c, first };
+}

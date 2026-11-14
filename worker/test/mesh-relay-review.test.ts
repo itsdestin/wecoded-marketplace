@@ -5,7 +5,7 @@
 import { env, SELF, createExecutionContext, waitOnExecutionContext, listDurableObjectIds, runDurableObjectAlarm } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
 import worker from "../src/index";
-import { Conn, bytesOf, holdHeader, inRoom, makeSet, newDevice, stubFor } from "./mesh-helpers";
+import { Conn, bytesOf, holdHeader, inRoom, makeSet, newDevice, stubFor, rosterAdd, rosterRemove } from "./mesh-helpers";
 import { DAY_MS } from "../src/mesh/protocol";
 import { isEd25519Point } from "../src/mesh/auth";
 
@@ -260,7 +260,7 @@ describe("finding 5: a stranger who knows a room id cannot hold the connection s
 describe("finding 6: one generic refusal, signature checked first", () => {
   it("a stranger learns nothing from the answer: unknown device, wrong signature on a member, and a removed id look alike", async () => {
     const { room: r, devices, conns } = await makeSet(["a", "b"]);
-    await conns[0]!.call({ op: "roster-remove", dev: devices[1]!.dev });
+    await rosterRemove(conns[0]!, devices[1]!.dev);
     const outsider = await newDevice("x");
     const answers: string[] = [];
     // unknown device id
@@ -273,7 +273,7 @@ describe("finding 6: one generic refusal, signature checked first", () => {
   });
   it("a removed device that proves its key is still told it was removed", async () => {
     const { room: r, devices, conns } = await makeSet(["a", "b"]);
-    await conns[0]!.call({ op: "roster-remove", dev: devices[1]!.dev });
+    await rosterRemove(conns[0]!, devices[1]!.dev);
     const c = await Conn.open(r);
     expect((await c.auth(devices[1]!)).h.r).toBe("removed");
   });
@@ -282,8 +282,8 @@ describe("finding 6: one generic refusal, signature checked first", () => {
 describe("finding 7: a room whose last device was removed cannot be re-created", () => {
   it("after the roster is emptied by removals, the same first key cannot register the room again", async () => {
     const { room: r, devices, conns } = await makeSet(["a", "b"]);
-    await conns[0]!.call({ op: "roster-remove", dev: devices[1]!.dev });
-    conns[0]!.send({ op: "roster-remove", dev: devices[0]!.dev });
+    await rosterRemove(conns[0]!, devices[1]!.dev);
+    await rosterRemove(conns[0]!, devices[0]!.dev, { noReply: true });
     await conns[0]!.waitClosed();
     const c = await Conn.open(r);
     const res = await c.auth(devices[0]!, { firstDevice: true });
@@ -326,6 +326,6 @@ describe("finding 13: a roster key must be a real Ed25519 point", () => {
   });
   it("roster-add refuses garbage", async () => {
     const { conns } = await makeSet(["a"]);
-    expect((await conns[0]!.call({ op: "roster-add", signKey: "02" + "00".repeat(31) })).h).toMatchObject({ op: "refused", reason: "bad-header" });
+    expect((await rosterAdd(conns[0]!, "02" + "00".repeat(31))).h).toMatchObject({ op: "refused", reason: "bad-header" });
   });
 });
