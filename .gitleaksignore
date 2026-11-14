@@ -1,7 +1,7 @@
 # Fake project-folder sync name in a test (account-erase-sync.test.ts), not a key.
 fb65a14c05802fd2983a9efcf49c585ebb7bd21b:worker/test/account-erase-sync.test.ts:generic-api-key:26
 # Not secrets: PUBLIC signature-checking keys in a known-answer test file shared by the app and the Worker (mesh roster vectors). Added 2026-11-14 by the mesh build session.
-1cc8f0094d8ff914c977f56662856296b375c7ca:jsonneric-api-key:3
-1cc8f0094d8ff914c977f56662856296b375c7ca:jsonneric-api-key:5
-1cc8f0094d8ff914c977f56662856296b375c7ca:jsonneric-api-key:14
-1cc8f0094d8ff914c977f56662856296b375c7ca:jsonneric-api-key:31
+1cc8f0094d8ff914c977f56662856296b375c7ca:worker/test/mesh-roster-vectors.json:generic-api-key:3
+1cc8f0094d8ff914c977f56662856296b375c7ca:worker/test/mesh-roster-vectors.json:generic-api-key:5
+1cc8f0094d8ff914c977f56662856296b375c7ca:worker/test/mesh-roster-vectors.json:generic-api-key:14
+1cc8f0094d8ff914c977f56662856296b375c7ca:worker/test/mesh-roster-vectors.json:generic-api-key:31
