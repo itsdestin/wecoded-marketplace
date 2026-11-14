@@ -122,7 +122,7 @@ export const ROSTER_MAX_PER_SIGNER_HOUR = 30;
 /** Largest `seen` list in a statement (the app's MAX_SEEN). */
 export const ROSTER_MAX_SEEN = 64;
 /** The room's first statement must be dated within this of the relay's clock (replay of an old captured statement after an idle erase). */
-export const FIRST_STATEMENT_SKEW_MS = DAY_MS;
+export const FIRST_STATEMENT_SKEW_MS = 24 * 60 * 60_000; // one day (written out, not an alias of DAY_MS: knip counts an alias as a duplicate export)
 /** Per-socket flood ceiling on a meeting point (far below RATE_MAX_MESSAGES: the exchange is a handful of messages). */
 export const MEET_RATE_MAX_MESSAGES = 40;
 

@@ -34,7 +34,7 @@ async function connect(token: string): Promise<WebSocket> {
   ws.accept();
   return ws;
 }
-function nextMessage(ws: WebSocket, type: string, timeoutMs = 2000): Promise<any> {
+function nextMessage(ws: WebSocket, type: string, timeoutMs = 15_000 /* a positive wait returns the moment the frame arrives; only a real failure ever waits this long. 2 s failed under heavy machine load (2026-11-14). */): Promise<any> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), timeoutMs);
     const handler = (ev: MessageEvent) => {
@@ -337,7 +337,7 @@ describe("game message rate limit", () => {
     wsB.send(result("chess", `${match}-honest`, a.userId, "win"));
     expect(await pending).toMatchObject({ opponent: a.userId });
     wsA.close(); wsB.close();
-  });
+  }, 60_000); // polls until the slot count settles (up to 6 s on a quiet machine); the default 5 s limit failed it under heavy load
 
   it("a normal run of matches is never limited", async () => {
     const { a, b, wsA, wsB, match } = await twoPlayers("honest");

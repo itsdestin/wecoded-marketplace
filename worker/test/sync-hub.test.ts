@@ -30,7 +30,7 @@ async function connectWithDeviceId(token: string, device: string, deviceId: stri
   return ws;
 }
 
-function nextMessage(ws: WebSocket, type: string, timeoutMs = 2000): Promise<any> {
+function nextMessage(ws: WebSocket, type: string, timeoutMs = 15_000 /* a positive wait returns the moment the frame arrives; only a real failure ever waits this long. 2 s failed under heavy machine load (2026-11-14). */): Promise<any> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`timeout waiting for ${type}`)), timeoutMs);
     const handler = (ev: MessageEvent) => {
@@ -162,7 +162,7 @@ function leaseOp(
   op: string,
   sessionId: string,
   deviceId: string,
-  timeoutMs = 2000,
+  timeoutMs = 15_000 /* a positive wait returns the moment the frame arrives; only a real failure ever waits this long. 2 s failed under heavy machine load (2026-11-14). */,
   expectedHolderId?: string,
 ): Promise<any> {
   const reqId = `req-${++reqSeq}`;

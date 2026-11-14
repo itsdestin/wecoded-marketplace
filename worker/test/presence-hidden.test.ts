@@ -9,14 +9,27 @@ import { createTestAccount, issueTestSession } from "./helpers";
 const presenceStub = () => env.PRESENCE.get(env.PRESENCE.idFromName("global"));
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// WHY every socket records from the moment it is accepted (flaky under machine load, 2026-11-14): `nextMessage` used to attach its listener
+// only when a test asked, so a frame the room sent between `accept()` and that call was lost and the test then waited its 2 s out. Now the
+// frame is already in the log, and positive waits allow 15 s (they return the moment the frame is there; only a failure ever waits that long).
+const logs = new WeakMap<WebSocket, any[]>();
+const consumed = new WeakMap<WebSocket, Set<any>>();
 async function connect(token: string, hidden = false): Promise<WebSocket> {
   const res = await SELF.fetch(`https://test.local/social/presence${hidden ? "?hidden=1" : ""}`, {
     headers: { Upgrade: "websocket", Authorization: `Bearer ${token}` },
   });
   expect(res.status).toBe(101);
   const ws = res.webSocket!;
+  track(ws);
   ws.accept();
   return ws;
+}
+/** Start recording a socket's frames (call BEFORE accept()). */
+function track(ws: WebSocket): void {
+  const log: any[] = [];
+  logs.set(ws, log);
+  consumed.set(ws, new Set());
+  ws.addEventListener("message", (ev: MessageEvent) => { log.push(JSON.parse(ev.data as string)); });
 }
 /** Every frame a socket receives, from now on. */
 function record(ws: WebSocket): any[] {
@@ -24,14 +37,22 @@ function record(ws: WebSocket): any[] {
   ws.addEventListener("message", (ev: MessageEvent) => { seen.push(JSON.parse(ev.data as string)); });
   return seen;
 }
-function nextMessage(ws: WebSocket, type: string, timeoutMs = 2000): Promise<any> {
+function nextMessage(ws: WebSocket, type: string, timeoutMs = 15_000): Promise<any> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), timeoutMs);
-    const handler = (ev: MessageEvent) => {
-      const data = JSON.parse(ev.data as string);
-      if (data.type === type) { clearTimeout(timer); ws.removeEventListener("message", handler); resolve(data); }
+    const log = logs.get(ws) as any[];
+    const used = consumed.get(ws) as Set<any>;
+    const take = (): boolean => {
+      const m = log.find((x) => x.type === type && !used.has(x));
+      if (!m) return false;
+      used.add(m);
+      clearTimeout(timer);
+      ws.removeEventListener("message", check);
+      resolve(m);
+      return true;
     };
-    ws.addEventListener("message", handler);
+    const check = () => { take(); };
+    const timer = setTimeout(() => { ws.removeEventListener("message", check); reject(new Error(`timed out waiting for ${type}`)); }, timeoutMs);
+    if (!take()) ws.addEventListener("message", check);
   });
 }
 async function befriend(aId: string, bId: string) {
@@ -61,6 +82,7 @@ describe("PresenceRoom — hidden mode (incognito)", () => {
     });
     const wsA = res.webSocket!;
     const frames = record(wsA);
+    track(wsA);
     wsA.accept();
     await nextMessage(wsA, "presence");
     // The hello comes before anything else, so a client can refuse an older server.
