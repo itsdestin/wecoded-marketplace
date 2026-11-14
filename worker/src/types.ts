@@ -19,6 +19,9 @@ export interface Env {
   MESH_RELAY?: DurableObjectNamespace;
   MESH_RELAY_ENABLED?: string;
   MESH_ALLOWED_ROOMS?: string;
+  // Explicit relay mode: "off" | "allowlist" (default when unset) | "open" (NOT implemented: treated as off) | "test-open"
+  // (tests only: any valid room, no limiter required). See src/mesh/routes.ts meshMode().
+  MESH_RELAY_MODE?: string;
   // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
   // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
   APP_ANALYTICS?: AnalyticsEngineDataset;

@@ -55,7 +55,7 @@ describe("connect and membership challenge", () => {
     const stranger = await newDevice("stranger");
     const c = await Conn.open(room);
     const r = await c.auth(stranger, { firstDevice: true });
-    expect(r.h.r).toBe("not-on-roster");
+    expect(r.h.r).toBe("refused");
     expect((await c.waitClosed()).code).toBe(4002);
   });
 
@@ -63,7 +63,7 @@ describe("connect and membership challenge", () => {
     const { room, devices } = await makeSet(["a"]);
     const c = await Conn.open(room);
     const r = await c.auth(devices[0]!, { corruptSig: true });
-    expect(r.h.r).toBe("bad-signature");
+    expect(r.h.r).toBe("refused");
     expect((await c.waitClosed()).code).toBe(4002);
   });
 
@@ -71,14 +71,14 @@ describe("connect and membership challenge", () => {
     const { room, devices } = await makeSet(["a"]);
     const c = await Conn.open(room);
     const r = await c.auth(devices[0]!, { room: "ab".repeat(32) });
-    expect(r.h.r).toBe("bad-signature");
+    expect(r.h.r).toBe("refused");
   });
 
   it("refuses an answer signed for another relay host", async () => {
     const { room, devices } = await makeSet(["a"]);
     const c = await Conn.open(room);
     const r = await c.auth(devices[0]!, { aud: "evil.example" });
-    expect(r.h.r).toBe("bad-signature");
+    expect(r.h.r).toBe("refused");
   });
 
   it("refuses the first-device claim when the room is not the hash of the key presented", async () => {
@@ -86,7 +86,7 @@ describe("connect and membership challenge", () => {
     const victimRoom = (await newDevice("victim")).room;
     const c = await Conn.open(victimRoom);
     const r = await c.auth(attacker, { firstDevice: true });
-    expect(r.h.r).toBe("not-on-roster");
+    expect(r.h.r).toBe("refused");
   });
 
   it("a challenge answer captured on one connection is useless on another (single-use, per-connection nonce)", async () => {
@@ -99,7 +99,7 @@ describe("connect and membership challenge", () => {
     const c2 = await Conn.open(room);
     await c2.waitFor("challenge");
     c2.send({ op: "auth", v: 1, dev: devices[0]!.dev, sig }); // the captured answer
-    expect((await c2.waitFor("auth-result")).h.r).toBe("bad-signature");
+    expect((await c2.waitFor("auth-result")).h.r).toBe("refused");
   });
 
   it("refuses a correctly signed answer that arrives after the 30-second window", async () => {
@@ -365,7 +365,7 @@ describe("per-address limit on creating sets", () => {
     const r = await c2.auth(d, { firstDevice: true });
     expect(r.h.r).toBe("rate-limited");
     expect((await c2.waitClosed()).code).toBe(4008);
-    expect(keys).toEqual(["mesh-create:203.0.113.9"]);
+    expect(keys).toEqual(["mesh-relay:create:203.0.113.9"]);
   });
   it("allows creation when the limiter allows, and does not consult it for existing members", async () => {
     const d = await newDevice();
@@ -448,9 +448,10 @@ describe("device removal", () => {
     conns[0]!.send({ op: "roster-remove", dev: devices[0]!.dev });
     // the removed device is closed with 4003 (that close lands first); the set is then wiped
     expect((await conns[0]!.waitClosed()).code).toBe(4003);
-    // the set is empty again: anyone's key can create it afresh (only the matching first key)
+    // WHY refused now (review finding 7): the room id is retired once every device was removed, so a removed first
+    // device cannot simply re-create it; a new set needs a new key (and so a new room id).
     const c = await Conn.open(room);
-    expect((await c.auth(devices[0]!, { firstDevice: true })).h).toMatchObject({ r: "ok", created: true });
+    expect((await c.auth(devices[0]!, { firstDevice: true })).h.r).toBe("refused");
   });
 });
 

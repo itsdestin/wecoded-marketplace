@@ -19,14 +19,15 @@ import type { Env } from "../types";
 import {
   CHALLENGE_TTL_MS, CLOSE_AUTH_FAILED, CLOSE_BAD_MESSAGE, CLOSE_DEVICE_REMOVED, CLOSE_NOT_AUTHED,
   CLOSE_RELAY_BUSY, CLOSE_SET_ERASED, CLOSE_TOO_FAST, CLOSE_TOO_LARGE, CLOSE_VERSION_REFUSED,
-  DEVICE_HEX, FETCH_PAGE_BYTES, GROUP_TTL_MS, KEY_HEX, MAX_DEVICES, MAX_FRAME_BYTES, MAX_GROUPS,
-  MAX_MESSAGE_BYTES, MAX_REGISTERS, MAX_SESSIONS_PER_DEVICE, MAX_SOCKETS, MESH_MIN_PROTOCOL_VERSION,
-  MESH_PROTOCOL_VERSION, NEARLY_FULL_FRACTION, NONCE_HEX, PRE_PAIR_CAP_BYTES, RATE_MAX_HOLDS,
+  ABANDON_MS, DEVICE_HEX, FETCH_PAGE_BYTES, GROUP_TTL_MS, KEY_HEX, MAX_DEVICES, MAX_FRAME_BYTES, MAX_GROUPS,
+  MAX_MESSAGE_BYTES, MAX_REGISTERS, MAX_SESSIONS_PER_DEVICE, MAX_SOCKETS, MAX_UNAUTH_SOCKETS, MESH_MIN_PROTOCOL_VERSION,
+  MESH_PROTOCOL_VERSION, NEARLY_FULL_FRACTION, NONCE_HEX, OUT_WINDOW_BYTES, PRE_PAIR_CAP_BYTES, RATE_MAX_HOLDS,
   RATE_MAX_MESSAGES, RATE_WINDOW_MS, REGISTER_MAX_BYTES, ROOM_HEX, SESSION_HEX, SET_CAP_BYTES,
-  SET_IDLE_ERASE_MS, SIG_HEX, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
+  SET_IDLE_ERASE_MS, SIG_HEX, UNAUTH_DEADLINE_MS, UNAUTH_MAX_MESSAGE_BYTES, UNAUTH_MIN_AGE_MS, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
   type MeshFill, type MeshUsage,
 } from "./protocol";
-import { deviceIdFor, randomHex, relayAuthMessage, roomIdFor, verifyEd25519 } from "./auth";
+import { deviceIdFor, isEd25519Point, randomHex, relayAuthMessage, roomIdFor, verifyEd25519 } from "./auth";
+import { limiterAllows, meshMode, type MeshMode } from "./routes";
 
 /** The only logging in the relay. Event name + 8-character room prefix, nothing else. */
 function meshLog(event: string, room: string | null): void {
@@ -49,24 +50,32 @@ interface Att {
 }
 
 /** Tunable per instance so tests can exercise ceilings without writing 900 MiB. */
-export interface MeshLimits { setCap: number; prePairCap: number; maxGroups: number; maxFrame: number }
+export interface MeshLimits { setCap: number; prePairCap: number; maxGroups: number; maxFrame: number; outWindowBytes: number }
 
 const TEXT = new TextEncoder();
 
 export class MeshRelayRoom {
   private sql: SqlStorage;
   // Not state: replaceable by tests, rebuilt from env on every construction.
-  limits: MeshLimits = { setCap: SET_CAP_BYTES, prePairCap: PRE_PAIR_CAP_BYTES, maxGroups: MAX_GROUPS, maxFrame: MAX_FRAME_BYTES };
+  limits: MeshLimits = { setCap: SET_CAP_BYTES, prePairCap: PRE_PAIR_CAP_BYTES, maxGroups: MAX_GROUPS, maxFrame: MAX_FRAME_BYTES, outWindowBytes: OUT_WINDOW_BYTES };
   createLimiter: CreateLimiter | undefined;
   now: () => number = () => Date.now();
+  // Read from env on construction; a test may replace it. Decides whether a missing/failed limiter refuses (anything but test-open).
+  mode: MeshMode;
+  // False after an abandoned object erased itself: tables are rebuilt lazily on the next request, so the object
+  // really is empty (no schema, no rows) while nobody uses it.
+  private tablesReady = true;
   // WHY in memory: a flood counter is meant to be forgotten; an object only hibernates while idle,
   // so a flooder cannot reset it by hibernating mid-flood.
   private recent = new WeakMap<WebSocket, number[]>();
   private recentHolds = new WeakMap<WebSocket, number[]>();
+  // Bytes sent to a connection in reply to fetches in the current window (finding 9): [windowStart, bytes].
+  private outBytes = new WeakMap<WebSocket, [number, number]>();
 
   constructor(private state: DurableObjectState, private env: Env) {
     this.sql = state.storage.sql;
     this.createLimiter = env.EVENT_RATE_LIMITER as CreateLimiter | undefined;
+    this.mode = meshMode(env);
     state.blockConcurrencyWhile(async () => { this.init(); });
     // Free keepalive: answered by the platform without waking the object or billing duration.
     state.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
@@ -90,6 +99,8 @@ export class MeshRelayRoom {
     // No declared type on v: it holds both numbers and the room id text.
     this.q(`CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v) WITHOUT ROWID`);
   }
+
+  private ensureInit(): void { if (!this.tablesReady) { this.init(); this.tablesReady = true; } }
 
   private q(text: string, ...bind: unknown[]): Record<string, any>[] {
     return this.sql.exec(text, ...(bind as any[])).toArray() as Record<string, any>[];
@@ -115,6 +126,7 @@ export class MeshRelayRoom {
   // ---------------------------------------------------------------- connect
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return new Response("expected websocket", { status: 426 });
+    this.ensureInit(); // after an abandoned-object erase the tables are rebuilt here, before anything reads them
     // These headers are set by routes.ts, which overwrites anything a client sent.
     const room = request.headers.get("X-Mesh-Room");
     const aud = request.headers.get("X-Mesh-Aud");
@@ -123,15 +135,31 @@ export class MeshRelayRoom {
     const stored = this.metaText("room");
     if (stored !== null && stored !== room) return new Response("bad request", { status: 400 });
 
-    // WHY sweep first: sockets that never answered their challenge would otherwise hold a slot forever.
+    // WHY sweep first: sockets that never answered their challenge would otherwise hold a slot.
     const now = this.now();
-    let swept = 0;
+    const closing = new Set<WebSocket>();
+    const unauth: Array<{ ws: WebSocket; issuedAt: number }> = [];
+    let authedCount = 0;
     for (const w of this.state.getWebSockets()) {
+      // A socket that is already closing (or closed but not yet dropped from the list) holds no slot.
+      if (w.readyState !== WebSocket.READY_STATE_OPEN) continue;
       const a = this.att(w);
-      if (!a || (!a.authed && now - a.issuedAt > CHALLENGE_TTL_MS)) { this.close(w, CLOSE_AUTH_FAILED, "challenge expired"); swept++; }
+      if (!a || (!a.authed && now - a.issuedAt > UNAUTH_DEADLINE_MS)) { this.close(w, CLOSE_AUTH_FAILED, "challenge expired"); closing.add(w); }
+      else if (a.authed) authedCount++;
+      else unauth.push({ ws: w, issuedAt: a.issuedAt });
     }
-    // A socket we just closed may still be listed until its close completes, so do not count it.
-    if (this.state.getWebSockets().length - swept >= MAX_SOCKETS) return new Response("relay busy", { status: 503 });
+    // WHY two caps (finding 5): a stranger who only knows the room id can hold at most the small unauthenticated
+    // cap, and that never consumes the members' 64. When it is full the OLDEST stranger (if it has had a fair
+    // chance to answer) is dropped for the newcomer, so a member can always connect.
+    if (authedCount >= MAX_SOCKETS) return new Response("relay busy", { status: 503 });
+    if (unauth.length >= MAX_UNAUTH_SOCKETS) {
+      unauth.sort((x, y) => x.issuedAt - y.issuedAt);
+      const oldest = unauth[0]!;
+      if (now - oldest.issuedAt < UNAUTH_MIN_AGE_MS) return new Response("relay busy", { status: 503 });
+      this.close(oldest.ws, CLOSE_RELAY_BUSY, "relay busy");
+    }
+    // First touch of this object: remember when, so an object nobody ever registers in can erase itself.
+    if (this.metaNum("born", 0) === 0) this.metaSet("born", now);
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
@@ -140,6 +168,9 @@ export class MeshRelayRoom {
     const att: Att = { authed: false, dev: "", room, aud, nonce, issuedAt: now, ip: (request.headers.get("X-Mesh-Ip") ?? "").slice(0, 64), lastBeat: 0 };
     server.serializeAttachment(att);
     this.send(server, { op: "challenge", aud, nonce, v: MESH_PROTOCOL_VERSION, min: MESH_MIN_PROTOCOL_VERSION });
+    // The alarm closes this socket at its deadline even if nobody ever connects again, and (if no device ever
+    // registers) erases the object once ABANDON_MS has passed.
+    await this.armAt(now + UNAUTH_DEADLINE_MS);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -173,6 +204,17 @@ export class MeshRelayRoom {
   private idOf(h: Record<string, unknown>): { id?: string } {
     return typeof h.id === "string" && h.id.length <= 64 ? { id: h.id } : {};
   }
+  /** True while this connection may still be sent fetch/list replies in the current window (finding 9). */
+  private outBudgetLeft(ws: WebSocket): boolean {
+    const now = this.now();
+    const cur = this.outBytes.get(ws);
+    return !cur || now - cur[0] >= RATE_WINDOW_MS || cur[1] < this.limits.outWindowBytes;
+  }
+  private chargeOut(ws: WebSocket, n: number): void {
+    const now = this.now();
+    const cur = this.outBytes.get(ws);
+    if (!cur || now - cur[0] >= RATE_WINDOW_MS) this.outBytes.set(ws, [now, n]); else cur[1] += n;
+  }
   private flood(ws: WebSocket, store: WeakMap<WebSocket, number[]>, max: number): boolean {
     const now = this.now();
     const list = (store.get(ws) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
@@ -188,6 +230,8 @@ export class MeshRelayRoom {
       if (typeof message === "string") return this.close(ws, CLOSE_BAD_MESSAGE, "binary messages only");
       // WHY size before anything else: refuse before doing any work on a huge message.
       if (message.byteLength > MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
+      // WHY (finding 12): before authentication the only valid message is a small auth answer; refuse anything bigger at once.
+      if (message.byteLength > UNAUTH_MAX_MESSAGE_BYTES && this.att(ws)?.authed !== true) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
       if (this.flood(ws, this.recent, RATE_MAX_MESSAGES)) return this.close(ws, CLOSE_TOO_FAST, "too many messages");
       const m = unpackMessage(message);
       if (!m.ok) return this.close(ws, CLOSE_BAD_MESSAGE, "malformed message");
@@ -232,7 +276,17 @@ export class MeshRelayRoom {
   async webSocketClose(ws: WebSocket): Promise<void> {
     const a = this.att(ws);
     this.close(ws, 1000, "closed");
-    if (a && a.authed) this.announcePresence(a.dev, "off", ws);
+    if (a && a.authed) {
+      // WHY (finding 3): the last time a device was here counts as activity, so a device that stayed connected for
+      // weeks and then left starts a fresh 90-day window instead of looking idle since its first connect.
+      this.touchLastConnect();
+      this.announcePresence(a.dev, "off", ws);
+    }
+  }
+  /** At most one write an hour (rows written are billed). */
+  private touchLastConnect(): void {
+    const t = this.now();
+    if (this.rosterRowCount() > 0 && t - this.metaNum("last_connect", 0) > 3_600_000) this.metaSet("last_connect", t);
   }
   async webSocketError(ws: WebSocket): Promise<void> { await this.webSocketClose(ws); }
 
@@ -269,24 +323,28 @@ export class MeshRelayRoom {
     const row = this.q(`SELECT sign_key, removed FROM roster WHERE dev=?`, dev)[0];
     let created = false;
     if (row) {
+      // WHY signature FIRST, one generic answer (finding 6): the old order answered "removed" before checking anything
+      // and told "bad signature" (device is on the roster) apart from "not on the roster", so a stranger who knew a
+      // device id could learn its membership. Now only someone who can sign with the stored key learns more.
+      if (!(await verifyEd25519(String(row.sign_key), msg, sig))) return fail("refused", CLOSE_AUTH_FAILED, "refused");
       if (Number(row.removed) === 1) return fail("removed", CLOSE_DEVICE_REMOVED, "device removed");
-      if (!(await verifyEd25519(String(row.sign_key), msg, sig))) return fail("bad-signature", CLOSE_AUTH_FAILED, "bad signature");
     } else {
       // Unknown device: the only way in is to be the FIRST device of a brand-new, empty set.
-      if (this.activeDevices().length > 0 || this.rosterRowCount() > 0) return fail("not-on-roster", CLOSE_AUTH_FAILED, "not on the roster");
+      if (this.activeDevices().length > 0 || this.rosterRowCount() > 0) return fail("refused", CLOSE_AUTH_FAILED, "refused");
+      // A set whose last device was removed is retired for good (finding 7): the same key cannot resurrect the room id.
+      if (this.metaNum("retired", 0) === 1) return fail("refused", CLOSE_AUTH_FAILED, "refused");
       const signKey = h.signKey;
-      if (typeof signKey !== "string") return fail("not-on-roster", CLOSE_AUTH_FAILED, "not on the roster");
+      if (typeof signKey !== "string") return fail("refused", CLOSE_AUTH_FAILED, "refused");
       // Self-certifying names: the room and the device id must both be derived from the key presented.
-      if ((await roomIdFor(signKey)) !== a.room || (await deviceIdFor(signKey)) !== dev) return fail("not-on-roster", CLOSE_AUTH_FAILED, "not on the roster");
-      if (!(await verifyEd25519(signKey, msg, sig))) return fail("bad-signature", CLOSE_AUTH_FAILED, "bad signature");
+      if ((await roomIdFor(signKey)) !== a.room || (await deviceIdFor(signKey)) !== dev) return fail("refused", CLOSE_AUTH_FAILED, "refused");
+      if (!(await verifyEd25519(signKey, msg, sig))) return fail("refused", CLOSE_AUTH_FAILED, "refused");
       // Per-address cap on creating sets (T7 abuse protection 3), checked only after the signature is good.
-      if (this.createLimiter && a.ip) {
-        let ok = true;
-        try { ok = (await this.createLimiter.limit({ key: `mesh-create:${a.ip}` })).success; } catch { /* limiter down: fail open, the size caps still apply */ }
-        if (!ok) return fail("rate-limited", CLOSE_TOO_FAST, "too many new sets from this address");
-      }
+      // WHY fail CLOSED (finding 4): the old code skipped the check when the limiter or the address was missing and
+      // let a limiter error through. Now only test-open mode (the test suite) may create a set without a working limiter.
+      const gate = await limiterAllows(a.ip ? this.createLimiter : undefined, this.mode, `mesh-relay:create:${a.ip || "unknown"}`);
+      if (gate !== "ok") return fail("rate-limited", CLOSE_TOO_FAST, "too many new sets from this address");
       // WHY re-checked: the awaits above let another connection register first; commit only if still empty.
-      if (this.rosterRowCount() > 0) return fail("not-on-roster", CLOSE_AUTH_FAILED, "not on the roster");
+      if (this.rosterRowCount() > 0) return fail("refused", CLOSE_AUTH_FAILED, "refused");
       const now = this.now();
       this.q(`INSERT INTO roster(dev,sign_key,added_at,removed) VALUES(?,?,?,0)`, dev, signKey, now);
       this.metaSet("room", a.room);
@@ -331,7 +389,12 @@ export class MeshRelayRoom {
     if (Number(grp.bytes) + size > this.cap()) return this.send(ws, { op: "over-limit", ...idf, why: "group", fill: this.fillOf(this.totalBytes()) });
     let released: Array<{ g: string; through: number }> = [];
     if (this.totalBytes() + size > this.cap()) released = this.makeRoom(size, g, a.dev);
-    if (this.totalBytes() + size > this.cap()) return this.send(ws, { op: "over-limit", ...idf, why: "set", fill: "full" });
+    if (this.totalBytes() + size > this.cap()) {
+      // WHY announce first (finding 10): groups were already emptied above; devices must hear "released" even when
+      // this write is then refused (possible only if byte accounting drifted), instead of discovering it later as a gap.
+      for (const r of released) this.broadcast({ op: "released", g: r.g, throughSeq: r.through });
+      return this.send(ws, { op: "over-limit", ...idf, why: "set", fill: "full" });
+    }
 
     const seq = Number(grp.next_seq);
     this.q(`INSERT INTO frames(g,seq,sz,b) VALUES(?,?,?,?)`, g, seq, size, payload);
@@ -387,6 +450,8 @@ export class MeshRelayRoom {
   private fetchAfter(ws: WebSocket, h: Record<string, unknown>): void {
     const idf = this.idOf(h);
     if (!isGroupName(h.g) || !isCount(h.seq)) return this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
+    // WHY (finding 9): a member could otherwise pull 4 MiB per request, 300 requests per window, on 64 connections.
+    if (!this.outBudgetLeft(ws)) return this.send(ws, { op: "over-limit", ...idf, why: "rate" });
     const g = this.q(`SELECT released_through FROM groups WHERE g=?`, h.g)[0];
     if (!g) return this.send(ws, { op: "frames-end", ...idf, g: h.g, more: false, empty: true });
     if (h.seq < Number(g.released_through)) return this.send(ws, { op: "gap", ...idf, g: h.g, through: Number(g.released_through) });
@@ -397,6 +462,7 @@ export class MeshRelayRoom {
       this.send(ws, { op: "frame", ...idf, g: h.g, seq: Number(r.seq) }, new Uint8Array(r.b as ArrayBuffer));
       sent += sz; last = Number(r.seq);
     }
+    this.chargeOut(ws, sent);
     this.send(ws, { op: "frames-end", ...idf, g: h.g, more, last });
   }
 
@@ -434,6 +500,7 @@ export class MeshRelayRoom {
   private regList(ws: WebSocket, h: Record<string, unknown>): void {
     const since = h.sinceRev === undefined ? 0 : h.sinceRev;
     if (!isCount(since)) return this.send(ws, { op: "refused", ...this.idOf(h), reason: "bad-header" });
+    if (!this.outBudgetLeft(ws)) return this.send(ws, { op: "over-limit", ...this.idOf(h), why: "rate" });
     // WHY paged by revision: 4096 registers of 16 KiB could be 64 MiB; replies stay near FETCH_PAGE_BYTES and say `more`.
     const rows: Array<{ k: string; v: Uint8Array; tok: number; rev: number }> = [];
     let total = 0, more = false;
@@ -443,6 +510,7 @@ export class MeshRelayRoom {
       rows.push({ k: String(r.k), v, tok: Number(r.tok), rev: Number(r.rev) });
       total += v.length;
     }
+    this.chargeOut(ws, total);
     const body = new Uint8Array(total);
     let o = 0;
     for (const r of rows) { body.set(r.v, o); o += r.v.length; }
@@ -459,6 +527,12 @@ export class MeshRelayRoom {
       return this.send(ws, { op: "conflict", ...idf, token: curTok, len: cur ? (cur.v as ArrayBuffer).byteLength : 0 }, cur ? new Uint8Array(cur.v as ArrayBuffer) : null);
     }
     if (!cur && Number(this.q(`SELECT count(*) n FROM regs`)[0]!.n) >= MAX_REGISTERS) return this.send(ws, { op: "over-limit", ...idf, why: "register" });
+    // WHY registers count toward the set's storage ceiling (finding 4): up to 4096 x 16 KiB = 64 MiB sat outside every
+    // cap. Counted as key + value bytes; an overwrite only counts the change, and a shrinking write is always allowed.
+    const newSize = TEXT.encode(h.key).length + payload.byteLength;
+    const oldSize = cur ? TEXT.encode(h.key).length + (cur.v as ArrayBuffer).byteLength : 0;
+    if (newSize > oldSize && this.totalBytes() + (newSize - oldSize) > this.cap()) return this.send(ws, { op: "over-limit", ...idf, why: "set", fill: this.fillOf(this.totalBytes()) });
+    this.metaSet("total_bytes", Math.max(0, this.totalBytes() + newSize - oldSize));
     const rev = this.metaNum("rev", 0) + 1;
     this.metaSet("rev", rev);
     this.q(`INSERT INTO regs(k,v,tok,rev) VALUES(?,?,?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, tok=excluded.tok, rev=excluded.rev`, h.key, payload, curTok + 1, rev);
@@ -485,7 +559,8 @@ export class MeshRelayRoom {
   // ---------------------------------------------------------------- roster (public keys only)
   private async rosterAdd(ws: WebSocket, a: Att, h: Record<string, unknown>): Promise<void> {
     const idf = this.idOf(h);
-    if (!isHex(h.signKey, KEY_HEX)) return this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
+    // WHY a curve check, not just 64 hex characters (finding 13): a non-key would hold one of the 16 slots forever.
+    if (!isHex(h.signKey, KEY_HEX) || !(await isEd25519Point(h.signKey))) return this.send(ws, { op: "refused", ...idf, reason: "bad-header" });
     const dev = await deviceIdFor(h.signKey);
     // Re-read after the await (other messages may have run meanwhile).
     const existing = this.q(`SELECT removed FROM roster WHERE dev=?`, dev)[0];
@@ -512,7 +587,7 @@ export class MeshRelayRoom {
     this.broadcast({ op: "roster-changed", change: "removed", dev }, { exceptDev: dev });
     if (dev !== a.dev) this.send(ws, { op: "ok", ...idf });
     // An empty roster erases the set at once (design 5.6).
-    if (this.activeDevices().length === 0) return await this.eraseAsync();
+    if (this.activeDevices().length === 0) return await this.eraseAsync("emptied");
     // Removal can complete other devices' acknowledgement sets: re-run the drop rule for held groups.
     for (const g of this.q(`SELECT g FROM groups WHERE bytes>0`)) {
       const m = this.q(`SELECT count(*) n, min(through) m FROM recv WHERE g=? AND dev IN (SELECT dev FROM roster WHERE removed=0)`, g.g)[0]!;
@@ -520,33 +595,73 @@ export class MeshRelayRoom {
     }
   }
 
-  // ---------------------------------------------------------------- lifetimes: 30-day groups, 90-day erase
+  // ---------------------------------------------------------------- lifetimes: 30-day groups, 90-day erase, abandoned objects
   private async arm(): Promise<void> {
     // An early alarm is harmless (it recomputes and re-arms), so one getAlarm per wake is enough.
     if ((await this.state.storage.getAlarm()) === null) await this.state.storage.setAlarm(this.now() + GROUP_TTL_MS);
   }
+  /** Make sure an alarm fires no later than `at` (an earlier one already set stays). */
+  private async armAt(at: number): Promise<void> {
+    const cur = await this.state.storage.getAlarm();
+    if (cur === null || cur > at) await this.state.storage.setAlarm(at);
+  }
 
   async alarm(): Promise<void> {
+    this.ensureInit();
     const now = this.now();
+    // 1. Unauthenticated sockets past their short deadline close here, not only when someone else connects (finding 5).
+    let nextUnauth: number | null = null;
+    for (const w of this.state.getWebSockets()) {
+      const a = this.att(w);
+      if (!a) { this.close(w, CLOSE_AUTH_FAILED, "no connection state"); continue; }
+      if (a.authed) continue;
+      if (now - a.issuedAt > UNAUTH_DEADLINE_MS) this.close(w, CLOSE_AUTH_FAILED, "challenge expired");
+      else nextUnauth = Math.min(nextUnauth ?? Infinity, a.issuedAt + UNAUTH_DEADLINE_MS);
+    }
+    // 2. Nobody ever registered a device here: after ABANDON_MS the object erases itself (finding 4). A retired
+    //    set (last device removed) keeps only its tombstone and needs no further wake-ups.
+    if (this.rosterRowCount() === 0) {
+      if (this.metaNum("retired", 0) === 1) return;
+      const born = this.metaNum("born", now);
+      if (now - born >= ABANDON_MS) return void (await this.abandonAsync());
+      await this.state.storage.setAlarm(this.now() + Math.max(1000, Math.min(born + ABANDON_MS, nextUnauth ?? Infinity) - now));
+      return;
+    }
+    // 3. WHY a live socket counts as activity (finding 3): last_connect is only written when a device authenticates, so a
+    //    device that stayed connected for 90 days looked idle and the whole set was erased under its open socket.
+    if (this.authedSockets().length > 0) this.metaSet("last_connect", now);
     if (now - this.metaNum("last_connect", now) > SET_IDLE_ERASE_MS) return void (await this.eraseAsync());
     for (const o of this.q(`SELECT g FROM groups WHERE bytes>0 AND last_line_at<?`, now - GROUP_TTL_MS)) {
       const through = this.emptyGroup(String(o.g));
       this.broadcast({ op: "released", g: String(o.g), throughSeq: through });
     }
-    // Next wake: the oldest remaining group's expiry or the 90-day idle check, whichever is sooner.
+    // Next wake: the oldest remaining group's expiry, an unauthenticated deadline, or the 90-day idle check, whichever is sooner.
     const oldest = this.q(`SELECT min(last_line_at) m FROM groups WHERE bytes>0`)[0]!.m;
     const idleAt = this.metaNum("last_connect", now) + SET_IDLE_ERASE_MS;
-    const next = Math.min(oldest === null ? Infinity : Number(oldest) + GROUP_TTL_MS, idleAt);
-    await this.state.storage.setAlarm(this.now() + Math.max(60_000, next - now));
+    const next = Math.min(oldest === null ? Infinity : Number(oldest) + GROUP_TTL_MS, idleAt, nextUnauth ?? Infinity);
+    await this.state.storage.setAlarm(this.now() + Math.max(nextUnauth !== null ? 1000 : 60_000, next - now));
   }
 
-  /** Erases everything (registers, roster, frames) and rebuilds the empty tables so the object keeps working. */
-  async eraseAsync(): Promise<void> {
+  /** Erases everything (registers, roster, frames) and rebuilds the empty tables so the object keeps working.
+   *  `emptied` (every device removed) also leaves a one-row tombstone so the same key cannot re-create the room (finding 7);
+   *  an idle (90-day) erase leaves none, because then the owner's own key legitimately starts a new set. */
+  async eraseAsync(why: "idle" | "emptied" = "idle"): Promise<void> {
     for (const w of this.state.getWebSockets()) this.close(w, CLOSE_SET_ERASED, "set erased");
     await this.state.storage.deleteAll();
     // WHY explicit: do not rely on deleteAll() also clearing the alarm; an erased set must not wake on its old schedule.
     await this.state.storage.deleteAlarm();
     this.init();
+    if (why === "emptied") this.metaSet("retired", 1);
     meshLog("erased", null);
+  }
+
+  /** An object nobody registered a device in: wipes storage completely and does NOT rebuild the tables, so it holds
+   *  nothing until (if ever) it is used again (ensureInit rebuilds on demand). */
+  private async abandonAsync(): Promise<void> {
+    for (const w of this.state.getWebSockets()) this.close(w, CLOSE_SET_ERASED, "set erased");
+    await this.state.storage.deleteAll();
+    await this.state.storage.deleteAlarm();
+    this.tablesReady = false;
+    meshLog("abandoned", null);
   }
 }

@@ -104,6 +104,10 @@ CATALOG_ENABLED = "1"
 # the relay may only go live deliberately, after an independent review (test/mesh-relay-gate.test.ts pins
 # this value). With "0" every /mesh/relay/* path is a plain 404 and no Durable Object is created.
 MESH_RELAY_ENABLED = "0"
+# Second, independent switch (review 2026-11-14): "off" here too. Valid words: "off", "allowlist" (only rooms in
+# MESH_ALLOWED_ROOMS; an empty list admits NOTHING), "test-open" (tests only). "open" is NOT implemented and is
+# refused. Never put "test-open" in this production section (test/mesh-relay-gate.test.ts pins it).
+MESH_RELAY_MODE = "off"
 # WHY: owner authorized activation after enabling the edge rate-limit rule.
 # Signing remains a CI-provisioned secret, never a public [vars] placeholder.
 SITE_ANALYTICS_ENABLED = "1"
@@ -205,6 +209,8 @@ THEME_REGISTRY_URL = ""
 REQUIRE_LOOPBACK_SIGNIN = "0"
 # Relay routes are ON in the test environment only (production is "0" at the top of this file).
 MESH_RELAY_ENABLED = "1"
+# Tests use fresh random rooms and have no rate-limit binding, so they run in "test-open" (production is "off").
+MESH_RELAY_MODE = "test-open"
 
 # Production runtime config: GH_CLIENT_ID, GH_CLIENT_SECRET, and ADMIN_USER_IDS
 # are injected as secrets by CI (see .github/workflows/worker-deploy.yml).

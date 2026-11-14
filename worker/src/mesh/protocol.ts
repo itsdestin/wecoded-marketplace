@@ -38,7 +38,24 @@ export const REGISTER_MAX_BYTES = 16 * 1024;
 export const MAX_REGISTERS = 4096;
 export const MAX_GROUPS = 5000;
 export const MAX_DEVICES = 16;
+/** Authenticated connections per set. */
 export const MAX_SOCKETS = 64;
+/** WHY a separate, small cap (review finding 5): sockets that have not proved who they are are the only
+ *  thing a stranger who merely knows a room id can hold. They never count against MAX_SOCKETS, and when all
+ *  of these slots are taken the OLDEST (past the minimum age) is dropped for a newcomer, so members can always
+ *  get in. */
+export const MAX_UNAUTH_SOCKETS = 8;
+/** An unauthenticated socket is closed this long after it connects (by an alarm, not only by the next connect). */
+export const UNAUTH_DEADLINE_MS = 10_000;
+/** A newcomer may evict the oldest unauthenticated socket only if it has had this long to answer (so a flood of
+ *  new connections cannot knock out a member who is mid-handshake). */
+export const UNAUTH_MIN_AGE_MS = 2_000;
+/** Before authentication the only valid message is a small auth answer; anything bigger is closed at once (finding 12). */
+export const UNAUTH_MAX_MESSAGE_BYTES = 16 * 1024;
+/** A room object that nobody has registered a device in erases itself this long after it was first touched (finding 4). */
+export const ABANDON_MS = 10 * 60_000;
+/** Bytes one connection may be sent in reply to fetch/list requests per RATE_WINDOW_MS (finding 9). */
+export const OUT_WINDOW_BYTES = 64 * 1024 * 1024;
 /** Per sender (device), how many distinct run sessions the relay remembers for duplicate checks. */
 export const MAX_SESSIONS_PER_DEVICE = 16;
 

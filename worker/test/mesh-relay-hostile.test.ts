@@ -64,7 +64,7 @@ describe("replay and forgery", () => {
     expect((await two.conns[0]!.frames("z")).map((m) => m.h.op)).toEqual(["frames-end"]);
     // a member of set one cannot sign into set two's room
     const c = await Conn.open(two.room);
-    expect((await c.auth(one.devices[0]!)).h.r).toBe("not-on-roster");
+    expect((await c.auth(one.devices[0]!)).h.r).toBe("refused");
   });
 
   it("a removed device cannot use a stolen live socket's authority for anything", async () => {
@@ -97,14 +97,18 @@ describe("oversize", () => {
 
 describe("flood", () => {
   it("closes a connection that sends more than 300 messages in 10 seconds", async () => {
-    const { conns } = await makeSet(["a"]);
+    const { room, conns } = await makeSet(["a"]);
+    // WHY a frozen room clock: "300 in 10 seconds" must not depend on how fast this machine drains the socket.
+    await inRoom(room, (r) => { const t = Date.now(); r.now = () => t; });
     for (let i = 0; i < 400; i++) conns[0]!.send({ op: "usage" });
     // WHY a long wait: the client sees the close only after it has dispatched the replies already queued, which is slow on a busy machine.
     expect((await conns[0]!.waitClosed(20_000)).code).toBe(4008);
   }, 30_000);
   it("answers holds beyond 100 in 10 seconds with over-limit `rate` and stores no more", async () => {
-    const { devices, conns } = await makeSet(["a", "b"]);
+    const { room, devices, conns } = await makeSet(["a", "b"]);
     const a = conns[0]!;
+    // WHY a frozen room clock: all 130 holds must land in ONE rate window however slowly they are processed.
+    await inRoom(room, (r) => { const t = Date.now(); r.now = () => t; });
     for (let i = 1; i <= 130; i++) a.send({ ...holdHeader(devices[0]!, "g", i), id: `h${i}` }, bytesOf(10));
     const results: string[] = [];
     for (let i = 1; i <= 130; i++) results.push((await a.waitFor((m) => m.h.id === `h${i}`, 10_000)).h.op);
@@ -120,13 +124,16 @@ describe("flood", () => {
   });
   it("sockets that never answer their challenge are swept and do not exhaust the connection slots", async () => {
     const d = await newDevice();
+    const t = Date.now();
+    await inRoom(d.room, (r) => { r.now = () => t; });
     const idle: Conn[] = [];
-    for (let i = 0; i < 64; i++) idle.push(await Conn.open(d.room));
+    // WHY 8 (review finding 5): unauthenticated sockets have their own small cap, separate from the members' 64.
+    for (let i = 0; i < 8; i++) idle.push(await Conn.open(d.room));
     await Conn.open(d.room).then(
-      () => { throw new Error("65th connection should be refused while 64 are fresh"); },
+      () => { throw new Error("9th connection should be refused while 8 are fresh"); },
       (e) => expect(String(e)).toMatch(/503/),
     );
-    await inRoom(d.room, (r) => { const t = Date.now(); r.now = () => t + 31_000; });
+    await inRoom(d.room, (r) => { r.now = () => t + 11_000; });
     const ok = await Conn.open(d.room); // sweep closes the stale ones first
     expect((await ok.auth(d, { firstDevice: true })).h.r).toBe("ok");
     expect((await idle[0]!.waitClosed()).code).toBe(4002);

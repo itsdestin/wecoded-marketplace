@@ -90,18 +90,27 @@ describe("production configuration is pinned off", () => {
   it("no allow-list or other var turns the relay on in production config", () => {
     expect(prod).not.toMatch(/^MESH_ALLOWED_ROOMS/m);
   });
+  it("production mode is \"off\"; \"test-open\" and \"open\" appear only where allowed", () => {
+    expect(prod.match(/^MESH_RELAY_MODE\s*=\s*"([^"]*)"/m)?.[1]).toBe("off");
+    expect(prod.match(/^MESH_RELAY_MODE/gm)).toHaveLength(1);
+    expect(test.match(/^MESH_RELAY_MODE\s*=\s*"([^"]*)"/m)?.[1]).toBe("test-open");
+    expect(prod).not.toMatch(/^[^#\n]*"(test-open|open)"/m);
+  });
 });
 
 describe("test-relay allow-list", () => {
-  it("unset or blank allows any room; a list allows only the named rooms", () => {
-    expect(roomAllowed({}, room)).toBe(true);
-    expect(roomAllowed({ MESH_ALLOWED_ROOMS: "  " }, room)).toBe(true);
+  // (review finding 2: these used to pin "an empty list means every room", which is the unsafe behaviour.)
+  it("unset or blank admits NO room (fails closed); a list admits only the named rooms", () => {
+    expect(roomAllowed({}, room)).toBe(false);
+    expect(roomAllowed({ MESH_ALLOWED_ROOMS: "  " }, room)).toBe(false);
+    expect(roomAllowed({ MESH_RELAY_MODE: "allowlist", MESH_ALLOWED_ROOMS: "" }, room)).toBe(false);
     expect(roomAllowed({ MESH_ALLOWED_ROOMS: `${"cd".repeat(32)}, ${room}` }, room)).toBe(true);
     expect(roomAllowed({ MESH_ALLOWED_ROOMS: "cd".repeat(32) }, room)).toBe(false);
+    expect(roomAllowed({ MESH_RELAY_MODE: "open", MESH_ALLOWED_ROOMS: room }, room)).toBe(false);
   });
   it("an unlisted room is a 404 and creates no object", async () => {
     const spy = spyNamespace();
-    expect((await call({ MESH_ALLOWED_ROOMS: "cd".repeat(32), MESH_RELAY: spy })).status).toBe(404);
+    expect((await call({ MESH_RELAY_MODE: "allowlist", MESH_ALLOWED_ROOMS: "cd".repeat(32), MESH_RELAY: spy })).status).toBe(404);
     expect(spy.touched).toEqual([]);
   });
 });

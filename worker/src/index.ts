@@ -176,6 +176,18 @@ app.route("/", siteAnalyticsRoutes);
 // Must match the hourly entry in wrangler.toml [triggers].
 const HOURLY_ALARM_CRON = "41 * * * *";
 
+/** True for any /parties/<name>/... path whose party segment names the Mesh relay binding, however it is spelled
+ *  (case, underscores, percent-encoding), so no spelling slips past an exact-match check. */
+function isMeshRelayParty(pathname: string): boolean {
+  const parts = pathname.split("/");
+  // Only a full /parties/<party>/<name> path is a lobby request partyserver would route; a bare party name falls through as before.
+  if (!parts[3]) return false;
+  const seg = parts[2] ?? "";
+  let decoded = seg;
+  try { decoded = decodeURIComponent(seg); } catch { /* keep the raw segment */ }
+  return decoded.toLowerCase().replace(/[-_]/g, "") === "meshrelay";
+}
+
 export default {
   // WHY the games check runs BEFORE Hono: the CORS middleware above would try to
   // add headers to a WebSocket (101) response, which is immutable. The game
@@ -184,12 +196,18 @@ export default {
   // through to the normal router untouched, so no existing route is affected.
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (new URL(req.url).pathname.startsWith("/parties/")) {
+      // WHY: partyserver auto-exposes EVERY Durable Object binding under its kebab-case name, so the Mesh relay
+      // binding is reachable as /parties/mesh-relay/<name> whatever MESH_RELAY_ENABLED says (review finding 1).
+      // Today the games ticket check stops it; this refuses it explicitly so loosening that check can never expose
+      // the relay. The answer is what an unknown party answered before the binding existed (400 "Invalid request").
+      if (isMeshRelayParty(new URL(req.url).pathname)) return new Response("Invalid request", { status: 400 });
       const res = await routePartykitRequest(req, env as unknown as Cloudflare.Env, {
         // WHY here: sign-in is checked BEFORE the request reaches (or wakes) a room.
         // Browsers cannot send headers on a WebSocket, so the app sends a one-time ticket
         // (POST /games/ticket) as ?ticket=. The room learns who the player is from the
         // headers set below, which we overwrite, so a client cannot forge them.
         async onBeforeConnect(request, lobby) {
+          if (isMeshRelayParty(`/parties/${lobby.party}/x`)) return new Response("Invalid request", { status: 400 }); // belt and braces for finding 1
           if (!isRoomCode(lobby.name)) return new Response("invalid room code", { status: 400 });
           const url = new URL(request.url);
           const player = await redeemTicket(env.DB, url.searchParams.get("ticket"), lobby.party, lobby.name, Math.floor(Date.now() / 1000));
@@ -202,7 +220,10 @@ export default {
         },
         // WHY: a plain GET used to wake (and create) a room for any made-up name. Answer the
         // same "Not implemented" the room gave, without touching a Durable Object at all.
-        onBeforeRequest() { return new Response("Not implemented", { status: 404 }); },
+        onBeforeRequest(_req, lobby) {
+          if (isMeshRelayParty(`/parties/${lobby.party}/x`)) return new Response("Invalid request", { status: 400 }); // finding 1
+          return new Response("Not implemented", { status: 404 });
+        },
       });
       if (res) return res;
     }

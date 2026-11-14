@@ -58,6 +58,8 @@ describe("hibernation: nothing that matters lives only in memory", () => {
   it("a rebuilt object still enforces the quota and erases on schedule (alarm armed in storage)", async () => {
     const { room, devices, conns } = await makeSet(["a", "b"]);
     await conns[0]!.call(holdHeader(devices[0]!, "g", 1) as any, bytesOf(1000));
+    // Connecting arms a short alarm (the unauthenticated-socket deadline); running it recomputes the real schedule.
+    await runDurableObjectAlarm(stubFor(room));
     const armed = await (runInDurableObject as any)(stubFor(room), async (_o: any, state: DurableObjectState) => {
       const fresh = new MeshRelayRoom(state, env as any);
       void fresh;
@@ -87,7 +89,8 @@ describe("30-day rule: a chat's frames are let go 30 days after its last line", 
     b.send({ op: "fetch-after", g: "chat:live", seq: 0, id: "l" });
     expect((await b.frames("l")).filter((m) => m.h.op === "frame")).toHaveLength(2);
     expect((await b.call({ op: "reg-get", key: "head:v1" })).h.regs).toHaveLength(1);
-    expect((await a.call({ op: "usage" })).h.usage.bytes).toBe(400);
+    // 400 held bytes + the register (7-byte key + 10-byte value): registers now count against the set's ceiling (review finding 4)
+    expect((await a.call({ op: "usage" })).h.usage.bytes).toBe(417);
     // and the next wake-up is scheduled
     const next = await (runInDurableObject as any)(stubFor(room), (_i: any, state: DurableObjectState) => state.storage.getAlarm());
     expect(next).not.toBeNull();
@@ -95,19 +98,22 @@ describe("30-day rule: a chat's frames are let go 30 days after its last line", 
 });
 
 describe("90-day rule: a set nobody has connected to for 90 days is erased, and the object keeps working", () => {
-  it("closes sockets with 4004, wipes roster, frames and registers, and re-creates its tables", async () => {
+  it("wipes roster, frames and registers once every device has been gone for 90 days, and re-creates its tables", async () => {
     const { room, devices, conns } = await makeSet(["a", "b"]);
     await conns[0]!.call(holdHeader(devices[0]!, "g", 1) as any, bytesOf(500));
     await conns[0]!.call({ op: "reg-set", key: "head:v1", expectToken: 0 }, bytesOf(10));
+    // WHY the devices leave first: a device with a live socket is activity and keeps the set (review finding 3, see
+    // mesh-relay-review.test.ts); the old version of this test erased a set under two open sockets.
+    for (const c of conns) c.ws.close(1000, "bye");
+    await Promise.all(conns.map((c) => c.closed));
+    await new Promise((r) => setTimeout(r, 50));
     await skewClock(room, 91 * DAY_MS);
     expect(await runDurableObjectAlarm(stubFor(room))).toBe(true);
-    expect((await conns[0]!.waitClosed()).code).toBe(4004);
-    expect((await conns[1]!.waitClosed()).code).toBe(4004);
 
     // The same object is alive (its tables were rebuilt): the old roster is gone, so the old second device is a stranger...
     await inRoom(room, (r) => { r.now = () => Date.now(); });
     const stranger = await Conn.open(room);
-    expect((await stranger.auth(devices[1]!)).h.r).toBe("not-on-roster");
+    expect((await stranger.auth(devices[1]!)).h.r).toBe("refused");
     // ...and the first device can create the set afresh, hold, and sees no old data.
     const again = await Conn.open(room);
     expect((await again.auth(devices[0]!, { firstDevice: true })).h).toMatchObject({ r: "ok", created: true, usage: { bytes: 0, paired: false } });
