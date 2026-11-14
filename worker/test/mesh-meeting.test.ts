@@ -3,7 +3,7 @@ import { env, createExecutionContext, waitOnExecutionContext, listDurableObjectI
 import { describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 import { Conn, bytesOf, inRoom, joinMeeting, makeSet, newMeetId, openMeeting } from "./mesh-helpers";
-import { MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_MESSAGE_BYTES, MEET_MAX_TOTAL_BYTES } from "../src/mesh/protocol";
+import { MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_HOST_MESSAGE_BYTES, MEET_MAX_MESSAGE_BYTES, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_DEVICE_HOUR } from "../src/mesh/protocol";
 
 // The pairing meeting point (T5 C10, threat model P-3 / P-9). The relay is a hostile pipe: every test here is something a
 // hostile party on or beside it could try.
@@ -133,10 +133,11 @@ describe("meeting point: hostile parties", () => {
   it("the whole meeting is capped in bytes and in messages; past the cap it ends and is erased", async () => {
     const t = await pair();
     await t.host.waitFor("meet-peer");
+    // WHY host-to-guest 1 MiB messages: that direction is the wide one (the welcome); four of them reach the 4 MiB total.
     let n = 0;
     let sent = 0;
-    while (sent + MEET_MAX_MESSAGE_BYTES <= MEET_MAX_TOTAL_BYTES) { relay(t.guest, ++n, new Uint8Array(MEET_MAX_MESSAGE_BYTES)); sent += MEET_MAX_MESSAGE_BYTES; await t.host.waitFor("meet-relay"); }
-    relay(t.guest, ++n, new Uint8Array(1000));
+    while (sent + MEET_MAX_HOST_MESSAGE_BYTES <= MEET_MAX_TOTAL_BYTES) { relay(t.host, ++n, new Uint8Array(MEET_MAX_HOST_MESSAGE_BYTES)); sent += MEET_MAX_HOST_MESSAGE_BYTES; await t.guest.waitFor("meet-relay"); }
+    relay(t.host, ++n, new Uint8Array(1000));
     expect((await t.guest.waitFor("meet-ended")).h.why).toBe("limit");
     await t.guest.waitClosed();
     await new Promise((r) => setTimeout(r, 30));
@@ -155,13 +156,15 @@ describe("meeting point: hostile parties", () => {
     expect(await inRoom(two.room, (r) => (r as any).q(`SELECT count(*) n FROM meets`)[0].n)).toBe(0);
   });
 
-  it("a stranger who knows the id burns at most the guest-connection allowance, then the door is shut (the host's three tries are the app's)", async () => {
+  it("a stranger who talks burns at most the guest-connection allowance, then the door is shut (the host's three tries are the app's)", async () => {
     const { conns } = await makeSet(["owner"]);
     const o = await openMeeting(conns[0]!);
     const host = await joinMeeting(o.m, "host", o.ticket);
     for (let i = 0; i < MEET_MAX_GUEST_CONNECTS; i++) {
       const g = await joinMeeting(o.m, "guest");
       expect(g.first.h.op).toBe("meet-joined");
+      g.c.send({ op: "meet-relay", n: 1 }, bytesOf(8)); // a guest counts toward the allowance once it has said something
+      await host.c.waitFor("meet-relay");
       g.c.ws.close(1000, "bye");
       await host.c.waitFor((m) => m.h.op === "meet-peer" && m.h.state === "off");
     }
@@ -190,14 +193,14 @@ describe("meeting point: hostile parties", () => {
     await expect(Conn.openMeet(t.m)).rejects.toThrow(/404/);
   });
 
-  it("per room: at most two meetings open at once and twelve an hour; refused, not queued", async () => {
+  it("per device: at most two meetings open at once and six an hour; refused, not queued", async () => {
     const { conns, room } = await makeSet(["owner"]);
     expect((await openMeeting(conns[0]!)).reply.h.op).toBe("meet-opened");
     expect((await openMeeting(conns[0]!)).reply.h.op).toBe("meet-opened");
     expect((await openMeeting(conns[0]!)).reply.h).toMatchObject({ op: "refused", reason: "too-many-meetings" });
     // an hour-long sweep: expire the open ones, then fill the hourly allowance
     await inRoom(room, (r) => { (r as any).q(`UPDATE meets SET expires=1`); });
-    for (let i = 0; i < 10; i++) { expect((await openMeeting(conns[0]!)).reply.h.op).toBe("meet-opened"); await inRoom(room, (r) => { (r as any).q(`UPDATE meets SET expires=1`); }); }
+    for (let i = 0; i < MEET_OPENS_PER_DEVICE_HOUR - 2; i++) { expect((await openMeeting(conns[0]!)).reply.h.op).toBe("meet-opened"); await inRoom(room, (r) => { (r as any).q(`UPDATE meets SET expires=1`); }); }
     expect((await openMeeting(conns[0]!)).reply.h).toMatchObject({ op: "refused", reason: "rate-limited" });
   });
 
@@ -229,7 +232,7 @@ describe("meeting point: hostile parties", () => {
     await t.host.waitFor("meet-relay");
     const dump = await meetObj(t.m, (r) => JSON.stringify({ meta: r.q(`SELECT k,v FROM meta`), tables: r.q(`SELECT name FROM sqlite_master`), frames: r.q(`SELECT count(*) n FROM frames`), roster: r.q(`SELECT count(*) n FROM roster`) }));
     expect(dump).not.toContain("PAKE-MESSAGE-MARKER");
-    expect(JSON.parse(dump).meta.map((x: any) => x.k).sort()).toEqual(["meet_bytes", "meet_created", "meet_guests", "meet_id", "meet_msgs", "meet_room", "meet_ticket"]);
+    expect(JSON.parse(dump).meta.map((x: any) => x.k).sort()).toEqual(["meet_bytes", "meet_created", "meet_gen", "meet_guests", "meet_id", "meet_msgs", "meet_room", "meet_ticket"]);
     expect(JSON.parse(dump).roster[0].n).toBe(0);
     expect(JSON.parse(dump).frames[0].n).toBe(0);
   });

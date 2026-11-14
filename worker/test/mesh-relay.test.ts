@@ -285,15 +285,16 @@ describe("storage accounting and ceilings", () => {
     expect((await a.call(holdHeader(d, "only", 5) as any, bytesOf(2_300))).h).toMatchObject({ op: "over-limit", why: "group", fill: "nearly-full" });
   });
 
+  // WHY every group below is a LINE group (line: true): only chat lines are released under pressure; control groups are exempt (review finding 5).
   it("releases whole groups, least recently used first, never the one being written, and announces it", async () => {
     const d = await newDevice();
     const a = await Conn.open(d.room);
     await a.auth(d, { firstDevice: true });
     await inRoom(d.room, (r) => { r.limits.prePairCap = 10_000; });
-    await a.call(holdHeader(d, "old", 1) as any, bytesOf(4_000));
-    await a.call(holdHeader(d, "mid", 2) as any, bytesOf(4_000));
-    await a.call(holdHeader(d, "old", 3) as any, bytesOf(1_000)); // touches "old" again: "mid" is now least recently used
-    const r = await a.call(holdHeader(d, "new", 4) as any, bytesOf(3_000));
+    await a.call(holdHeader(d, "old", 1, undefined, { line: true }) as any, bytesOf(4_000));
+    await a.call(holdHeader(d, "mid", 2, undefined, { line: true }) as any, bytesOf(4_000));
+    await a.call(holdHeader(d, "old", 3, undefined, { line: true }) as any, bytesOf(1_000)); // touches "old" again: "mid" is now least recently used
+    const r = await a.call(holdHeader(d, "new", 4, undefined, { line: true }) as any, bytesOf(3_000));
     expect(r.h.op).toBe("stored");
     const rel = await a.waitFor("released");
     expect(rel.h).toMatchObject({ g: "mid", throughSeq: 1 });
@@ -311,9 +312,9 @@ describe("storage accounting and ceilings", () => {
     const { room, devices, conns } = await makeSet(["a", "b"]);
     const [a, b] = conns as [Conn, Conn];
     await inRoom(room, (r) => { r.limits.setCap = 10_000; });
-    await b.call(holdHeader(devices[1]!, "b-chat", 1) as any, bytesOf(3_000));   // older, written by b
-    await a.call(holdHeader(devices[0]!, "a-chat", 1) as any, bytesOf(3_000));   // newer, written by a
-    await a.call(holdHeader(devices[0]!, "a-new", 2) as any, bytesOf(6_000));    // needs room: a's own chat goes first
+    await b.call(holdHeader(devices[1]!, "b-chat", 1, undefined, { line: true }) as any, bytesOf(3_000));   // older, written by b
+    await a.call(holdHeader(devices[0]!, "a-chat", 1, undefined, { line: true }) as any, bytesOf(3_000));   // newer, written by a
+    await a.call(holdHeader(devices[0]!, "a-new", 2, undefined, { line: true }) as any, bytesOf(6_000));    // needs room: a's own chat goes first
     const rel = await b.waitFor("released");
     expect(rel.h.g).toBe("a-chat");
     b.send({ op: "fetch-after", g: "b-chat", seq: 0, id: "x" });

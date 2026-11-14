@@ -24,7 +24,8 @@ import {
   MESH_PROTOCOL_VERSION, NEARLY_FULL_FRACTION, NONCE_HEX, OUT_WINDOW_BYTES, PRE_PAIR_CAP_BYTES, RATE_MAX_HOLDS,
   RATE_MAX_MESSAGES, RATE_WINDOW_MS, REGISTER_MAX_BYTES, ROOM_HEX, SESSION_HEX, SET_CAP_BYTES,
   CLOSE_MEET_ENDED, CLOSE_MEET_REFUSED, MEET_HEX, MEET_JOIN_DEADLINE_MS, MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_MESSAGES,
-  MEET_MAX_MESSAGE_BYTES, MEET_MAX_OPEN_PER_ROOM, MEET_MAX_SOCKETS, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_HOUR, MEET_RATE_MAX_MESSAGES,
+  MEET_MAX_HOST_MESSAGE_BYTES, MEET_MAX_MESSAGE_BYTES, MEET_MAX_OPEN_PER_DEVICE, MEET_MAX_OPEN_PER_ROOM, MEET_MAX_SOCKETS, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_DEVICE_HOUR, MEET_OPENS_PER_ROOM_HOUR, MEET_RATE_MAX_MESSAGES,
+  FIRST_STATEMENT_SKEW_MS, ROSTER_MAX_PER_SIGNER, ROSTER_MAX_PER_SIGNER_HOUR, ROSTER_MAX_SEEN,
   SET_IDLE_ERASE_MS, SIG_HEX, UNAUTH_DEADLINE_MS, UNAUTH_MAX_MESSAGE_BYTES, UNAUTH_MIN_AGE_MS, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
   type MeshFill, type MeshUsage,
 } from "./protocol";
@@ -105,7 +106,10 @@ export class MeshRelayRoom {
   private init(): void {
     this.q(`CREATE TABLE IF NOT EXISTS frames(g TEXT, seq INTEGER, sz INTEGER, b BLOB, PRIMARY KEY(g,seq)) WITHOUT ROWID`);
     this.q(`CREATE TABLE IF NOT EXISTS groups(g TEXT PRIMARY KEY, next_seq INTEGER NOT NULL, bytes INTEGER NOT NULL,
-            last_line_at INTEGER NOT NULL, last_touch INTEGER NOT NULL, released_through INTEGER NOT NULL, last_writer TEXT NOT NULL) WITHOUT ROWID`);
+            last_line_at INTEGER NOT NULL, last_touch INTEGER NOT NULL, released_through INTEGER NOT NULL, last_writer TEXT NOT NULL,
+            has_line INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID`);
+    // WHY has_line (review finding 5): the 30-day rule and set-full release are about CHAT LINES. A group becomes a line group on its first
+    // `line:true` hold; a group that never had one (the roster group, other control traffic) is a control group, which neither rule may touch.
     this.q(`CREATE TABLE IF NOT EXISTS recv(g TEXT, dev TEXT, through INTEGER NOT NULL, PRIMARY KEY(g,dev)) WITHOUT ROWID`);
     this.q(`CREATE TABLE IF NOT EXISTS regs(k TEXT PRIMARY KEY, v BLOB, tok INTEGER NOT NULL, rev INTEGER NOT NULL) WITHOUT ROWID`);
     // WHY the index: "what changed since revision N" otherwise reads every register (T7 measured 6,000 rows to return 0).
@@ -119,12 +123,15 @@ export class MeshRelayRoom {
     this.q(`CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v) WITHOUT ROWID`);
     // Signed roster changes the relay has accepted (review finding 8): just ids, so the relay can check a new statement's
     // stated ancestry. rseen = the statement's `seen` list; rintro = the entry that introduced each device.
-    this.q(`CREATE TABLE IF NOT EXISTS rentries(id TEXT PRIMARY KEY, signer TEXT NOT NULL, kind TEXT NOT NULL, target TEXT NOT NULL) WITHOUT ROWID`);
+    this.q(`CREATE TABLE IF NOT EXISTS rentries(id TEXT PRIMARY KEY, signer TEXT NOT NULL, kind TEXT NOT NULL, target TEXT NOT NULL, t INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID`);
+    // WHY t (review finding 4): the per-device hourly limit counts accepted statements by the relay's own clock. t=0 marks the creator's
+    // genesis placeholder, which is not a statement and never counts.
+    this.q(`CREATE INDEX IF NOT EXISTS rentries_signer ON rentries(signer, t)`);
     this.q(`CREATE TABLE IF NOT EXISTS rseen(id TEXT NOT NULL, sid TEXT NOT NULL, PRIMARY KEY(id,sid)) WITHOUT ROWID`);
     this.q(`CREATE TABLE IF NOT EXISTS rintro(dev TEXT PRIMARY KEY, entry TEXT NOT NULL) WITHOUT ROWID`);
     // Pairing meetings this ROOM has opened (opened only by an authenticated member). The meeting id itself is the key; the
     // meeting object holds the actual pipe. Kept for an hour so the per-room hourly cap can count them.
-    this.q(`CREATE TABLE IF NOT EXISTS meets(m TEXT PRIMARY KEY, created INTEGER NOT NULL, expires INTEGER NOT NULL) WITHOUT ROWID`);
+    this.q(`CREATE TABLE IF NOT EXISTS meets(m TEXT PRIMARY KEY, created INTEGER NOT NULL, expires INTEGER NOT NULL, opener TEXT NOT NULL DEFAULT '') WITHOUT ROWID`);
   }
 
   private ensureInit(): void { if (!this.tablesReady) { this.init(); this.tablesReady = true; } }
@@ -419,7 +426,7 @@ export class MeshRelayRoom {
     let grp = this.q(`SELECT next_seq, bytes FROM groups WHERE g=?`, g)[0];
     if (!grp) {
       if (Number(this.q(`SELECT count(*) n FROM groups`)[0]!.n) >= this.limits.maxGroups) return this.send(ws, { op: "over-limit", ...idf, why: "groups" });
-      this.q(`INSERT INTO groups(g,next_seq,bytes,last_line_at,last_touch,released_through,last_writer) VALUES(?,?,?,?,?,?,?)`, g, 1, 0, now, now, 0, a.dev);
+      this.q(`INSERT INTO groups(g,next_seq,bytes,last_line_at,last_touch,released_through,last_writer,has_line) VALUES(?,?,?,?,?,?,?,0)`, g, 1, 0, now, now, 0, a.dev);
       grp = { next_seq: 1, bytes: 0 };
     }
     // One group alone may not exceed the set's ceiling (a chat over the ceiling is never held; the host says "Relay full").
@@ -435,8 +442,8 @@ export class MeshRelayRoom {
 
     const seq = Number(grp.next_seq);
     this.q(`INSERT INTO frames(g,seq,sz,b) VALUES(?,?,?,?)`, g, seq, size, payload);
-    this.q(`UPDATE groups SET next_seq=?, bytes=bytes+?, last_touch=?, last_writer=?, last_line_at=CASE WHEN ? THEN ? ELSE last_line_at END WHERE g=?`,
-      seq + 1, size, now, a.dev, h.line === true ? 1 : 0, now, g);
+    this.q(`UPDATE groups SET next_seq=?, bytes=bytes+?, last_touch=?, last_writer=?, last_line_at=CASE WHEN ? THEN ? ELSE last_line_at END, has_line=CASE WHEN ? THEN 1 ELSE has_line END WHERE g=?`,
+      seq + 1, size, now, a.dev, h.line === true ? 1 : 0, now, h.line === true ? 1 : 0, g);
     this.metaSet("total_bytes", this.totalBytes() + size);
     this.noteSender(a.dev, session, n, now, !sender);
     this.send(ws, { op: "stored", ...idf, g, seq, fill: this.fillOf(this.totalBytes()) });
@@ -455,12 +462,12 @@ export class MeshRelayRoom {
     }
   }
 
-  /** Release whole groups, least recently used first, the WRITER'S OWN groups before anyone else's
+  /** Release whole LINE groups (never a control group: roster frames must survive memory pressure, review finding 5), least recently used first, the WRITER'S OWN groups before anyone else's
    *  (threat model Y-9: one device should not push another's waiting data out first), never the group
    *  being written. Every release is announced by the caller and kept as a mark on the group. */
   private makeRoom(need: number, protectG: string, writer: string): Array<{ g: string; through: number }> {
     const released: Array<{ g: string; through: number }> = [];
-    const victims = this.q(`SELECT g, next_seq FROM groups WHERE g<>? AND bytes>0 ORDER BY (last_writer=?) DESC, last_touch ASC`, protectG, writer);
+    const victims = this.q(`SELECT g, next_seq FROM groups WHERE g<>? AND bytes>0 AND has_line=1 ORDER BY (last_writer=?) DESC, last_touch ASC`, protectG, writer);
     for (const v of victims) {
       if (this.totalBytes() + need <= this.cap()) break;
       released.push({ g: String(v.g), through: Number(v.next_seq) - 1 });
@@ -613,8 +620,8 @@ export class MeshRelayRoom {
     const idf = this.idOf(h);
     const refuse = (reason: string) => this.send(ws, { op: "refused", ...idf, reason });
     const seenRaw = h.seen;
-    if ((h.kind !== "add" && h.kind !== "remove") || !isHex(h.signer, DEVICE_HEX) || !isHex(h.target, DEVICE_HEX) || !isHex(h.entry, 64) || !isHex(h.sig, SIG_HEX) || !isCount(h.at)
-      || !Array.isArray(seenRaw) || seenRaw.length < 1 || seenRaw.length > 16 || !seenRaw.every((x) => isHex(x, 64)) || new Set(seenRaw).size !== seenRaw.length) return refuse("bad-header");
+    if ((h.kind !== "add" && h.kind !== "remove" && h.kind !== "rename") || !isHex(h.signer, DEVICE_HEX) || !isHex(h.target, DEVICE_HEX) || !isHex(h.entry, 64) || !isHex(h.sig, SIG_HEX) || !isCount(h.at)
+      || !Array.isArray(seenRaw) || seenRaw.length < 1 || seenRaw.length > ROSTER_MAX_SEEN || !seenRaw.every((x) => isHex(x, 64)) || new Set(seenRaw).size !== seenRaw.length) return refuse("bad-header");
     const kind = h.kind, signer = h.signer, target = h.target, entry = h.entry, seen = seenRaw as string[];
     let targetKey: string | null = null;
     if (kind === "add") {
@@ -622,6 +629,10 @@ export class MeshRelayRoom {
       if (!isHex(h.targetKey, KEY_HEX) || !(await isEd25519Point(h.targetKey)) || (await deviceIdFor(h.targetKey)) !== target) return refuse("bad-header");
       targetKey = h.targetKey;
     } else if (h.targetKey !== undefined && h.targetKey !== null) return refuse("bad-header");
+    // WHY (review finding 1): a rename is an entry the app writes, so the relay must be able to follow it or every later statement from
+    // a device that has renamed itself fails the ancestry walk. It changes nobody's membership, names its signer as its own target and
+    // carries no name (the relay never learns names).
+    if (kind === "rename" && target !== signer) return refuse("bad-header");
 
     const signerRow = this.q(`SELECT sign_key, removed FROM roster WHERE dev=?`, signer)[0];
     if (!signerRow) return refuse("not-a-member");
@@ -633,12 +644,22 @@ export class MeshRelayRoom {
     const again = this.q(`SELECT removed FROM roster WHERE dev=?`, signer)[0];
     if (!again || Number(again.removed) === 1) return refuse("signer-removed");
     if (this.q(`SELECT 1 FROM rentries WHERE id=?`, entry)[0]) return refuse("duplicate");
+    // WHY per-device limits here (review finding 4): a member could otherwise record unlimited cheap statements. Counted only for statements
+    // already accepted; the check precedes every write. 512 in total and 30 in any rolling hour, by the relay's own clock (never the signed `at`).
+    const nowMs = this.now();
+    const tally = this.q(`SELECT count(*) n, coalesce(sum(t>?),0) h FROM rentries WHERE signer=? AND t>0`, nowMs - 3_600_000, signer)[0]!;
+    if (Number(tally.n) >= ROSTER_MAX_PER_SIGNER) return refuse("too-many-entries");
+    if (Number(tally.h) >= ROSTER_MAX_PER_SIGNER_HOUR) return refuse("roster-rate-limited");
     const first = Number(this.q(`SELECT count(*) n FROM rentries`)[0]!.n) === 0;
     if (first) {
+      // WHY a fresh date on the first statement (review 15, idle-erase replay): after an idle erase the room is empty again, and the first
+      // statement is accepted on the strength of its signature alone. Without a date check an operator could replay an old captured one.
+      // A day either way tolerates any honest clock; the creator's own statement is made moments after it connected.
+      if (Math.abs(h.at - nowMs) > FIRST_STATEMENT_SKEW_MS) return refuse("stale-statement");
       // The room's first statement: the only member is the creator, and it names its own genesis entry (which the relay
       // never saw) as its sole ancestry. That id is recorded as the creator's introduction.
       if (this.activeDevices().length !== 1 || this.activeDevices()[0] !== signer || seen.length !== 1) return refuse("bad-ancestry");
-      this.q(`INSERT INTO rentries(id,signer,kind,target) VALUES(?,?,?,?)`, seen[0], signer, "add", signer);
+      this.q(`INSERT INTO rentries(id,signer,kind,target,t) VALUES(?,?,?,?,0)`, seen[0], signer, "add", signer);
       this.q(`INSERT INTO rintro(dev,entry) VALUES(?,?)`, signer, seen[0]);
     } else {
       const intro = this.q(`SELECT entry FROM rintro WHERE dev=?`, signer)[0];
@@ -648,6 +669,10 @@ export class MeshRelayRoom {
       for (const r of this.q(`SELECT id FROM rentries WHERE kind='remove' AND target=?`, signer)) if (visited.has(String(r.id))) return refuse("signer-knew-removal");
     }
 
+    if (kind === "rename") {
+      this.recordEntry(entry, signer, kind, target, seen);
+      return this.send(ws, { op: "ok", ...idf });
+    }
     if (kind === "add") {
       const existing = this.q(`SELECT removed FROM roster WHERE dev=?`, target)[0];
       if (existing) return refuse(Number(existing.removed) === 1 ? "banned" : "already-member");
@@ -681,7 +706,7 @@ export class MeshRelayRoom {
     }
   }
   private recordEntry(id: string, signer: string, kind: string, target: string, seen: string[]): void {
-    this.q(`INSERT INTO rentries(id,signer,kind,target) VALUES(?,?,?,?)`, id, signer, kind, target);
+    this.q(`INSERT INTO rentries(id,signer,kind,target,t) VALUES(?,?,?,?,?)`, id, signer, kind, target, this.now());
     for (const s of seen) this.q(`INSERT OR IGNORE INTO rseen(id,sid) VALUES(?,?)`, id, s);
   }
   /** Every entry id reachable from `seen` through the statements the relay has accepted (bounded: a log is capped at 8192). */
@@ -713,11 +738,15 @@ export class MeshRelayRoom {
     const now = this.now();
     // Fail closed on limits: the counts are read before anything is created.
     this.q(`DELETE FROM meets WHERE created<?`, now - 3_600_000);
-    if (Number(this.q(`SELECT count(*) n FROM meets WHERE expires>?`, now)[0]!.n) >= MEET_MAX_OPEN_PER_ROOM) return void this.send(ws, { op: "refused", ...idf, reason: "too-many-meetings" });
-    if (Number(this.q(`SELECT count(*) n FROM meets`)[0]!.n) >= MEET_OPENS_PER_HOUR) return void this.send(ws, { op: "refused", ...idf, reason: "rate-limited" });
+    // WHY per opening device first (review finding 12, M4): a member who used the room's whole allowance locked the owner out of pairing.
+    // Each device has its own open-at-once and per-hour share; the room totals are only a backstop sized so no device's share is crowded out.
+    const open = (opener: string | null) => Number(this.q(`SELECT count(*) n FROM meets WHERE expires>?${opener === null ? "" : " AND opener=?"}`, ...(opener === null ? [now] : [now, opener]))[0]!.n);
+    const hour = (opener: string | null) => Number(this.q(`SELECT count(*) n FROM meets${opener === null ? "" : " WHERE opener=?"}`, ...(opener === null ? [] : [opener]))[0]!.n);
+    if (open(a.dev) >= MEET_MAX_OPEN_PER_DEVICE || open(null) >= MEET_MAX_OPEN_PER_ROOM) return void this.send(ws, { op: "refused", ...idf, reason: "too-many-meetings" });
+    if (hour(a.dev) >= MEET_OPENS_PER_DEVICE_HOUR || hour(null) >= MEET_OPENS_PER_ROOM_HOUR) return void this.send(ws, { op: "refused", ...idf, reason: "rate-limited" });
     if (this.q(`SELECT 1 FROM meets WHERE m=?`, h.m)[0]) return void this.send(ws, { op: "refused", ...idf, reason: "meeting-exists" });
     // Reserve the slot BEFORE the await, so two quick opens cannot both pass the count.
-    this.q(`INSERT INTO meets(m,created,expires) VALUES(?,?,?)`, h.m, now, now + MEET_LIFETIME_MS);
+    this.q(`INSERT INTO meets(m,created,expires,opener) VALUES(?,?,?,?)`, h.m, now, now + MEET_LIFETIME_MS, a.dev);
     let ticket: string | null = null;
     try {
       // The meeting remembers which room opened it, so it can tell that room when it ends (its concurrency slot is then freed).
@@ -780,7 +809,10 @@ export class MeshRelayRoom {
   private async meetMessage(ws: WebSocket, message: ArrayBuffer): Promise<void> {
     if (!this.tablesReady) return this.close(ws, CLOSE_MEET_ENDED, "meeting over");
     // Header cap + payload cap; anything bigger is closed before it is parsed.
-    if (message.byteLength > 4 + MAX_HEADER_BYTES_MEET + MEET_MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
+    // WHY by role (review finding 11): the host's welcome carries the whole signed roster log and may be large; a guest (a stranger until
+    // the exchange completes) and a socket that has not joined yet stay at the small cap, so widening the pipe widens it only for the member.
+    const maxPayload = this.att(ws)?.role === "host" ? MEET_MAX_HOST_MESSAGE_BYTES : MEET_MAX_MESSAGE_BYTES;
+    if (message.byteLength > 4 + MAX_HEADER_BYTES_MEET + maxPayload) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
     if (this.flood(ws, this.recent, MEET_RATE_MAX_MESSAGES)) return this.close(ws, CLOSE_TOO_FAST, "too many messages");
     const m = unpackMessage(message);
     if (!m.ok) return this.close(ws, CLOSE_BAD_MESSAGE, "malformed message");
@@ -795,7 +827,7 @@ export class MeshRelayRoom {
     // Strictly rising numbers per socket: a repeated or older number is a replay or a retry and is dropped, not forwarded.
     if (!isCount(h.n) || h.n < 1) return this.close(ws, CLOSE_BAD_MESSAGE, "bad number");
     if (h.n <= (a.lastN ?? 0)) return void this.send(ws, { op: "refused", ...this.idOf(h), reason: "replay" });
-    if (m.payload.byteLength === 0 || m.payload.byteLength > MEET_MAX_MESSAGE_BYTES) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
+    if (m.payload.byteLength === 0 || m.payload.byteLength > maxPayload) return this.close(ws, CLOSE_TOO_LARGE, "message too large");
     const bytes = this.metaNum("meet_bytes", 0) + m.payload.byteLength;
     const msgs = this.metaNum("meet_msgs", 0) + 1;
     // The whole meeting is tiny (threat model P-9): past the total the meeting simply ends and is erased.
@@ -804,6 +836,9 @@ export class MeshRelayRoom {
     if (!peer) return void this.send(ws, { op: "refused", ...this.idOf(h), reason: "peer-absent" });
     this.metaSet("meet_bytes", bytes);
     this.metaSet("meet_msgs", msgs);
+    // WHY counted here (review finding 12, M5): a guest connection uses up one of the meeting's few guest allowances only once it has said
+    // something. Counting at join let someone who knew only the meeting id burn all of them with silent connections.
+    if (a.role === "guest" && a.sent !== true) this.metaSet("meet_guests", this.metaNum("meet_guests", 0) + 1);
     ws.serializeAttachment({ ...a, lastN: h.n, sent: true } satisfies Att);
     // `gen` ties every message to one guest connection, so the host never mixes two strangers' exchanges.
     this.send(peer.ws, { op: "meet-relay", from: a.role, gen: a.role === "guest" ? (a.gen ?? 0) : (peer.a.gen ?? 0), n: h.n }, m.payload);
@@ -822,12 +857,21 @@ export class MeshRelayRoom {
       return void this.send(ws, { op: "meet-joined", ...idf, role: "host", gen: 0, peer: this.meetOpenSockets("guest").length > 0 });
     }
     if (h.role !== "guest") return refuse("bad-role");
-    // Exactly two parties: one guest at a time. A second guest while one holds the slot is refused, not queued.
-    if (this.meetOpenSockets("guest").length > 0) return refuse("busy");
-    const connects = this.metaNum("meet_guests", 0);
-    if (connects >= MEET_MAX_GUEST_CONNECTS) return refuse("full");
-    const gen = connects + 1;
-    this.metaSet("meet_guests", gen);
+    // Exactly two parties: one guest at a time. A second guest while one holds the slot is refused, not queued, EXCEPT that a guest who has
+    // said nothing for a short while (UNAUTH_MIN_AGE_MS) gives way to a newcomer: a stranger who knows only the id could otherwise keep the
+    // slot occupied and shut the honest guest out. A guest that has already sent a message is never displaced.
+    for (const g of this.meetOpenSockets("guest")) {
+      if (g.a.sent === true || now - (g.a.at ?? g.a.issuedAt) < UNAUTH_MIN_AGE_MS) return refuse("busy");
+    }
+    if (this.metaNum("meet_guests", 0) >= MEET_MAX_GUEST_CONNECTS) return refuse("full");
+    for (const g of this.meetOpenSockets("guest")) {
+      const host = this.meetOpenSockets("host")[0];
+      if (host) this.send(host.ws, { op: "meet-peer", state: "off", gen: g.a.gen ?? 0 });
+      this.close(g.ws, CLOSE_MEET_REFUSED, "replaced by a newer guest");
+    }
+    // `gen` numbers every guest connection (counted or not) so the host never mixes two connections' exchanges.
+    const gen = this.metaNum("meet_gen", 0) + 1;
+    this.metaSet("meet_gen", gen);
     ws.serializeAttachment({ ...a, role: "guest", gen, at: now, sent: false } satisfies Att);
     const hostUp = this.meetOpenSockets("host")[0];
     this.send(ws, { op: "meet-joined", ...idf, role: "guest", gen, peer: !!hostUp });
@@ -913,12 +957,12 @@ export class MeshRelayRoom {
     //    device that stayed connected for 90 days looked idle and the whole set was erased under its open socket.
     if (this.authedSockets().length > 0) this.metaSet("last_connect", now);
     if (now - this.metaNum("last_connect", now) > SET_IDLE_ERASE_MS) return void (await this.eraseAsync());
-    for (const o of this.q(`SELECT g FROM groups WHERE bytes>0 AND last_line_at<?`, now - GROUP_TTL_MS)) {
+    for (const o of this.q(`SELECT g FROM groups WHERE bytes>0 AND has_line=1 AND last_line_at<?`, now - GROUP_TTL_MS)) {
       const through = this.emptyGroup(String(o.g));
       this.broadcast({ op: "released", g: String(o.g), throughSeq: through });
     }
     // Next wake: the oldest remaining group's expiry, an unauthenticated deadline, or the 90-day idle check, whichever is sooner.
-    const oldest = this.q(`SELECT min(last_line_at) m FROM groups WHERE bytes>0`)[0]!.m;
+    const oldest = this.q(`SELECT min(last_line_at) m FROM groups WHERE bytes>0 AND has_line=1`)[0]!.m;
     const idleAt = this.metaNum("last_connect", now) + SET_IDLE_ERASE_MS;
     const next = Math.min(oldest === null ? Infinity : Number(oldest) + GROUP_TTL_MS, idleAt, nextUnauth ?? Infinity);
     await this.state.storage.setAlarm(this.now() + Math.max(nextUnauth !== null ? 1000 : 60_000, next - now));

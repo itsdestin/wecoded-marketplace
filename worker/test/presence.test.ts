@@ -9,22 +9,33 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const ping = (ws: WebSocket) => ws.send(JSON.stringify({ type: "ping" }));
 const presenceStub = () => env.PRESENCE.get(env.PRESENCE.idFromName("global"));
 
+// WHY every socket records its messages from the moment it is accepted (flaky test, found 2026-11-14 when "multi-device" failed once while
+// the machine was at load average 25): the old helper attached its listener only when a test asked for a message. A message the server sent
+// between accept() and that later call was delivered to nobody, and the test then waited out its timeout. Recording at accept time means a
+// message is never lost however the event loop is scheduled; nextMessage takes the first matching message already received, or waits.
+const inboxes = new WeakMap<WebSocket, any[]>();
 async function connect(token: string): Promise<WebSocket> {
   const res = await SELF.fetch("https://test.local/social/presence", {
     headers: { Upgrade: "websocket", Authorization: `Bearer ${token}` },
   });
   expect(res.status).toBe(101);
   const ws = res.webSocket!;
+  const inbox: any[] = [];
+  inboxes.set(ws, inbox);
+  ws.addEventListener("message", (ev: MessageEvent) => { try { inbox.push(JSON.parse(ev.data as string)); } catch { /* not JSON: ignore */ } });
   ws.accept();
   return ws;
 }
-function nextMessage(ws: WebSocket, type: string, timeoutMs = 2000): Promise<any> {
+// WHY a long default timeout: it only matters when something is wrong (a message that never comes); under load a message that WILL come may
+// take seconds, and a short limit turned that into a failure. Tests that expect NO message pass `timeoutMs` explicitly and still use a short one.
+function nextMessage(ws: WebSocket, type: string, timeoutMs = 15_000): Promise<any> {
+  const inbox = inboxes.get(ws)!;
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), timeoutMs);
-    const handler = (ev: MessageEvent) => {
-      const data = JSON.parse(ev.data as string);
-      if (data.type === type) { clearTimeout(timer); ws.removeEventListener("message", handler); resolve(data); }
-    };
+    const take = (): any | undefined => { const i = inbox.findIndex((m) => m.type === type); return i >= 0 ? inbox.splice(i, 1)[0] : undefined; };
+    const have = take();
+    if (have) return resolve(have);
+    const timer = setTimeout(() => { ws.removeEventListener("message", handler); reject(new Error(`timed out waiting for ${type}`)); }, timeoutMs);
+    const handler = () => { const m = take(); if (m) { clearTimeout(timer); ws.removeEventListener("message", handler); resolve(m); } };
     ws.addEventListener("message", handler);
   });
 }

@@ -105,9 +105,9 @@ export class Conn {
 const ledger = new Map<string, { genesis: string | null; last: Map<string, string> }>();
 const led = (room: string) => { let l = ledger.get(room); if (!l) { l = { genesis: null, last: new Map() }; ledger.set(room, l); } return l; };
 
-export interface PutOpts { signer?: Device; seen?: string[]; entry?: string; room?: string; corruptSig?: boolean; noReply?: boolean; at?: number; kind?: "add" | "remove" }
+export interface PutOpts { signer?: Device; seen?: string[]; entry?: string; room?: string; corruptSig?: boolean; noReply?: boolean; at?: number }
 /** Build, sign and send a roster-put from `c`'s device (or `opts.signer`). Resolves with the relay's reply. */
-export async function rosterPut(c: Conn, kind: "add" | "remove", target: { dev: string; signKey?: string }, opts: PutOpts = {}): Promise<Msg> {
+export async function rosterPut(c: Conn, kind: "add" | "remove" | "rename", target: { dev: string; signKey?: string }, opts: PutOpts = {}): Promise<Msg> {
   const signer = opts.signer ?? c.as;
   if (!signer) throw new Error("rosterPut: connection has not authenticated");
   const room = opts.room ?? c.room;
@@ -120,6 +120,7 @@ export async function rosterPut(c: Conn, kind: "add" | "remove", target: { dev: 
   const entry = opts.entry ?? randomHex(32);
   const at = opts.at ?? Date.now();
   const targetKey = kind === "add" ? (target.signKey as string) : null;
+  if (kind === "rename") target = { dev: signer.dev }; // a rename names its signer as target and carries no key
   const msg = rosterStatementMessage({ kind, room, signer: signer.dev, target: target.dev, targetKey, entry, seen, at });
   let sig = await sign(signer, msg);
   if (opts.corruptSig) sig = (sig[0] === "0" ? "1" : "0") + sig.slice(1);
@@ -133,6 +134,7 @@ export const rosterAdd = async (c: Conn, target: Device | string, opts: PutOpts 
   const signKey = typeof target === "string" ? target : target.signKey;
   return rosterPut(c, "add", { dev: typeof target === "string" ? await deviceIdFor(signKey).catch(() => "00".repeat(16)) : target.dev, signKey }, opts);
 };
+export const rosterRename = (c: Conn, opts: PutOpts = {}): Promise<Msg> => rosterPut(c, "rename", { dev: "" }, opts);
 export const rosterRemove = (c: Conn, dev: string, opts: PutOpts = {}): Promise<Msg> => rosterPut(c, "remove", { dev }, opts);
 
 /** Set up a set: first device creates it, the rest are added and connect. Returns connections by name. */

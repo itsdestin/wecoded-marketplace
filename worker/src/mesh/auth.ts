@@ -77,7 +77,7 @@ export function relayAuthMessage(aud: string, roomHex: string, nonceHex: string,
 //   signed = LABEL+"relay-roster\0" || canonicalCBOR{ kind, room, signer, target, targetKey|null, entry, seen[], at }
 // The app builds the same bytes with its full CBOR encoder; known-answer vectors (test/mesh-roster-vectors.json here,
 // tests/mesh/mesh-roster-vectors.json there, kept byte-identical by a drift test) pin the two together.
-export interface RosterStatement { kind: "add" | "remove"; room: string; signer: string; target: string; targetKey: string | null; entry: string; seen: string[]; at: number }
+export interface RosterStatement { kind: "add" | "remove" | "rename"; room: string; signer: string; target: string; targetKey: string | null; entry: string; seen: string[]; at: number }
 function uintItem(n: number): Uint8Array {
   // Shortest form, as the deterministic encoding requires. `at` is a millisecond clock: below 2^53.
   if (n < 24) return Uint8Array.of(n);

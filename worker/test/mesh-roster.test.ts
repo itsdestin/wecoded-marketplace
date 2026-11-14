@@ -8,10 +8,12 @@ import { randomHex } from "../src/mesh/auth";
 
 describe("roster statement: known answers shared with the app", () => {
   it("rebuilds every vector's message bytes and verifies its signature with the Worker's own encoder and WebCrypto", async () => {
-    expect(vectors.cases.length).toBeGreaterThanOrEqual(4);
+    expect(vectors.cases.length).toBeGreaterThanOrEqual(6);
+    // every entry kind the app can produce is pinned by at least one vector (a new kind without a vector fails here)
+    expect(new Set(vectors.cases.map((c) => c.statement.kind))).toEqual(new Set(["add", "remove", "rename"]));
     for (const c of vectors.cases) {
       const s = c.statement;
-      const msg = rosterStatementMessage({ kind: s.kind as "add" | "remove", room: s.room, signer: s.signer, target: s.target, targetKey: s.targetKey, entry: s.entry, seen: s.seen, at: s.at });
+      const msg = rosterStatementMessage({ kind: s.kind as "add" | "remove" | "rename", room: s.room, signer: s.signer, target: s.target, targetKey: s.targetKey, entry: s.entry, seen: s.seen, at: s.at });
       expect(bytesToHex(msg), c.name).toBe(c.messageHex);
       expect(await verifyEd25519(vectors.signerSignKey, msg, c.sigHex), c.name).toBe(true);
       const bad = new Uint8Array(msg); bad[bad.length - 1]! ^= 1;

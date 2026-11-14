@@ -309,7 +309,7 @@ describe("finding 10: released groups are announced even when the write is then 
   it("broadcasts released before the over-limit answer", async () => {
     const { room: r, devices, conns } = await makeSet(["a", "b"]);
     await inRoom(r, (x) => { x.limits.prePairCap = 1000; x.limits.setCap = 1000; });
-    await conns[0]!.call(holdHeader(devices[0]!, "x", 1) as any, bytesOf(300));
+    await conns[0]!.call(holdHeader(devices[0]!, "x", 1, undefined, { line: true }) as any, bytesOf(300));
     await inRoom(r, (x: any) => x.metaSet("total_bytes", 5000)); // simulated accounting drift
     const res = await conns[0]!.call(holdHeader(devices[0]!, "y", 2) as any, bytesOf(200));
     expect(res.h.op).toBe("over-limit");
