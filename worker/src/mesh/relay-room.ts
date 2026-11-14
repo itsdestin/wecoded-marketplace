@@ -26,6 +26,8 @@ import {
   CLOSE_MEET_ENDED, CLOSE_MEET_REFUSED, MEET_HEX, MEET_JOIN_DEADLINE_MS, MEET_LIFETIME_MS, MEET_MAX_GUEST_CONNECTS, MEET_MAX_MESSAGES,
   MEET_MAX_HOST_MESSAGE_BYTES, MEET_MAX_MESSAGE_BYTES, MEET_MAX_OPEN_PER_DEVICE, MEET_MAX_OPEN_PER_ROOM, MEET_MAX_SOCKETS, MEET_MAX_TOTAL_BYTES, MEET_OPENS_PER_DEVICE_HOUR, MEET_OPENS_PER_ROOM_HOUR, MEET_RATE_MAX_MESSAGES,
   FIRST_STATEMENT_SKEW_MS, ROSTER_MAX_PER_SIGNER, ROSTER_MAX_PER_SIGNER_HOUR, ROSTER_MAX_SEEN,
+  CONTROL_FRAME_TTL_MS, CONTROL_GROUPS, CONTROL_RESERVE_FRACTION, OTHER_GROUP_MAX_BYTES, OTHER_WRITER_MAX_BYTES, OTHER_WRITER_MAX_FRAMES,
+  ROSTER_WRITER_MAX_BYTES, ROSTER_WRITER_MAX_FRAMES, isControlGroup,
   SET_IDLE_ERASE_MS, SIG_HEX, UNAUTH_DEADLINE_MS, UNAUTH_MAX_MESSAGE_BYTES, UNAUTH_MIN_AGE_MS, isCount, isGroupName, isHex, isRegisterKey, packMessage, unpackMessage,
   type MeshFill, type MeshUsage,
 } from "./protocol";
@@ -60,7 +62,18 @@ interface Att {
 }
 
 /** Tunable per instance so tests can exercise ceilings without writing 900 MiB. */
-export interface MeshLimits { setCap: number; prePairCap: number; maxGroups: number; maxFrame: number; outWindowBytes: number }
+export interface MeshLimits {
+  setCap: number; prePairCap: number; maxGroups: number; maxFrame: number; outWindowBytes: number;
+  // Per-writer / per-group quotas (review 2, N6). Instance fields so tests can exercise them without writing hundreds of MiB.
+  otherGroupBytes: number; otherWriterBytes: number; otherWriterFrames: number; rosterWriterBytes: number; rosterWriterFrames: number;
+}
+
+/** What happens when two devices remove each other at once and neither removal cites the other (the app's "mutual removal").
+ *  'both': both end up removed (the default: the relay cannot tell which one is the honest one, so neither is trusted).
+ *  'first-admitted': the device admitted to the set earlier survives, the later one is removed, and the other removal is refused.
+ *  ONE small swappable function so the rule can be changed without touching the statement checks. */
+export type MutualPolicy = "both" | "first-admitted";
+export function mutualRemovalWinner(): MutualPolicy { return "both"; }
 
 const TEXT = new TextEncoder();
 // Same cap as MAX_HEADER_BYTES for a meeting message's header (kept as its own name so a meeting header could be tightened alone).
@@ -77,7 +90,9 @@ function constantTimeEqual(a: string, b: string): boolean {
 export class MeshRelayRoom {
   private sql: SqlStorage;
   // Not state: replaceable by tests, rebuilt from env on every construction.
-  limits: MeshLimits = { setCap: SET_CAP_BYTES, prePairCap: PRE_PAIR_CAP_BYTES, maxGroups: MAX_GROUPS, maxFrame: MAX_FRAME_BYTES, outWindowBytes: OUT_WINDOW_BYTES };
+  limits: MeshLimits = { setCap: SET_CAP_BYTES, prePairCap: PRE_PAIR_CAP_BYTES, maxGroups: MAX_GROUPS, maxFrame: MAX_FRAME_BYTES, outWindowBytes: OUT_WINDOW_BYTES,
+    otherGroupBytes: OTHER_GROUP_MAX_BYTES, otherWriterBytes: OTHER_WRITER_MAX_BYTES, otherWriterFrames: OTHER_WRITER_MAX_FRAMES, rosterWriterBytes: ROSTER_WRITER_MAX_BYTES, rosterWriterFrames: ROSTER_WRITER_MAX_FRAMES };
+  mutualWinner: () => MutualPolicy = mutualRemovalWinner;
   createLimiter: CreateLimiter | undefined;
   now: () => number = () => Date.now();
   // Read from env on construction; a test may replace it. Decides whether a missing/failed limiter refuses (anything but test-open).
@@ -104,7 +119,8 @@ export class MeshRelayRoom {
   // WHY a method: erase() drops every table but the object stays alive; the prototype hung every
   // later request after an erase because tables were only created in the constructor.
   private init(): void {
-    this.q(`CREATE TABLE IF NOT EXISTS frames(g TEXT, seq INTEGER, sz INTEGER, b BLOB, PRIMARY KEY(g,seq)) WITHOUT ROWID`);
+    // w = the writing device and t = when it was stored (review 2): per-writer quotas, freeing a removed writer's frames, and the 90-day control expiry.
+    this.q(`CREATE TABLE IF NOT EXISTS frames(g TEXT, seq INTEGER, sz INTEGER, b BLOB, w TEXT, t INTEGER, PRIMARY KEY(g,seq)) WITHOUT ROWID`);
     this.q(`CREATE TABLE IF NOT EXISTS groups(g TEXT PRIMARY KEY, next_seq INTEGER NOT NULL, bytes INTEGER NOT NULL,
             last_line_at INTEGER NOT NULL, last_touch INTEGER NOT NULL, released_through INTEGER NOT NULL, last_writer TEXT NOT NULL,
             has_line INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID`);
@@ -126,12 +142,33 @@ export class MeshRelayRoom {
     this.q(`CREATE TABLE IF NOT EXISTS rentries(id TEXT PRIMARY KEY, signer TEXT NOT NULL, kind TEXT NOT NULL, target TEXT NOT NULL, t INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID`);
     // WHY t (review finding 4): the per-device hourly limit counts accepted statements by the relay's own clock. t=0 marks the creator's
     // genesis placeholder, which is not a statement and never counts.
-    this.q(`CREATE INDEX IF NOT EXISTS rentries_signer ON rentries(signer, t)`);
     this.q(`CREATE TABLE IF NOT EXISTS rseen(id TEXT NOT NULL, sid TEXT NOT NULL, PRIMARY KEY(id,sid)) WITHOUT ROWID`);
     this.q(`CREATE TABLE IF NOT EXISTS rintro(dev TEXT PRIMARY KEY, entry TEXT NOT NULL) WITHOUT ROWID`);
     // Pairing meetings this ROOM has opened (opened only by an authenticated member). The meeting id itself is the key; the
     // meeting object holds the actual pipe. Kept for an hour so the per-room hourly cap can count them.
     this.q(`CREATE TABLE IF NOT EXISTS meets(m TEXT PRIMARY KEY, created INTEGER NOT NULL, expires INTEGER NOT NULL, opener TEXT NOT NULL DEFAULT '') WITHOUT ROWID`);
+    this.migrate();
+    // Indexes come AFTER the migration: they name columns an old table may not have had yet.
+    this.q(`CREATE INDEX IF NOT EXISTS rentries_signer ON rentries(signer, t)`);
+    this.q(`CREATE INDEX IF NOT EXISTS frames_w ON frames(w)`);
+  }
+
+  /** WHY (review 2, N10): `CREATE TABLE IF NOT EXISTS` never changes a table that already exists, so an object created by older code kept the old
+   *  `groups` / `meets` shape and its first hold or meet-open died with handler-error (1011). Each column added since is checked on every start (a handful of
+   *  schema reads, no row reads, and no marker row that would show up in storage) and added if missing. No production object exists; this keeps test relays working. */
+  private migrate(): void {
+    const add = (table: string, col: string, ddl: string): boolean => {
+      const cols = this.q(`PRAGMA table_info(${table})`).map((r) => String(r.name));
+      if (cols.includes(col)) return false;
+      this.q(`ALTER TABLE ${table} ADD COLUMN ${col} ${ddl}`);
+      return true;
+    };
+    add("groups", "has_line", "INTEGER NOT NULL DEFAULT 0");
+    add("meets", "opener", "TEXT NOT NULL DEFAULT ''");
+    add("rentries", "t", "INTEGER NOT NULL DEFAULT 0");
+    add("frames", "w", "TEXT");
+    // Frames written before the stamp existed count as written now, so the 90-day clock starts at the upgrade rather than expiring them at once.
+    if (add("frames", "t", "INTEGER")) this.q(`UPDATE frames SET t=? WHERE t IS NULL`, this.now());
   }
 
   private ensureInit(): void { if (!this.tablesReady) { this.init(); this.tablesReady = true; } }
@@ -417,23 +454,47 @@ export class MeshRelayRoom {
     if (h.from !== a.dev) return this.send(ws, { op: "refused", ...idf, reason: "forged-sender" });
     const g = h.g, session = h.session, n = h.n;
     const size = payload.byteLength;
+    // WHY (review 2, N5): the retention class of a group the relay knows by name is fixed by that name. `line:true` on `roster` would make it releasable
+    // under pressure and purgeable after 30 days, so any member could have the relay forget the roster frames. Refused, deterministically.
+    const isLine = h.line === true;
+    const control = isControlGroup(g);
+    if (control && isLine) return this.send(ws, { op: "refused", ...idf, reason: "control-group" });
 
     // Per-sender numbering: each (device, session) must strictly increase. A repeat is a retry or a replay.
     const sender = this.q(`SELECT last_n FROM senders WHERE dev=? AND session=?`, a.dev, session)[0];
     if (sender && n <= Number(sender.last_n)) return this.send(ws, { op: "duplicate", ...idf, g, n });
 
     const now = this.now();
-    let grp = this.q(`SELECT next_seq, bytes FROM groups WHERE g=?`, g)[0];
+    let grp = this.q(`SELECT next_seq, bytes, has_line FROM groups WHERE g=?`, g)[0];
+    // WHY (review 2, N5): for any other group the FIRST hold decides the class for good; a later hold that disagrees is refused, not applied.
+    if (grp && !control && (Number(grp.has_line) === 1) !== isLine) return this.send(ws, { op: "refused", ...idf, reason: "group-class" });
     if (!grp) {
       if (Number(this.q(`SELECT count(*) n FROM groups`)[0]!.n) >= this.limits.maxGroups) return this.send(ws, { op: "over-limit", ...idf, why: "groups" });
-      this.q(`INSERT INTO groups(g,next_seq,bytes,last_line_at,last_touch,released_through,last_writer,has_line) VALUES(?,?,?,?,?,?,?,0)`, g, 1, 0, now, now, 0, a.dev);
-      grp = { next_seq: 1, bytes: 0 };
+      // The class is decided here, once (has_line is never updated afterwards).
+      this.q(`INSERT INTO groups(g,next_seq,bytes,last_line_at,last_touch,released_through,last_writer,has_line) VALUES(?,?,?,?,?,?,?,?)`, g, 1, 0, now, now, 0, a.dev, isLine ? 1 : 0);
+      grp = { next_seq: 1, bytes: 0, has_line: isLine ? 1 : 0 };
+    }
+    // WHY quotas (review 2, N6): groups that are neither line groups nor named control groups are never released, expired early or evicted, and are freed only
+    // when every device acknowledges (devices acknowledge only what they follow), so a member's junk there would stay for good. Each writer therefore gets a byte
+    // and frame quota, such a group gets its own cap, and all such junk together may not take the reserve the roster group needs for a removal bundle. The roster
+    // group has a per-writer quota too (a member cannot fill it either). Chat lines are exempt: they are released under pressure.
+    let capLimit = this.cap();
+    if (!isLine) {
+      const roster = control;
+      if (!roster && Number(grp.bytes) + size > this.limits.otherGroupBytes) return this.send(ws, { op: "over-limit", ...idf, why: "group", fill: this.fillOf(this.totalBytes()) });
+      const own = roster
+        ? this.q(`SELECT coalesce(sum(sz),0) b, count(*) n FROM frames WHERE w=? AND g=?`, a.dev, g)[0]!
+        : this.q(`SELECT coalesce(sum(f.sz),0) b, count(*) n FROM frames f JOIN groups gr ON gr.g=f.g WHERE f.w=? AND gr.has_line=0 AND f.g NOT IN (${CONTROL_GROUPS.map(() => "?").join(",")})`, a.dev, ...CONTROL_GROUPS)[0]!;
+      const maxBytes = roster ? this.limits.rosterWriterBytes : this.limits.otherWriterBytes;
+      const maxFrames = roster ? this.limits.rosterWriterFrames : this.limits.otherWriterFrames;
+      if (Number(own.b) + size > maxBytes || Number(own.n) + 1 > maxFrames) return this.send(ws, { op: "over-limit", ...idf, why: "writer", fill: this.fillOf(this.totalBytes()) });
+      if (!roster) capLimit = this.cap() - Math.floor(this.cap() * CONTROL_RESERVE_FRACTION);
     }
     // One group alone may not exceed the set's ceiling (a chat over the ceiling is never held; the host says "Relay full").
     if (Number(grp.bytes) + size > this.cap()) return this.send(ws, { op: "over-limit", ...idf, why: "group", fill: this.fillOf(this.totalBytes()) });
     let released: Array<{ g: string; through: number }> = [];
-    if (this.totalBytes() + size > this.cap()) released = this.makeRoom(size, g, a.dev);
-    if (this.totalBytes() + size > this.cap()) {
+    if (this.totalBytes() + size > capLimit) released = this.makeRoom(size, g, a.dev, capLimit);
+    if (this.totalBytes() + size > capLimit) {
       // WHY announce first (finding 10): groups were already emptied above; devices must hear "released" even when
       // this write is then refused (possible only if byte accounting drifted), instead of discovering it later as a gap.
       for (const r of released) this.broadcast({ op: "released", g: r.g, throughSeq: r.through });
@@ -441,9 +502,9 @@ export class MeshRelayRoom {
     }
 
     const seq = Number(grp.next_seq);
-    this.q(`INSERT INTO frames(g,seq,sz,b) VALUES(?,?,?,?)`, g, seq, size, payload);
-    this.q(`UPDATE groups SET next_seq=?, bytes=bytes+?, last_touch=?, last_writer=?, last_line_at=CASE WHEN ? THEN ? ELSE last_line_at END, has_line=CASE WHEN ? THEN 1 ELSE has_line END WHERE g=?`,
-      seq + 1, size, now, a.dev, h.line === true ? 1 : 0, now, h.line === true ? 1 : 0, g);
+    this.q(`INSERT INTO frames(g,seq,sz,b,w,t) VALUES(?,?,?,?,?,?)`, g, seq, size, payload, a.dev, now);
+    this.q(`UPDATE groups SET next_seq=?, bytes=bytes+?, last_touch=?, last_writer=?, last_line_at=CASE WHEN ? THEN ? ELSE last_line_at END WHERE g=?`,
+      seq + 1, size, now, a.dev, isLine ? 1 : 0, now, g);
     this.metaSet("total_bytes", this.totalBytes() + size);
     this.noteSender(a.dev, session, n, now, !sender);
     this.send(ws, { op: "stored", ...idf, g, seq, fill: this.fillOf(this.totalBytes()) });
@@ -465,11 +526,11 @@ export class MeshRelayRoom {
   /** Release whole LINE groups (never a control group: roster frames must survive memory pressure, review finding 5), least recently used first, the WRITER'S OWN groups before anyone else's
    *  (threat model Y-9: one device should not push another's waiting data out first), never the group
    *  being written. Every release is announced by the caller and kept as a mark on the group. */
-  private makeRoom(need: number, protectG: string, writer: string): Array<{ g: string; through: number }> {
+  private makeRoom(need: number, protectG: string, writer: string, capLimit: number): Array<{ g: string; through: number }> {
     const released: Array<{ g: string; through: number }> = [];
     const victims = this.q(`SELECT g, next_seq FROM groups WHERE g<>? AND bytes>0 AND has_line=1 ORDER BY (last_writer=?) DESC, last_touch ASC`, protectG, writer);
     for (const v of victims) {
-      if (this.totalBytes() + need <= this.cap()) break;
+      if (this.totalBytes() + need <= capLimit) break;
       released.push({ g: String(v.g), through: Number(v.next_seq) - 1 });
       this.emptyGroup(String(v.g));
     }
@@ -636,13 +697,16 @@ export class MeshRelayRoom {
 
     const signerRow = this.q(`SELECT sign_key, removed FROM roster WHERE dev=?`, signer)[0];
     if (!signerRow) return refuse("not-a-member");
-    if (Number(signerRow.removed) === 1) return refuse("signer-removed");
+    // WHY only `remove` may continue from a removed signer (review 2, concurrent removal): the one case the app honours is MUTUAL removal (A removes B while
+    // B removes A, neither citing the other's removal). Everything else from a removed signer stays refused, here, before any signature work.
+    const signerWasRemoved = Number(signerRow.removed) === 1;
+    if (signerWasRemoved && kind !== "remove") return refuse("signer-removed");
     const msg = rosterStatementMessage({ kind, room: a.room, signer, target, targetKey, entry, seen, at: h.at });
     if (!(await verifyEd25519(String(signerRow.sign_key), msg, h.sig))) return refuse("bad-signature");
 
     // ---- everything below runs without another await, so the checks and the writes see the same state ----
     const again = this.q(`SELECT removed FROM roster WHERE dev=?`, signer)[0];
-    if (!again || Number(again.removed) === 1) return refuse("signer-removed");
+    if (!again || (Number(again.removed) === 1) !== signerWasRemoved) return refuse("signer-removed");
     if (this.q(`SELECT 1 FROM rentries WHERE id=?`, entry)[0]) return refuse("duplicate");
     // WHY per-device limits here (review finding 4): a member could otherwise record unlimited cheap statements. Counted only for statements
     // already accepted; the check precedes every write. 512 in total and 30 in any rolling hour, by the relay's own clock (never the signed `at`).
@@ -651,6 +715,8 @@ export class MeshRelayRoom {
     if (Number(tally.n) >= ROSTER_MAX_PER_SIGNER) return refuse("too-many-entries");
     if (Number(tally.h) >= ROSTER_MAX_PER_SIGNER_HOUR) return refuse("roster-rate-limited");
     const first = Number(this.q(`SELECT count(*) n FROM rentries`)[0]!.n) === 0;
+    let mutual = false;
+    if (first && signerWasRemoved) return refuse("signer-removed");
     if (first) {
       // WHY a fresh date on the first statement (review 15, idle-erase replay): after an idle erase the room is empty again, and the first
       // statement is accepted on the strength of its signature alone. Without a date check an operator could replay an old captured one.
@@ -666,7 +732,15 @@ export class MeshRelayRoom {
       if (!intro) return refuse("bad-ancestry");
       const visited = this.ancestry(seen);
       if (!visited.has(String(intro.entry))) return refuse("bad-ancestry");
-      for (const r of this.q(`SELECT id FROM rentries WHERE kind='remove' AND target=?`, signer)) if (visited.has(String(r.id))) return refuse("signer-knew-removal");
+      if (!signerWasRemoved) {
+        for (const r of this.q(`SELECT id FROM rentries WHERE kind='remove' AND target=?`, signer)) if (visited.has(String(r.id))) return refuse("signer-knew-removal");
+      } else {
+        // Mutual removal: (a) the statement does not cite (directly or through entries the relay knows) the removal that removed its signer, and
+        // (b) its target is the device that signed that removal. Anything else is the removed device acting on the set: refused.
+        const removal = this.q(`SELECT id, signer FROM rentries WHERE kind='remove' AND target=? ORDER BY t DESC LIMIT 1`, signer)[0];
+        if (!removal || visited.has(String(removal.id)) || String(removal.signer) !== target) return refuse("signer-removed");
+        mutual = true;
+      }
     }
 
     if (kind === "rename") {
@@ -685,13 +759,27 @@ export class MeshRelayRoom {
       this.broadcast({ op: "roster-changed", change: "added", dev: target }, { exceptDev: a.dev });
       return this.send(ws, { op: "ok", ...idf, dev: target } as object);
     }
-    const row = this.q(`SELECT removed FROM roster WHERE dev=?`, target)[0];
-    if (!row || Number(row.removed) === 1) return refuse("not-found");
+    const row = this.q(`SELECT removed, added_at FROM roster WHERE dev=?`, target)[0];
+    if (!row) return refuse("not-found");
+    // Removing a device that is already removed changes nothing and succeeds (idempotent): the entry is still recorded so later statements can cite it.
+    if (Number(row.removed) === 1) {
+      this.recordEntry(entry, signer, kind, target, seen);
+      return this.send(ws, { op: "ok", ...idf });
+    }
+    if (mutual && this.mutualWinner() === "first-admitted") {
+      // The earlier-admitted device survives. Admission order is the relay's own admission time (ties broken by device id, so it is deterministic).
+      const mine = this.q(`SELECT added_at FROM roster WHERE dev=?`, signer)[0]!;
+      const signerEarlier = Number(mine.added_at) < Number(row.added_at) || (Number(mine.added_at) === Number(row.added_at) && signer < target);
+      if (!signerEarlier) return refuse("mutual-removal-lost");
+      // The signer was admitted first, so ITS removal of the target stands and the target's earlier removal of it is undone (it was only a concurrent act).
+      this.q(`UPDATE roster SET removed=0 WHERE dev=?`, signer);
+    }
     this.recordEntry(entry, signer, kind, target, seen);
     this.q(`UPDATE roster SET removed=1 WHERE dev=?`, target);
     // Its acknowledgements must not count for or against dropping frames any more.
     this.q(`DELETE FROM recv WHERE dev=?`, target);
     this.q(`DELETE FROM senders WHERE dev=?`, target);
+    this.freeWriterFrames(target);
     // Close every connection it has, including the one that asked if it removed itself. WHY (review: "a removed device's
     // socket is closed and it cannot re-add itself"): its row is now removed=1, so its later statements die at "signer-removed".
     for (const { ws: w, a: wa } of this.authedSockets()) if (wa.dev === target) this.close(w, CLOSE_DEVICE_REMOVED, "device removed");
@@ -704,6 +792,18 @@ export class MeshRelayRoom {
       const m = this.q(`SELECT count(*) n, min(through) m FROM recv WHERE g=? AND dev IN (SELECT dev FROM roster WHERE removed=0)`, g.g)[0]!;
       if (Number(m.n) >= this.activeDevices().length) this.dropReceived(String(g.g), Number(m.m));
     }
+  }
+  /** WHY (review 2, N6): a removed device's frames in every non-roster group are freed at once, so junk it wrote cannot outlive it. Its roster frames stay:
+   *  they are the removal bundles and entries other devices still need. The groups keep their numbering (a hole in the sequence is harmless to a fetch). */
+  private freeWriterFrames(dev: string): void {
+    const rows = this.q(`SELECT g, coalesce(sum(sz),0) s FROM frames WHERE w=? AND g NOT IN (${CONTROL_GROUPS.map(() => "?").join(",")}) GROUP BY g`, dev, ...CONTROL_GROUPS);
+    let freed = 0;
+    for (const r of rows) {
+      this.q(`DELETE FROM frames WHERE w=? AND g=?`, dev, r.g);
+      this.q(`UPDATE groups SET bytes=MAX(0,bytes-?) WHERE g=?`, r.s, r.g);
+      freed += Number(r.s);
+    }
+    if (freed) this.metaSet("total_bytes", Math.max(0, this.totalBytes() - freed));
   }
   private recordEntry(id: string, signer: string, kind: string, target: string, seen: string[]): void {
     this.q(`INSERT INTO rentries(id,signer,kind,target,t) VALUES(?,?,?,?,?)`, id, signer, kind, target, this.now());
@@ -961,10 +1061,22 @@ export class MeshRelayRoom {
       const through = this.emptyGroup(String(o.g));
       this.broadcast({ op: "released", g: String(o.g), throughSeq: through });
     }
+    // WHY (review 2, dead member): control frames wait for EVERY roster device to acknowledge, so a device that is on the roster but dead would pin them
+    // forever. Frames in non-line groups (the roster group included) are released CONTROL_FRAME_TTL_MS after they were written. Frames of a group are
+    // numbered in time order, so the expired ones are a prefix: everything up to the newest expired frame goes, and `released_through` moves up to it. A
+    // device that comes back after that and asks from a lower position gets `gap` (see fetchAfter), which the app treats as "ask for everything again".
+    for (const o of this.q(`SELECT f.g g, max(f.seq) s FROM frames f JOIN groups gr ON gr.g=f.g WHERE gr.has_line=0 AND f.t<? GROUP BY f.g`, now - CONTROL_FRAME_TTL_MS)) {
+      const sz = Number(this.q(`SELECT coalesce(sum(sz),0) z FROM frames WHERE g=? AND seq<=?`, o.g, o.s)[0]!.z);
+      this.q(`DELETE FROM frames WHERE g=? AND seq<=?`, o.g, o.s);
+      this.q(`UPDATE groups SET bytes=MAX(0,bytes-?), released_through=MAX(released_through,?) WHERE g=?`, sz, o.s, o.g);
+      this.metaSet("total_bytes", Math.max(0, this.totalBytes() - sz));
+      this.broadcast({ op: "released", g: String(o.g), throughSeq: Number(o.s) });
+    }
+    const oldestControl = this.q(`SELECT min(f.t) m FROM frames f JOIN groups gr ON gr.g=f.g WHERE gr.has_line=0`)[0]!.m;
     // Next wake: the oldest remaining group's expiry, an unauthenticated deadline, or the 90-day idle check, whichever is sooner.
     const oldest = this.q(`SELECT min(last_line_at) m FROM groups WHERE bytes>0 AND has_line=1`)[0]!.m;
     const idleAt = this.metaNum("last_connect", now) + SET_IDLE_ERASE_MS;
-    const next = Math.min(oldest === null ? Infinity : Number(oldest) + GROUP_TTL_MS, idleAt, nextUnauth ?? Infinity);
+    const next = Math.min(oldest === null ? Infinity : Number(oldest) + GROUP_TTL_MS, oldestControl === null ? Infinity : Number(oldestControl) + CONTROL_FRAME_TTL_MS + 1, idleAt, nextUnauth ?? Infinity);
     await this.state.storage.setAlarm(this.now() + Math.max(nextUnauth !== null ? 1000 : 60_000, next - now));
   }
 

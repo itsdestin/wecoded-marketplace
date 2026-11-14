@@ -90,13 +90,15 @@ describe("finding 5: control groups (roster) are never dropped by the 30-day rul
     back.send({ op: "fetch-after", g: "chat:x", seq: 0, id: "c" });
     expect((await back.frames("c"))[0]!.h).toMatchObject({ op: "gap" }); // the line group is still let go on schedule
   });
-  it("a group first held without line and later with line becomes a line group (expires)", async () => {
+  // CHANGED in review round 2 (N5): this test used to pin "a group first held without line and later with line becomes a line group (expires)",
+  // which let any member turn the roster group into a purgeable one. The first hold now decides the class for good; a later change is refused.
+  it("a group first held without line stays a control group: a later line:true is refused and the frames are not expired at 31 days", async () => {
     const { room, devices, conns } = await makeSet(["a"]);
     await conns[0]!.call(holdHeader(devices[0]!, "g", 1) as any, bytesOf(100));
-    await conns[0]!.call(holdHeader(devices[0]!, "g", 2, undefined, { line: true }) as any, bytesOf(100));
+    expect((await conns[0]!.call(holdHeader(devices[0]!, "g", 2, undefined, { line: true }) as any, bytesOf(100))).h).toMatchObject({ op: "refused", reason: "group-class" });
     await skew(room, 31 * DAY_MS);
     await runDurableObjectAlarm(stubFor(room));
-    expect((await conns[0]!.call({ op: "usage" })).h.usage.bytes).toBe(0);
+    expect((await conns[0]!.call({ op: "usage" })).h.usage.bytes).toBe(100);
   });
   it("when the set is full, line groups are released but the control group is not", async () => {
     const { room, devices, conns } = await makeSet(["a", "b"]);

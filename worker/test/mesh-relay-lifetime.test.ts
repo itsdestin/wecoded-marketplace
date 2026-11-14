@@ -33,8 +33,8 @@ describe("hibernation: nothing that matters lives only in memory", () => {
       const drive = (ws: WebSocket, h: object, p?: Uint8Array) => fresh.webSocketMessage(ws, packMessage(h, p));
 
       await drive(wsB, { op: "fetch-after", g: "chat:1", seq: 0, id: "f1" });                                            // held frame survived
-      await drive(wsA, holdHeader(devices[0]!, "chat:1", 1, undefined, { id: "d1" }), bytesOf(5));                         // numbering survived: replay refused
-      await drive(wsA, holdHeader(devices[0]!, "chat:1", 2, undefined, { id: "d2" }), bytesOf(5));                         // next seq survived
+      await drive(wsA, holdHeader(devices[0]!, "chat:1", 1, undefined, { id: "d1", line: true }), bytesOf(5));                         // numbering survived: replay refused
+      await drive(wsA, holdHeader(devices[0]!, "chat:1", 2, undefined, { id: "d2", line: true }), bytesOf(5));                         // next seq survived
       await drive(wsB, { op: "reg-get", key: "head:v1", id: "r1" });                                                      // register survived
       await drive(wsB, { op: "usage", id: "u1" });                                                                        // still authenticated, pairing state kept
       await drive(wsA, { op: "beat", n: 5 });                                                                             // beat counter lives in the attachment: repeat dropped

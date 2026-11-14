@@ -278,11 +278,12 @@ describe("storage accounting and ceilings", () => {
     await a.auth(d, { firstDevice: true });
     await inRoom(d.room, (r) => { r.limits.prePairCap = 10_000; });
     const fills: string[] = [];
-    for (let i = 1; i <= 4; i++) fills.push((await a.call(holdHeader(d, "only", i) as any, bytesOf(2_300))).h.fill);
+    // round 2: "only" is a LINE group; non-line groups keep a 10% reserve for the roster group and would be refused at 9000 (tested in mesh-relay-review2)
+    for (let i = 1; i <= 4; i++) fills.push((await a.call(holdHeader(d, "only", i, undefined, { line: true }) as any, bytesOf(2_300))).h.fill);
     // 2300, 4600, 6900 are ok; 9200 is 92 percent of 10_000
     expect(fills).toEqual(["ok", "ok", "ok", "nearly-full"]);
     // one group cannot exceed the ceiling on its own: refused, and the response says how full the set is
-    expect((await a.call(holdHeader(d, "only", 5) as any, bytesOf(2_300))).h).toMatchObject({ op: "over-limit", why: "group", fill: "nearly-full" });
+    expect((await a.call(holdHeader(d, "only", 5, undefined, { line: true }) as any, bytesOf(2_300))).h).toMatchObject({ op: "over-limit", why: "group", fill: "nearly-full" });
   });
 
   // WHY every group below is a LINE group (line: true): only chat lines are released under pressure; control groups are exempt (review finding 5).
@@ -304,7 +305,8 @@ describe("storage accounting and ceilings", () => {
     a.send({ op: "fetch-after", g: "old", seq: 0, id: "o" });
     expect((await a.frames("o")).filter((m) => m.h.op === "frame")).toHaveLength(2);
     // new lines for the released chat are accepted and numbered after the mark
-    const again = await a.call(holdHeader(d, "mid", 5) as any, bytesOf(100));
+    // (round 2: "mid" is a line group, so the later hold must say line:true too; a group's class is fixed by its first hold)
+    const again = await a.call(holdHeader(d, "mid", 5, undefined, { line: true }) as any, bytesOf(100));
     expect(again.h).toMatchObject({ op: "stored", seq: 2 });
   });
 
