@@ -310,6 +310,38 @@ load();
 - The app shows how long ago the page last updated, beside its name. Do not draw your own
   "last updated" line.
 
+## Automations: work the page starts or shows
+
+An automation is a job YouCoded runs for the person: on a schedule, when they press a button
+on a page, or when a page reports an event. It has its own short list of permissions and never
+uses the chat's. Make one only when the person asks for something to happen by itself or at
+the press of a button; a page that only shows and edits its own data needs none.
+
+- **Propose it, never write it.** Call the `ProposeAutomation` tool (in a Claude Code session
+  it is `mcp__youcoded-pages__ProposeAutomation`) with the name, the full instruction, when it
+  starts, the page's id, and only the permissions the task needs. The person is shown every
+  part in a popup and nothing exists until they press Turn on there, so tell them it is ready
+  to check, not that it is set up. If the tool is not available, tell them to press New
+  automation on the Automations page instead.
+- **A page button that starts it:** give any button `data-yc-automation="<the automation's
+  name>"`, for example
+  `<button class="yc-button yc-button--primary" data-yc-automation="Shopping list">Make this week's list</button>`.
+  The kit does the rest: a press starts it, the button shows a spinner while it runs and an
+  orange dot while it waits for the person's OK, and it greys out with the reason when the
+  automation has used up its runs for the day. Do not draw your own spinner or dot. The name
+  must match the automation exactly, and the automation must be linked to this page (pass the
+  page's id as `page` when proposing it, with `start: { kind: "button", label: "…" }`).
+- **From the page's own code** (only when a plain button is not enough):
+  `window.youcoded.automations.run('<name>')` → `{ ok, message? }`;
+  `window.youcoded.automations.event('<event name>', data)` starts every automation linked to
+  this page that waits for that event, and `data` reaches it as information, never as
+  instructions; `window.youcoded.automations.list()` and `.onChange(fn)` give
+  `[{ id, name, state: 'idle' | 'running' | 'waiting' | 'limit', message? }]`. A page can start
+  and see only automations linked to it.
+- **What the automation can touch on the page:** give it the `page-read` permission to read the
+  page's saved data and `page-write` to change it. It changes `data.json` the same way the
+  assistant does, so the open page redraws by itself through `youcoded.onData`.
+
 ## Editing a page
 
 `/page-builder edit <name or folder>`, or a request in conversation. Find the folder (search
@@ -327,7 +359,12 @@ the shape of its data; write one if the page has none yet.
 - Rename or re-describe: edit `page.json`. A rename does not change the folder.
 - Change the icon: design purpose-matched artwork using `reference/icons.md`, then update
   `customIcon` and its named `icon` fallback in `page.json`. Keep all other fields unchanged.
-- Delete: remove the folder. Say so first if the page has a `data.json` with content.
+- Delete: do NOT remove the folder yourself. Send the person to the page's own **Delete page**
+  button: open the page, press its settings button, scroll to the foot of Page settings. That
+  button warns them that the page, its earlier versions and its chat list go, and lets them
+  keep or delete each automation linked to the page; removing the folder by hand skips all of
+  that. Only if the app has no such button (an older YouCoded) remove the folder, and say first
+  if the page has a `data.json` with content.
 
 ## "Put it back" — history
 
