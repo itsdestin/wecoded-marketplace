@@ -63,23 +63,87 @@ function recordingSpawn(responses) {
   return impl;
 }
 
-test('publishCommunity runs gh repo create, push, and opens PR', async () => {
-  const spawn = recordingSpawn({
-    'repo create': { exitCode: 0, stdout: 'https://github.com/alice/demo', stderr: '' },
-    'pr create': { exitCode: 0, stdout: 'https://github.com/itsdestin/wecoded-marketplace/pull/100', stderr: '' },
-  });
+// Stub that behaves like gh/git enough for openCommunityPr: `gh repo clone` creates the
+// target dir with a marketplace.json in it, so the real file read/write path is exercised.
+function marketplaceSpawn({ failPushTimes = 0 } = {}) {
+  const calls = [];
+  let pushes = 0;
+  const impl = async (cmd, args) => {
+    calls.push([cmd, ...args].join(' '));
+    if (cmd === 'gh' && args[0] === 'repo' && args[1] === 'clone') {
+      const dir = args[3];
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, 'marketplace.json'), JSON.stringify({ plugins: [{ name: 'existing' }] }, null, 2) + '\n');
+      impl.cloneDir = dir;
+    }
+    if (cmd === 'git' && args.includes('commit')) {
+      impl.committed = await fs.readFile(path.join(impl.cloneDir, 'marketplace.json'), 'utf8');
+    }
+    if (cmd === 'git' && args.includes('push') && pushes++ < failPushTimes) {
+      return { exitCode: 1, stdout: '', stderr: 'fork not ready' };
+    }
+    if (cmd === 'git' && args[0] === 'config') return { exitCode: 0, stdout: 'x', stderr: '' };
+    if (cmd === 'gh' && args[0] === 'repo' && args[1] === 'create') return { exitCode: 0, stdout: 'https://github.com/alice/demo', stderr: '' };
+    if (cmd === 'gh' && args[0] === 'pr') return { exitCode: 0, stdout: 'https://github.com/itsdestin/wecoded-marketplace/pull/100', stderr: '' };
+    return { exitCode: 0, stdout: '', stderr: '' };
+  };
+  impl.calls = calls;
+  return impl;
+}
+
+test('publishCommunity forks, pushes the branch to the fork, THEN opens a PR with a user:branch head', async () => {
+  const spawn = marketplaceSpawn();
   const result = await publishCommunity({
     workingDir: '/tmp/does-not-matter',
     pluginId: 'demo',
     ghUser: 'alice',
-    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal', tags: ['journal'], audience: 'general' },
     spawn,
   });
-  assert.ok(spawn.calls.some(c => c.startsWith('gh repo create')));
-  assert.ok(spawn.calls.some(c => c.startsWith('git push')) || spawn.calls.some(c => c.includes('--push')));
-  assert.ok(spawn.calls.some(c => c.startsWith('gh pr create')));
+  const idx = (re) => spawn.calls.findIndex(c => re.test(c));
+  const fork = idx(/^gh repo fork itsdestin\/wecoded-marketplace/);
+  const commit = idx(/commit -s/);
+  const push = idx(/ push .*fork add-plugin\/demo:add-plugin\/demo/);
+  const pr = idx(/^gh pr create/);
+  assert.ok(fork >= 0 && commit > fork && push > commit && pr > push, spawn.calls.join('\n'));
+  assert.match(spawn.calls[pr], /--head alice:add-plugin\/demo/);
+  // The branch is created before the commit.
+  assert.ok(idx(/checkout -b add-plugin\/demo/) < commit);
+  // The commit contains the new listing (URL source, community) alongside the existing entry.
+  const committed = JSON.parse(spawn.committed);
+  assert.deepEqual(committed.plugins.map(p => p.name), ['existing', 'demo']);
+  const e = committed.plugins[1];
+  assert.equal(e.source.url, 'https://github.com/alice/demo.git');
+  assert.equal(e.sourceMarketplace, 'community');
+  assert.deepEqual(e.tags, ['journal']);
+  assert.equal(e.audience, 'general');
   assert.equal(result.repoUrl, 'https://github.com/alice/demo');
   assert.equal(result.communityPR, 'https://github.com/itsdestin/wecoded-marketplace/pull/100');
+  // Temp clone is cleaned up.
+  await assert.rejects(fs.access(spawn.cloneDir));
+});
+
+test('openCommunityPr retries a push while a new fork is still being set up', async () => {
+  const spawn = marketplaceSpawn({ failPushTimes: 2 });
+  const { openCommunityPr } = await import('../scripts/publish.js');
+  const r = await openCommunityPr({
+    pluginId: 'demo', ghUser: 'alice', repoUrl: 'https://github.com/alice/demo',
+    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    spawn, sleep: async () => {},
+  });
+  assert.equal(spawn.calls.filter(c => / push /.test(c)).length, 3);
+  assert.match(r.communityPR, /pull\/100/);
+});
+
+test('openCommunityPr does not open a PR if the push never succeeds', async () => {
+  const spawn = marketplaceSpawn({ failPushTimes: 99 });
+  const { openCommunityPr } = await import('../scripts/publish.js');
+  await assert.rejects(openCommunityPr({
+    pluginId: 'demo', ghUser: 'alice', repoUrl: 'https://github.com/alice/demo',
+    metadata: { displayName: 'Demo', description: 'd', author: { name: 'alice' }, category: 'personal' },
+    spawn, sleep: async () => {},
+  }), /fork not ready/);
+  assert.ok(!spawn.calls.some(c => c.startsWith('gh pr create')));
 });
 
 test('publishCommunity fails gracefully when repo create fails', async () => {
@@ -127,9 +191,7 @@ test('publish resumes from "repo-created" state in ledger', async () => {
     state: 'repo-created',
   }});
 
-  const spawn = recordingSpawn({
-    'pr create': { exitCode: 0, stdout: 'https://.../pull/5', stderr: '' },
-  });
+  const spawn = marketplaceSpawn();
 
   const result = await publish({
     workingDir: '/tmp/xx',
@@ -142,7 +204,7 @@ test('publish resumes from "repo-created" state in ledger', async () => {
   });
   assert.ok(!spawn.calls.some(c => c.startsWith('gh repo create')));
   assert.ok(spawn.calls.some(c => c.startsWith('gh pr create')));
-  assert.equal(result.communityPR, 'https://.../pull/5');
+  assert.equal(result.communityPR, 'https://github.com/itsdestin/wecoded-marketplace/pull/100');
 });
 
 test('publish with dryRun does not call gh repo create', async () => {
@@ -162,4 +224,19 @@ test('publish with dryRun does not call gh repo create', async () => {
   assert.equal(result.dryRun, true);
   assert.ok(result.plan);
   assert.match(result.plan, /would create/i);
+});
+
+// WHY: a name clash must never overwrite someone else's listing (e.g. first-party youcoded-core).
+test('addEntryToMarketplaceJson refuses to replace a different plugin with the same name', async () => {
+  const { addEntryToMarketplaceJson } = await import('../scripts/publish.js');
+  const text = JSON.stringify({ plugins: [
+    { name: 'youcoded-core', source: { source: 'url', url: 'https://github.com/itsdestin/youcoded-core.git' } },
+    { name: 'mine', sourceMarketplace: 'community', source: { source: 'url', url: 'https://github.com/a/mine.git' } },
+  ] });
+  const mk = (name, url) => ({ name, sourceMarketplace: 'community', source: { source: 'url', url } });
+  assert.throws(() => addEntryToMarketplaceJson(text, mk('youcoded-core', 'https://github.com/a/x.git')), /different plugin/);
+  assert.throws(() => addEntryToMarketplaceJson(text, mk('mine', 'https://github.com/b/other.git')), /different plugin/);
+  // Refreshing the same community submission is allowed.
+  const out = JSON.parse(addEntryToMarketplaceJson(text, { ...mk('mine', 'https://github.com/a/mine.git'), description: 'new' }));
+  assert.equal(out.plugins[1].description, 'new');
 });
