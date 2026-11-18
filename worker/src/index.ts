@@ -16,7 +16,6 @@ import { socialRoutes } from "./social/routes";
 import { gameRoutes } from "./games/routes";
 import { syncRoutes } from "./sync/routes";
 import { adminAnalyticsRoutes } from "./admin/analytics";
-import { adminDashboardRoute } from "./admin/dashboard-route";
 import { pruneExpired } from "./maintenance";
 import { siteAnalyticsRoutes } from "./site-analytics/routes";
 import { saveDailyTotals } from "./admin/daily-totals";
@@ -165,7 +164,6 @@ app.route("/", socialRoutes);
 app.route("/", gameRoutes);
 app.route("/", syncRoutes);
 app.route("/", adminAnalyticsRoutes);
-app.route("/", adminDashboardRoute);
 app.route("/", siteAnalyticsRoutes);
 
 // Export the fetch handler plus a scheduled() handler for the daily maintenance
