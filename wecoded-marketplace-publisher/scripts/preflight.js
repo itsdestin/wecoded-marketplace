@@ -131,23 +131,31 @@ export async function preflightNetwork({ pluginId, metadata, fetchImpl }) {
     detail: unique ? 'Plugin ID is not taken' : `Plugin ID "${pluginId}" is already used in the marketplace`,
   });
 
-  // Check 2: category must be in the live CATEGORIES enum.
+  // Checks 2-4: tags / life areas / audience must be in the live lists. These mirror what
+  // CI's validateEnums enforces on marketplace.json entries (scripts/schema.js).
+  // There is NO category list in the schema (CI never checks category), so none is checked.
+  // WHY unreadable list = "warn", not pass: an empty list used to count as a pass, which is
+  // how this check stayed green for months while checking nothing.
   const schema = await fetchSchemaEnums(fetchImpl);
-
-  const catOk = schema.categories.length === 0 || schema.categories.includes(metadata.category);
-  checks.push({
-    name: 'category-enum',
-    status: catOk ? 'pass' : 'fail',
-    detail: catOk ? 'Category accepted' : `Category "${metadata.category}" not in [${schema.categories.join(', ')}]`,
-  });
-
-  // Check 3: audience must be in the live AUDIENCES enum.
-  const audOk = schema.audiences.length === 0 || schema.audiences.includes(metadata.audience || '');
-  checks.push({
-    name: 'audience-enum',
-    status: audOk ? 'pass' : 'fail',
-    detail: audOk ? 'Audience accepted' : `Audience "${metadata.audience}" not in [${schema.audiences.join(', ')}]`,
-  });
+  const enumCheck = (name, label, allowed, values) => {
+    if (!allowed.length) {
+      checks.push({ name, status: 'warn', detail: `Could not read the live ${label} list, so it was not checked` });
+      return;
+    }
+    const bad = values.filter(v => !allowed.includes(v));
+    checks.push({
+      name,
+      status: bad.length ? 'fail' : 'pass',
+      detail: bad.length
+        ? `${label} ${bad.map(b => `"${b}"`).join(', ')} not in [${allowed.join(', ')}]`
+        : `${label} accepted`,
+    });
+  };
+  // Tags: CI lowercases and applies aliases; we only know the allowed list, so compare lowercase.
+  enumCheck('tags-enum', 'Tags', schema.tags, (metadata.tags || []).map(t => String(t).toLowerCase().trim()));
+  enumCheck('life-area-enum', 'Life area', schema.lifeAreas, metadata.lifeArea || []);
+  // CI only rejects an audience that is set and not allowed; leaving it out is fine.
+  enumCheck('audience-enum', 'Audience', schema.audiences, metadata.audience ? [metadata.audience] : []);
 
   const pass = checks.every(c => c.status !== 'fail');
   return { pass, checks };
