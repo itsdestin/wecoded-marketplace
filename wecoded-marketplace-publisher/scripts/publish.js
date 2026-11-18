@@ -84,7 +84,15 @@ export function addEntryToMarketplaceJson(text, entry) {
   const data = JSON.parse(text);
   const plugins = Array.isArray(data.plugins) ? data.plugins : [];
   const i = plugins.findIndex(p => p.name === entry.name);
-  if (i >= 0) plugins[i] = entry; else plugins.push(entry);
+  if (i >= 0) {
+    // WHY refuse: a name clash must never silently replace someone else's listing (e.g. a
+    // first-party entry). Only the same community submission (same source URL) may be refreshed.
+    const old = plugins[i];
+    if (old.sourceMarketplace !== 'community' || old.source?.url !== entry.source?.url) {
+      throw new Error(`marketplace.json already has a different plugin named "${entry.name}"; pick another id`);
+    }
+    plugins[i] = entry;
+  } else plugins.push(entry);
   data.plugins = plugins;
   return JSON.stringify(data, null, 2) + '\n';
 }
@@ -121,9 +129,10 @@ export async function openCommunityPr({
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'wmp-marketplace-'));
   try {
     const dir = path.join(tmp, 'marketplace');
+    // Full (not --depth 1) clone: a shallow clone can be refused when pushed to a fork.
     // Clone the REAL registry (fresh master), not the fork: a stale fork would put the
     // listing on top of an old marketplace.json and conflict with the real one.
-    await run(spawn, 'gh', ['repo', 'clone', MARKETPLACE_REPO, dir, '--', '--depth', '1']);
+    await run(spawn, 'gh', ['repo', 'clone', MARKETPLACE_REPO, dir]);
     const git = (...a) => run(spawn, 'git', ['-C', dir, ...a]);
 
     const mpPath = path.join(dir, 'marketplace.json');
@@ -156,7 +165,7 @@ export async function openCommunityPr({
         break;
       } catch (e) {
         pushErr = e;
-        await sleep(3000);
+        if (attempt < 3) await sleep(3000); // no pointless wait after the final attempt
       }
     }
     if (pushErr) throw pushErr;

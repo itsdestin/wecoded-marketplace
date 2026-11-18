@@ -413,7 +413,10 @@ jobs:
           echo "Merged plugins: $PLUGINS"
           # WHY a separate `run` flag: a manual run rebuilds the whole index but
           # auto-adds nothing (no merged plugins), so the gate can't be `plugins`.
-          if [ -n "$PLUGINS" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # WHY marketplace.json: community listings from the publisher edit ONLY that file, so a
+          # merge touching it must still rebuild the generated index or the plugin never appears.
+          LISTING_CHANGED=$(git diff --name-only HEAD~1 HEAD -- marketplace.json)
+          if [ -n "$PLUGINS" ] || [ -n "$LISTING_CHANGED" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "run=yes" >> "$GITHUB_OUTPUT"
           fi
 

@@ -225,3 +225,18 @@ test('publish with dryRun does not call gh repo create', async () => {
   assert.ok(result.plan);
   assert.match(result.plan, /would create/i);
 });
+
+// WHY: a name clash must never overwrite someone else's listing (e.g. first-party youcoded-core).
+test('addEntryToMarketplaceJson refuses to replace a different plugin with the same name', async () => {
+  const { addEntryToMarketplaceJson } = await import('../scripts/publish.js');
+  const text = JSON.stringify({ plugins: [
+    { name: 'youcoded-core', source: { source: 'url', url: 'https://github.com/itsdestin/youcoded-core.git' } },
+    { name: 'mine', sourceMarketplace: 'community', source: { source: 'url', url: 'https://github.com/a/mine.git' } },
+  ] });
+  const mk = (name, url) => ({ name, sourceMarketplace: 'community', source: { source: 'url', url } });
+  assert.throws(() => addEntryToMarketplaceJson(text, mk('youcoded-core', 'https://github.com/a/x.git')), /different plugin/);
+  assert.throws(() => addEntryToMarketplaceJson(text, mk('mine', 'https://github.com/b/other.git')), /different plugin/);
+  // Refreshing the same community submission is allowed.
+  const out = JSON.parse(addEntryToMarketplaceJson(text, { ...mk('mine', 'https://github.com/a/mine.git'), description: 'new' }));
+  assert.equal(out.plugins[1].description, 'new');
+});
