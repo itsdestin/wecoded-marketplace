@@ -1,4 +1,7 @@
 import { spawn as nodeSpawn } from 'node:child_process';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { readLedger, writeLedgerEntry } from './lib/ledger.js';
 
 function defaultSpawn(cmd, args) {
@@ -36,7 +39,7 @@ async function run(spawn, cmd, args) {
 
 // Build the marketplace.json entry shape for a community plugin.
 export function marketplaceEntryFor(pluginId, metadata, repoUrl) {
-  return {
+  const entry = {
     name: pluginId,
     displayName: metadata.displayName,
     description: metadata.description,
@@ -46,6 +49,13 @@ export function marketplaceEntryFor(pluginId, metadata, repoUrl) {
     homepage: repoUrl,
     sourceMarketplace: 'community',
   };
+  // WHY: CI (validateEnums) checks tags/lifeArea/audience on marketplace.json entries, and
+  // the listing's filters use them. They were collected and checked in preflight but never
+  // written to the entry. Only include what the contributor actually set.
+  if (metadata.tags?.length) entry.tags = metadata.tags;
+  if (metadata.lifeArea?.length) entry.lifeArea = metadata.lifeArea;
+  if (metadata.audience) entry.audience = metadata.audience;
+  return entry;
 }
 
 // Phase 1: create the user's public repo and push the local working dir to it.
@@ -62,9 +72,32 @@ export async function createUserRepo({ workingDir, pluginId, ghUser, spawn = def
   return { repoUrl };
 }
 
-// Phase 2: open a PR against itsdestin/wecoded-marketplace to list the plugin.
-// Returns { communityPR }.
-export async function openCommunityPr({ pluginId, metadata, repoUrl, spawn = defaultSpawn }) {
+// The registry we list in. Outside contributors have no write access to it, so every
+// submission goes fork -> branch -> push to the fork -> cross-repo PR.
+const MARKETPLACE_REPO = 'itsdestin/wecoded-marketplace';
+
+// Add (or refresh) the plugin's entry in marketplace.json text. Returns the new file text.
+// WHY marketplace.json only: CONTRIBUTING.md says "add your entry to marketplace.json and
+// ONLY that file" — index.json / skills/index.json are generated and hand edits are
+// overwritten. Output format (2-space JSON + trailing newline) matches what CI writes.
+export function addEntryToMarketplaceJson(text, entry) {
+  const data = JSON.parse(text);
+  const plugins = Array.isArray(data.plugins) ? data.plugins : [];
+  const i = plugins.findIndex(p => p.name === entry.name);
+  if (i >= 0) plugins[i] = entry; else plugins.push(entry);
+  data.plugins = plugins;
+  return JSON.stringify(data, null, 2) + '\n';
+}
+
+// Phase 2: fork the marketplace, put the listing on a branch in the fork, and open a PR
+// from that branch. Returns { communityPR }.
+// WHY this exists: the old version ran `gh pr create --head add-plugin/<id>` against a
+// branch nothing ever created, so it failed for everyone (and a contributor without write
+// access cannot push to the real repo anyway).
+export async function openCommunityPr({
+  pluginId, metadata, repoUrl, ghUser, spawn = defaultSpawn,
+  sleep = (ms) => new Promise(r => setTimeout(r, ms)),
+}) {
   const branch = `add-plugin/${pluginId}`;
   const body = [
     `Adds \`${pluginId}\` as a community plugin.`,
@@ -76,14 +109,70 @@ export async function openCommunityPr({ pluginId, metadata, repoUrl, spawn = def
     'Published via `wecoded-marketplace-publisher`.',
   ].join('\n');
 
-  const r = await run(spawn, 'gh', [
-    'pr', 'create',
-    '--repo', 'itsdestin/wecoded-marketplace',
-    '--head', branch,
-    '--title', `Add ${metadata.displayName} (community)`,
-    '--body', body,
-  ]);
-  return { communityPR: (r.stdout || '').trim() };
+  // Who is the contributor? (the PR head must be "<login>:<branch>")
+  let login = ghUser;
+  if (!login) {
+    login = (await run(spawn, 'gh', ['api', 'user', '--jq', '.login'])).stdout.trim();
+  }
+
+  // Idempotent: if the fork already exists gh just reports it and exits 0.
+  await run(spawn, 'gh', ['repo', 'fork', MARKETPLACE_REPO, '--clone=false']);
+
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'wmp-marketplace-'));
+  try {
+    const dir = path.join(tmp, 'marketplace');
+    // Clone the REAL registry (fresh master), not the fork: a stale fork would put the
+    // listing on top of an old marketplace.json and conflict with the real one.
+    await run(spawn, 'gh', ['repo', 'clone', MARKETPLACE_REPO, dir, '--', '--depth', '1']);
+    const git = (...a) => run(spawn, 'git', ['-C', dir, ...a]);
+
+    const mpPath = path.join(dir, 'marketplace.json');
+    const entry = marketplaceEntryFor(pluginId, metadata, repoUrl);
+    await fs.writeFile(mpPath, addEntryToMarketplaceJson(await fs.readFile(mpPath, 'utf8'), entry));
+
+    await git('checkout', '-b', branch);
+    await git('add', 'marketplace.json');
+    // WHY -s: CONTRIBUTING.md requires a DCO sign-off on every commit. Use the contributor's
+    // own git identity; only if none is configured fall back to their GitHub no-reply address.
+    const haveName = (await spawn('git', ['config', 'user.name'])).stdout.trim();
+    const haveEmail = (await spawn('git', ['config', 'user.email'])).stdout.trim();
+    const identity = haveName && haveEmail ? [] : [
+      '-c', `user.name=${login}`, '-c', `user.email=${login}@users.noreply.github.com`,
+    ];
+    await git(...identity, 'commit', '-s', '-m', `Add ${metadata.displayName} (community)`);
+
+    await git('remote', 'add', 'fork', `https://github.com/${login}/wecoded-marketplace.git`);
+    // WHY the inline credential helper: plain git does not know gh's login, and
+    // `gh auth setup-git` would change the contributor's global git config. This applies to
+    // this one push only. --force because add-plugin/<id> is the contributor's own branch on
+    // their own fork (a retry after a half-finished run must be able to overwrite it).
+    // Retry: a just-created fork can take a few seconds before it accepts pushes.
+    let pushErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        await git('-c', 'credential.helper=', '-c', 'credential.helper=!gh auth git-credential',
+          'push', '--force', 'fork', `${branch}:${branch}`);
+        pushErr = null;
+        break;
+      } catch (e) {
+        pushErr = e;
+        await sleep(3000);
+      }
+    }
+    if (pushErr) throw pushErr;
+
+    const r = await run(spawn, 'gh', [
+      'pr', 'create',
+      '--repo', MARKETPLACE_REPO,
+      '--head', `${login}:${branch}`,
+      '--base', 'master',
+      '--title', `Add ${metadata.displayName} (community)`,
+      '--body', body,
+    ]);
+    return { communityPR: (r.stdout || '').trim() };
+  } finally {
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
 }
 
 // Convenience wrapper: runs both phases in sequence.
@@ -92,7 +181,7 @@ export async function openCommunityPr({ pluginId, metadata, repoUrl, spawn = def
 // the simple end-to-end path.
 export async function publishCommunity({ workingDir, pluginId, ghUser, metadata, spawn = defaultSpawn }) {
   const { repoUrl } = await createUserRepo({ workingDir, pluginId, ghUser, spawn });
-  const { communityPR } = await openCommunityPr({ pluginId, metadata, repoUrl, spawn });
+  const { communityPR } = await openCommunityPr({ pluginId, metadata, repoUrl, ghUser, spawn });
   return {
     repoUrl,
     communityPR,
@@ -156,7 +245,7 @@ export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoi
     const planLines = [
       `Would create GitHub repo: ${ghUser}/${pluginId}`,
       `Would push working dir: ${workingDir}`,
-      `Would open community PR at: itsdestin/wecoded-marketplace (branch: add-plugin/${pluginId})`,
+      `Would fork itsdestin/wecoded-marketplace into your GitHub account, push branch add-plugin/${pluginId} to the fork, and open a PR from it`,
     ];
     if (pathChoice === 'adoption') {
       planLines.push(`Would open adoption-request PR at: itsdestin/wecoded-marketplace (branch: adoption-request/${pluginId})`);
@@ -182,7 +271,7 @@ export async function publish({ workingDir, pluginId, ghUser, metadata, pathChoi
 
   // Phase 2: open community PR (skip if ledger already has a communityPR).
   if (!communityPR) {
-    const pr = await openCommunityPr({ pluginId, metadata, repoUrl, spawn });
+    const pr = await openCommunityPr({ pluginId, metadata, repoUrl, ghUser, spawn });
     communityPR = pr.communityPR;
     await writeLedgerEntry({ configDir, entry: { pluginId, communityPR, state: 'community-pr-open' } });
   }
