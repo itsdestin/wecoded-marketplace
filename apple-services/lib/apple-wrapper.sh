@@ -44,9 +44,59 @@ if [ -z "$integration" ] || [ -z "$op" ]; then
   err_out INVALID_ARG wrapper "Usage: apple-wrapper.sh <integration> <op> [args]" "See skills/<integration>/SKILL.md"
 fi
 
+# ─── Portable timeout ───────────────────────────────────────────────────────
+
+# WHY: stock macOS ships neither GNU `timeout` nor `flock`, so every helper /
+# AppleScript call failed with "command not found" there. This uses only
+# bash 3.2 builtins plus kill/sleep.
+# Usage: run_with_timeout <seconds> <cmd> [args...]
+# Returns the command's own status, or 124 if the watchdog had to kill it
+# (same convention as GNU timeout, so callers' "= 124" checks keep working).
+run_with_timeout() {
+  local secs="$1"; shift
+  local flag; flag="$(mktemp)"; rm -f "$flag"
+
+  "$@" &
+  local cmd_pid=$!
+
+  # Watchdog: sleeps, then drops a marker file and kills the command (TERM,
+  # then KILL after 2s). Its stdio goes to /dev/null so a leftover process can
+  # never hold open the pipe our caller is reading from.
+  (
+    sleep "$secs" &
+    local sleeper=$!
+    # If the command finishes first we get TERM: stop the sleeper and leave.
+    trap 'kill "$sleeper" 2>/dev/null; exit 0' TERM
+    wait "$sleeper"
+    # Timer fired: stop special-casing TERM so the caller can end us at once.
+    trap - TERM
+    : > "$flag"
+    kill -TERM "$cmd_pid" 2>/dev/null
+    sleep 2
+    kill -KILL "$cmd_pid" 2>/dev/null
+  ) >/dev/null 2>&1 &
+  local watchdog_pid=$!
+
+  local rc=0
+  wait "$cmd_pid" || rc=$?
+  kill -TERM "$watchdog_pid" 2>/dev/null
+  wait "$watchdog_pid" 2>/dev/null || true
+
+  if [ -e "$flag" ]; then
+    rm -f "$flag"
+    return 124
+  fi
+  return "$rc"
+}
+
 # ─── Per-op timeout selection ───────────────────────────────────────────────
 
 op_timeout() {
+  # APPLE_SERVICES_TIMEOUT_OVERRIDE exists so tests can exercise the timeout
+  # path in a second instead of 15-60s; not documented for users.
+  if [ -n "${APPLE_SERVICES_TIMEOUT_OVERRIDE:-}" ]; then
+    echo "$APPLE_SERVICES_TIMEOUT_OVERRIDE"; return
+  fi
   case "$op" in
     search|search_*) echo 60 ;;
     list_*|get_*|list) echo 15 ;;
@@ -65,12 +115,16 @@ route_helper() {
   local timeout; timeout=$(op_timeout)
   local stderr_file; stderr_file="$(mktemp)"
 
-  if timeout "$timeout" "$HELPER_BIN" "$integration" "$op" "$@" 2> "$stderr_file"; then
+  # WHY `|| exit_code=$?`: the old `if cmd; then ...; fi` followed by
+  # `exit_code=$?` always read 0 (an `if` with no branch taken succeeds), so
+  # failures were reported as success and the timeout branch never fired.
+  local exit_code=0
+  run_with_timeout "$timeout" "$HELPER_BIN" "$integration" "$op" "$@" 2> "$stderr_file" || exit_code=$?
+  if [ "$exit_code" -eq 0 ]; then
     rm -f "$stderr_file"
     return 0
   fi
 
-  local exit_code=$?
   if grep -q "^TCC_DENIED:" "$stderr_file"; then
     cat "$stderr_file" >&2
     rm -f "$stderr_file"
@@ -106,15 +160,50 @@ route_applescript() {
   # Serialize concurrent calls to the same target app — AppleScript talks to
   # the live app process and two parallel osascripts fighting over Mail.app
   # will occasionally error out.
-  local lock="$LOCK_DIR/apple-services.$integration.lock"
-  exec 9> "$lock" || err_out INTERNAL "$integration" "Couldn't acquire lock $lock" "Free disk space in TMPDIR."
-  flock -w 30 9 || err_out UNAVAILABLE "$integration" "$integration lock busy for 30s." "Retry; another skill call may be running."
+  # WHY mkdir lock (not flock): flock is absent on stock macOS; mkdir is atomic
+  # everywhere. The owner's pid is stored so a lock left by a crashed call
+  # (dead pid) is reclaimed instead of blocking for 30s every time.
+  local lock="$LOCK_DIR/apple-services.$integration.lock.d"
+  local tries=0 noowner=0
+  until mkdir "$lock" 2>/dev/null; do
+    local owner; owner="$(cat "$lock/pid" 2>/dev/null || true)"
+    # WHY noowner: a call killed between mkdir and writing the pid file leaves a
+    # lock with no owner that would never be reclaimed. A lock that stays
+    # owner-less for ~2s (10 polls) is treated as abandoned.
+    if [ -z "$owner" ]; then noowner=$((noowner + 1)); else noowner=0; fi
+    if { [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; } || [ "$noowner" -gt 10 ]; then
+      # WHY rename, not rm: rename is atomic, so when two callers both see the
+      # same dead lock only one wins it. If we moved a lock that turns out to
+      # belong to someone else (a live owner took over in between), put it back.
+      local gone="$lock.stale.$$"
+      if mv "$lock" "$gone" 2>/dev/null; then
+        local moved; moved="$(cat "$gone/pid" 2>/dev/null || true)"
+        if [ -n "$moved" ] && [ "$moved" != "$owner" ] && kill -0 "$moved" 2>/dev/null; then
+          mv "$gone" "$lock" 2>/dev/null || rm -rf "$gone"
+        else
+          rm -rf "$gone"
+        fi
+      fi
+      noowner=0
+      continue
+    fi
+    tries=$((tries + 1))
+    [ "$tries" -gt 150 ] && err_out UNAVAILABLE "$integration" "$integration lock busy for 30s." "Retry; another skill call may be running."
+    sleep 0.2
+  done
+  echo "$$" > "$lock/pid"
+  # shellcheck disable=SC2064  # expand $lock now, deliberately
+  trap "rm -rf '$lock'" EXIT
 
   local timeout; timeout=$(op_timeout)
   local stderr_file; stderr_file="$(mktemp)"
   local stdout_file; stdout_file="$(mktemp)"
 
-  if timeout "$timeout" osascript "${osascript_lang[@]}" "$script" "$@" > "$stdout_file" 2> "$stderr_file"; then
+  # WHY ${arr[@]+...}: on bash 3.2 (macOS) an empty array under `set -u` is an
+  # "unbound variable" error, which broke every .applescript (non-JXA) op.
+  local exit_code=0
+  run_with_timeout "$timeout" osascript ${osascript_lang[@]+"${osascript_lang[@]}"} "$script" "$@" > "$stdout_file" 2> "$stderr_file" || exit_code=$?
+  if [ "$exit_code" -eq 0 ]; then
     # Post-process TSV-emitting AppleScript ops (notes/get_note, mail/read_message)
     # into JSON. These scripts return tab-separated fields because JSON-escaping
     # HTML bodies from AppleScript is painful.
@@ -123,7 +212,6 @@ route_applescript() {
     return 0
   fi
 
-  local exit_code=$?
   # AppleScript Automation denial surfaces as error -1743
   if grep -qE '\(-1743\)' "$stderr_file"; then
     err_out TCC_DENIED "$integration" "Automation access to $integration was denied." "Open System Settings → Privacy & Security → Automation, find your Claude host app, turn on $integration. Then re-run."
@@ -189,18 +277,40 @@ route_icloud() {
   done
 
   resolve() {
-    # Reject paths escaping ICLOUD_ROOT
-    local rel="$1"
-    local abs; abs="$(cd "$ICLOUD_ROOT" 2>/dev/null && cd "$(dirname "./$rel")" 2>/dev/null && pwd)/$(basename "./$rel")" || true
-    case "$abs" in
-      "$ICLOUD_ROOT"/*|"$ICLOUD_ROOT") echo "$abs" ;;
-      *) err_out INVALID_ARG icloud "Path escapes iCloud Drive root: $rel" "Pass paths relative to iCloud Drive root." ;;
-    esac
+    # Map a path relative to ICLOUD_ROOT onto an absolute path, rejecting any
+    # that climb out of the root.
+    # WHY lexical (not `cd`): the old version cd'd into the parent folder, which
+    # fails for folders that don't exist yet, so writing "Projects/new/a.txt"
+    # (or create_folder A/B) was wrongly rejected as "escapes iCloud root".
+    local rest="$1" seg out=""
+    while [ -n "$rest" ]; do
+      case "$rest" in
+        */*) seg="${rest%%/*}"; rest="${rest#*/}" ;;
+        *) seg="$rest"; rest="" ;;
+      esac
+      case "$seg" in
+        ""|".") ;;
+        "..")
+          case "$out" in
+            "") err_out INVALID_ARG icloud "Path escapes iCloud Drive root: $1" "Pass paths relative to iCloud Drive root." ;;
+            */*) out="${out%/*}" ;;
+            *) out="" ;;
+          esac ;;
+        *) out="${out:+$out/}$seg" ;;
+      esac
+    done
+    # WHY: an empty path, "." or "A/.." resolves to the iCloud root itself. Only
+    # list/stat/create_folder (which pass "root_ok") may act on it; otherwise
+    # `delete` would wipe all of iCloud Drive and `move`/`write` would target it.
+    if [ -z "$out" ] && [ "${2:-}" != "root_ok" ]; then
+      err_out INVALID_ARG icloud "Path must name a file or folder inside iCloud Drive, not the root itself: '$1'" "Pass a path relative to iCloud Drive root."
+    fi
+    if [ -z "$out" ]; then echo "$ICLOUD_ROOT"; else echo "$ICLOUD_ROOT/$out"; fi
   }
 
   case "$op" in
     list)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path" root_ok) || exit 1
       [ -d "$full" ] || err_out NOT_FOUND icloud "Not a directory: $path" "Check the path."
       local find_args=(-mindepth 1)
       [ "$recursive" = 0 ] && find_args+=(-maxdepth 1)
@@ -236,7 +346,7 @@ route_icloud() {
       done | jq -cs .
       ;;
     read)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path") || exit 1
       local base; base="$(basename "$full")"
       # Reject legacy .icloud stub (file wouldn't even exist at the cleaned name)
       if [ -e "$(dirname "$full")/.${base}.icloud" ]; then
@@ -259,31 +369,31 @@ route_icloud() {
       fi
       ;;
     write)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path") || exit 1
       mkdir -p "$(dirname "$full")"
       printf '%s' "$content" > "$full"
       echo '{"ok":true}'
       ;;
     delete)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path") || exit 1
       [ -e "$full" ] || err_out NOT_FOUND icloud "Not found: $path" "Check the path."
       rm -rf -- "$full"
       echo '{"ok":true}'
       ;;
     move)
-      local srcFull; srcFull=$(resolve "$src")
-      local dstFull; dstFull=$(resolve "$dst")
+      local srcFull; srcFull=$(resolve "$src") || exit 1
+      local dstFull; dstFull=$(resolve "$dst") || exit 1
       mkdir -p "$(dirname "$dstFull")"
       mv "$srcFull" "$dstFull"
       echo '{"ok":true}'
       ;;
     create_folder)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path" root_ok) || exit 1
       mkdir -p "$full"
       echo '{"ok":true}'
       ;;
     stat)
-      local full; full=$(resolve "$path")
+      local full; full=$(resolve "$path" root_ok) || exit 1
       [ -e "$full" ] || err_out NOT_FOUND icloud "Not found: $path" "Check the path."
       local name type size modified
       name=$(basename "$full")
