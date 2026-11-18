@@ -48,6 +48,20 @@ run icloud write --path "A/../Z/b.txt" --content ok
 [ "$rc" -eq 0 ] && [ -f "$ROOT/Z/b.txt" ]
 check "harmless .. that stays inside the root is allowed" $?
 
+# the iCloud root itself must never be deleted/moved/overwritten
+mkdir -p "$ROOT/Keep"; echo keep > "$ROOT/Keep/k.txt"
+for p in "" "." "A/.." "./"; do
+  run icloud delete --path "$p"
+  [ "$rc" -ne 0 ] && [ -f "$ROOT/Keep/k.txt" ] && [ -d "$ROOT/Z" ]
+  check "delete of root-equivalent path '$p' is refused, files kept" $?
+done
+run icloud move --src "." --dst "Moved"
+[ "$rc" -ne 0 ] && [ -f "$ROOT/Keep/k.txt" ] && [ ! -e "$ROOT/Moved" ]
+check "move of the root itself is refused" $?
+run icloud list --path ""
+[ "$rc" -eq 0 ] && echo "$out" | grep -q Keep
+check "listing the root is still allowed" $?
+
 # ── helper route: exit status and timeout ──
 printf '#!/bin/sh\necho boom >&2\nexit 7\n' > "$T/helper-fail"
 printf '#!/bin/sh\necho "{\\"ok\\":true}"\n' > "$T/helper-ok"
@@ -90,6 +104,13 @@ printf '#!/bin/sh\necho "{\\"ok\\":true}"\n' > "$T/bin/osascript"
 run notes list_folders
 [ "$rc" -eq 0 ]
 check "stale lock left by a dead process is reclaimed" $?
+
+# lock with no pid file (caller killed mid-acquire) must not block forever
+mkdir "$TMPDIR/apple-services.notes.lock.d"
+start=$SECONDS
+run notes list_folders
+[ "$rc" -eq 0 ] && [ $((SECONDS - start)) -lt 15 ]
+check "owner-less lock is reclaimed after a few seconds" $?
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

@@ -164,11 +164,27 @@ route_applescript() {
   # everywhere. The owner's pid is stored so a lock left by a crashed call
   # (dead pid) is reclaimed instead of blocking for 30s every time.
   local lock="$LOCK_DIR/apple-services.$integration.lock.d"
-  local tries=0
+  local tries=0 noowner=0
   until mkdir "$lock" 2>/dev/null; do
     local owner; owner="$(cat "$lock/pid" 2>/dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
-      rm -rf "$lock"   # owner is gone: stale lock
+    # WHY noowner: a call killed between mkdir and writing the pid file leaves a
+    # lock with no owner that would never be reclaimed. A lock that stays
+    # owner-less for ~2s (10 polls) is treated as abandoned.
+    if [ -z "$owner" ]; then noowner=$((noowner + 1)); else noowner=0; fi
+    if { [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; } || [ "$noowner" -gt 10 ]; then
+      # WHY rename, not rm: rename is atomic, so when two callers both see the
+      # same dead lock only one wins it. If we moved a lock that turns out to
+      # belong to someone else (a live owner took over in between), put it back.
+      local gone="$lock.stale.$$"
+      if mv "$lock" "$gone" 2>/dev/null; then
+        local moved; moved="$(cat "$gone/pid" 2>/dev/null || true)"
+        if [ -n "$moved" ] && [ "$moved" != "$owner" ] && kill -0 "$moved" 2>/dev/null; then
+          mv "$gone" "$lock" 2>/dev/null || rm -rf "$gone"
+        else
+          rm -rf "$gone"
+        fi
+      fi
+      noowner=0
       continue
     fi
     tries=$((tries + 1))
@@ -283,12 +299,18 @@ route_icloud() {
         *) out="${out:+$out/}$seg" ;;
       esac
     done
+    # WHY: an empty path, "." or "A/.." resolves to the iCloud root itself. Only
+    # list/stat/create_folder (which pass "root_ok") may act on it; otherwise
+    # `delete` would wipe all of iCloud Drive and `move`/`write` would target it.
+    if [ -z "$out" ] && [ "${2:-}" != "root_ok" ]; then
+      err_out INVALID_ARG icloud "Path must name a file or folder inside iCloud Drive, not the root itself: '$1'" "Pass a path relative to iCloud Drive root."
+    fi
     if [ -z "$out" ]; then echo "$ICLOUD_ROOT"; else echo "$ICLOUD_ROOT/$out"; fi
   }
 
   case "$op" in
     list)
-      local full; full=$(resolve "$path") || exit 1
+      local full; full=$(resolve "$path" root_ok) || exit 1
       [ -d "$full" ] || err_out NOT_FOUND icloud "Not a directory: $path" "Check the path."
       local find_args=(-mindepth 1)
       [ "$recursive" = 0 ] && find_args+=(-maxdepth 1)
@@ -366,12 +388,12 @@ route_icloud() {
       echo '{"ok":true}'
       ;;
     create_folder)
-      local full; full=$(resolve "$path") || exit 1
+      local full; full=$(resolve "$path" root_ok) || exit 1
       mkdir -p "$full"
       echo '{"ok":true}'
       ;;
     stat)
-      local full; full=$(resolve "$path") || exit 1
+      local full; full=$(resolve "$path" root_ok) || exit 1
       [ -e "$full" ] || err_out NOT_FOUND icloud "Not found: $path" "Check the path."
       local name type size modified
       name=$(basename "$full")
