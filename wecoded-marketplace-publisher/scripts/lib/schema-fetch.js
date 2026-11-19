@@ -14,8 +14,12 @@ export async function fetchSchemaEnums(fetchImpl = fetch) {
   return parseSchemaModule(src);
 }
 
+// WHY rewritten: this used to look for CATEGORIES / LIFE_AREAS / AUDIENCES, but the real
+// scripts/schema.js defines ALLOWED_TAGS / ALLOWED_LIFE_AREAS / ALLOWED_AUDIENCE (and has no
+// category list at all), so every check read an empty list and silently passed.
+// The name is anchored on `const <NAME> =` so one name can never match inside another.
 function extractArray(src, name) {
-  const re = new RegExp(`${name}\\s*=\\s*\\[([^\\]]*)\\]`);
+  const re = new RegExp(`const\\s+${name}\\s*=\\s*\\[([^\\]]*)\\]`);
   const m = src.match(re);
   if (!m) return [];
   return [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]);
@@ -23,8 +27,8 @@ function extractArray(src, name) {
 
 export function parseSchemaModule(src) {
   return {
-    categories: extractArray(src, 'CATEGORIES'),
-    lifeAreas: extractArray(src, 'LIFE_AREAS'),
-    audiences: extractArray(src, 'AUDIENCES'),
+    tags: extractArray(src, 'ALLOWED_TAGS'),
+    lifeAreas: extractArray(src, 'ALLOWED_LIFE_AREAS'),
+    audiences: extractArray(src, 'ALLOWED_AUDIENCE'),
   };
 }

@@ -36,6 +36,7 @@ test('preflightLocal fails when secrets remain in source', async () => {
 });
 
 import { preflightNetwork } from '../scripts/preflight.js';
+import { parseSchemaModule } from '../scripts/lib/schema-fetch.js';
 
 function fakeFetch(responses) {
   return async (url) => {
@@ -45,14 +46,35 @@ function fakeFetch(responses) {
   };
 }
 
+// WHY: mirrors the REAL scripts/schema.js (CommonJS, ALLOWED_* names). The old tests faked a
+// schema.js with CATEGORIES/AUDIENCES that does not exist, so they passed while checking nothing.
+const REAL_SCHEMA = `
+const ALLOWED_TAGS = [
+  // Content kinds
+  "skill", "theme",
+  "productivity", "journal",
+];
+const ALLOWED_LIFE_AREAS = [
+  "school", "work", "personal",
+];
+const ALLOWED_AUDIENCE = ["general", "developer"];
+module.exports = { ALLOWED_TAGS };`;
+
+test('parseSchemaModule reads the real schema.js constant names', () => {
+  const r = parseSchemaModule(REAL_SCHEMA);
+  assert.deepEqual(r.tags, ['skill', 'theme', 'productivity', 'journal']);
+  assert.deepEqual(r.lifeAreas, ['school', 'work', 'personal']);
+  assert.deepEqual(r.audiences, ['general', 'developer']);
+});
+
 test('preflightNetwork passes with unique plugin ID and valid enums', async () => {
   const fetchImpl = fakeFetch({
     'marketplace.json': JSON.stringify({ plugins: [{ name: 'other-plugin' }] }),
-    'schema.js': 'export const CATEGORIES = ["personal","productivity","development"]; export const LIFE_AREAS = ["personal","work"]; export const AUDIENCES = ["general","developer"];',
+    'schema.js': REAL_SCHEMA,
   });
   const result = await preflightNetwork({
     pluginId: 'new-plugin',
-    metadata: { category: 'personal', lifeArea: ['personal'], audience: 'general', tags: [] },
+    metadata: { category: 'anything', lifeArea: ['personal'], audience: 'general', tags: ['journal'] },
     fetchImpl,
   });
   assert.equal(result.pass, true);
@@ -61,27 +83,40 @@ test('preflightNetwork passes with unique plugin ID and valid enums', async () =
 test('preflightNetwork fails on duplicate plugin ID', async () => {
   const fetchImpl = fakeFetch({
     'marketplace.json': JSON.stringify({ plugins: [{ name: 'existing' }] }),
-    'schema.js': 'export const CATEGORIES = ["personal"]; export const LIFE_AREAS = []; export const AUDIENCES = [];',
+    'schema.js': REAL_SCHEMA,
   });
   const result = await preflightNetwork({
     pluginId: 'existing',
-    metadata: { category: 'personal', lifeArea: [], audience: '', tags: [] },
+    metadata: { category: 'personal', lifeArea: [], tags: [] },
     fetchImpl,
   });
   assert.equal(result.pass, false);
   assert.ok(result.checks.find(c => c.name === 'id-uniqueness' && c.status === 'fail'));
 });
 
-test('preflightNetwork fails on invalid category enum', async () => {
+test('preflightNetwork fails on a tag, life area or audience the live schema rejects', async () => {
   const fetchImpl = fakeFetch({
     'marketplace.json': JSON.stringify({ plugins: [] }),
-    'schema.js': 'export const CATEGORIES = ["personal"]; export const LIFE_AREAS = []; export const AUDIENCES = [];',
+    'schema.js': REAL_SCHEMA,
   });
   const result = await preflightNetwork({
     pluginId: 'x',
-    metadata: { category: 'madeup', lifeArea: [], audience: '', tags: [] },
+    metadata: { category: 'personal', lifeArea: ['nope'], audience: 'everyone', tags: ['gmail'] },
     fetchImpl,
   });
   assert.equal(result.pass, false);
-  assert.ok(result.checks.find(c => c.name === 'category-enum' && c.status === 'fail'));
+  for (const n of ['tags-enum', 'life-area-enum', 'audience-enum']) {
+    assert.ok(result.checks.find(c => c.name === n && c.status === 'fail'), n);
+  }
+});
+
+test('preflightNetwork warns (never silently passes) when the schema lists cannot be read', async () => {
+  const fetchImpl = fakeFetch({
+    'marketplace.json': JSON.stringify({ plugins: [] }),
+    'schema.js': 'module.exports = {};',
+  });
+  const result = await preflightNetwork({
+    pluginId: 'x', metadata: { tags: ['gmail'], audience: 'general' }, fetchImpl,
+  });
+  assert.ok(result.checks.find(c => c.name === 'tags-enum' && c.status === 'warn'));
 });
