@@ -1,5 +1,5 @@
 {
-  "version": "2026-11-18T23:51:53.925Z",
+  "version": "2026-11-19T00:03:11.991Z",
   "generatedBy": "sync.js",
   "entries": [
     {
@@ -10,8 +10,8 @@
       "category": "integrations",
       "author": "YouCoded",
       "tags": [],
-      "version": "0.1.0",
-      "publishedAt": "2026-08-28T00:00:00Z",
+      "version": "0.1.1",
+      "publishedAt": "2026-11-19T00:00:00Z",
       "sourceMarketplace": "youcoded",
       "sourceType": "local",
       "sourceRef": "apple-services",
