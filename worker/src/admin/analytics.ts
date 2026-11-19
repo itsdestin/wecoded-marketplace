@@ -95,7 +95,7 @@ adminAnalyticsRoutes.get("/admin/analytics/dau", requireAdminAuth, async (c) => 
   // WHY N+1 days only with tz_offset: buckets are then LOCAL days but the window
   // is measured back from UTC NOW(), so one extra day keeps the oldest local day
   // fully covered (the client trims to N). Without an offset the window stays
-  // exactly N days, so older callers (dashboard-html.ts, the /analytics skill)
+  // exactly N days, so older callers (the /analytics skill)
   // get the same rows as before.
   const windowDays = local === "timestamp" ? days : days + 1;
   const rows = await runAnalyticsQuery<{ day: string; devices: number }>(
