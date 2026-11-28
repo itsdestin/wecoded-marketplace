@@ -192,9 +192,9 @@ Propose values based on:
 
 - **`displayName`** — the casual name the user gave in Step 2, cleaned up (Title Case, no weird punctuation). Example: "summarize emails" → "Summarize Emails".
 - **`description`** — the one-sentence description from Step 2, gently polished for marketplace prose (remove "it" at the start, add a subject if missing). Target length: 1-2 sentences, under 150 characters.
-- **`category`** — pick ONE from the valid set. The first time you reach this step, fetch the live marketplace schema to get the current valid categories (the preflight script already knows how — you can read `scripts/schema.js` source via a plain `fetch` or reuse the schema-fetch helpers the preflight script uses). Common values: `personal`, `productivity`, `development`, `work`, `fun`. Match based on what the plugin does. If it's a Gmail skill → `productivity`. If it's a journaling skill → `personal`.
-- **`tags`** — 3-5 lowercase kebab-case keywords that help people find it. Draw from the user's intake words + the component types detected (e.g. `email`, `summary`, `mcp-integration`, `gmail`). Rules: lowercase only, words within a tag separated by `-`, no spaces or special characters. If the user proposes an invalid tag, reformat it silently and confirm: *"I'll use `their-reformatted-tag` — sound right?"*
-- **`lifeArea`** — infer from category: `personal` category → `["personal"]`; `work` → `["work"]`; others can be empty `[]` or mirror the category.
+- **`category`** — pick ONE short label. The marketplace does not keep a fixed category list, so nothing checks it. Common values: `personal`, `productivity`, `development`, `work`, `fun`. Match based on what the plugin does. If it's a Gmail skill → `productivity`. If it's a journaling skill → `personal`.
+- **`tags`** — 3-5 keywords that help people find it. They MUST come from the marketplace's fixed tag list (the marketplace rejects anything else): `skill, theme, plugin, prompt, agent, hook, command, mcp, productivity, writing, research, code-review, debugging, testing, docs, git, shell, data, design, learning, planning, communication, journal, reference, automation, ai, personal` (the live list is `ALLOWED_TAGS` in `scripts/schema.js`; preflight checks against it). Pick the closest matches to the user's intake words and the component types detected. Never invent tags like `gmail`.
+- **`lifeArea`** — choose from `school, work, creative, health, personal, finance, home` (may be empty `[]`). Infer from what the plugin does.
 - **`audience`** — default to `"general"` unless the plugin is clearly for developers (mentions git, terminals, CI, etc.), in which case `"developer"`.
 
 Show the user the proposed values as a clean list. Then ask:
@@ -222,7 +222,7 @@ Run the full preflight checks against the working dir:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/preflight.js" '{
   "pluginDir": "~/.claude/wecoded-marketplace-publisher/working/<pluginId>",
   "pluginId": "<pluginId>",
-  "metadata": { "displayName": "...", "description": "...", "category": "...", "audience": "..." }
+  "metadata": { "displayName": "...", "description": "...", "category": "...", "tags": ["..."], "lifeArea": ["..."], "audience": "..." }
 }'
 ```
 
@@ -235,6 +235,7 @@ Parse the JSON output. For each `check` entry:
 - **If `status: "fail"`** — don't proceed. Translate the `detail` field into plain language and jump back to the appropriate earlier step:
   - `secret-scan` fail → **loop back to Step 7** and quote the preflight's findings so the user sees exactly what was flagged
   - `required-fields` fail → **loop back to Step 8** and fix the missing fields
+  - `tags-enum` / `life-area-enum` / `audience-enum` fail → **loop back to Step 8**; the detail lists the allowed values, so swap in the closest allowed one(s) and confirm with the user
   - `id-uniqueness` fail → the plugin ID is taken on the marketplace. Suggest 2-3 alternatives based on the displayName (e.g. "summarize-emails" → "summarize-my-emails" or "email-summarizer"). Ask the user to pick one, update the manifest, and re-run build-plugin (Step 6) with the new ID before looping back here
   - `size` / `hygiene` fail → show the offending files. Offer to exclude them from the build (ask the user to confirm each) and re-run build-plugin with the updated piece list
 
@@ -311,7 +312,7 @@ If the user hesitates or asks questions, answer them honestly. Common ones:
 
 ## Step 12 — Publish
 
-Call the publish orchestrator:
+Before calling it, tell the user plainly what will happen: *"I'll make a copy (a fork) of the YouCoded marketplace in your GitHub account, add your plugin's listing to it, and open a pull request from that copy. You'll see the fork in your GitHub account; it's how outside contributors are expected to submit."* Then call the publish orchestrator:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/publish.js" publish '{

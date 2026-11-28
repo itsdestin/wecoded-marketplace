@@ -159,6 +159,25 @@ describe("catalog ingest routes", () => {
     expect(cat.capabilities).toHaveLength(1);
   });
 
+  it("a degraded run that saw a NEW commit keeps the scanned commit, so unread code is never listed as checked", async () => {
+    const good = entry("moved", { catalog: { itemType: "plugin", origin: { tier: "youcoded" },
+      scan: { status: "checked", checkedAt: "2026-08-28T00:00:00Z", rules: "1" }, capabilities: [], sourceCommit: "a".repeat(40) } });
+    await post("/admin/catalog/upsert", { source: "wecoded", run_id: "r1", entries: [good] });
+    const unread = entry("moved", { catalog: { itemType: "plugin", origin: { tier: "youcoded" },
+      scan: { status: "unchecked" }, capabilities: [], sourceCommit: "b".repeat(40) } });
+    await post("/admin/catalog/upsert", { source: "wecoded", run_id: "r2", entries: [unread] });
+    const cat = (await stored("moved")).catalog;
+    expect(cat.scan.status).toBe("checked");
+    expect(cat.sourceCommit).toBe("a".repeat(40));
+    // And a later run that DID read the new commit moves both together.
+    const read = entry("moved", { catalog: { itemType: "plugin", origin: { tier: "youcoded" },
+      scan: { status: "caution", checkedAt: "2026-08-29T00:00:00Z", rules: "1", findings: ["x"] }, capabilities: [], sourceCommit: "b".repeat(40) } });
+    await post("/admin/catalog/upsert", { source: "wecoded", run_id: "r3", entries: [read] });
+    const after = (await stored("moved")).catalog;
+    expect(after.sourceCommit).toBe("b".repeat(40));
+    expect(after.scan.status).toBe("caution");
+  });
+
   it("an UPGRADE still wins — a real scan replaces an unchecked one", async () => {
     await post("/admin/catalog/upsert", { source: "wecoded", run_id: "r1", entries: [entry("up")] });
     const better = entry("up", { catalog: { itemType: "plugin", origin: { tier: "youcoded" },

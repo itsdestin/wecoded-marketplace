@@ -70,6 +70,12 @@ function mergeOntoStored(incoming: IngestEntry, storedJson: string | null, nowIs
   // stored scan that exists, so this can never skip a downgrade we meant to block.
   if (b.scan && (SCAN_RANK[a.scan?.status ?? "unchecked"] ?? 0) < (SCAN_RANK[b.scan.status ?? "unchecked"] ?? 0)) {
     merged.scan = b.scan;                                    // keep the real verdict AND its age
+    // WHY (security apparatus, 2026-11): the kept verdict belongs to the STORED commit. A run that
+    // saw a newer commit but could not read its files must not pair that unread commit with the
+    // old "checked" result, or the app would install code nobody scanned. Keeping the stored
+    // commit also keeps the next run's skip key (<commit>:<rules>) different from upstream, so
+    // the new commit is re-read rather than skipped forever.
+    if (b.sourceCommit !== undefined) merged.sourceCommit = b.sourceCommit;
   }
   if (!a.capabilities?.length && b.capabilities?.length) merged.capabilities = b.capabilities;
   // A RE-SCAN THAT FOUND NOTHING NEW IS NOT A CHANGE — keep the stored `checkedAt`.

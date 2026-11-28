@@ -20,10 +20,22 @@ An MCP (Model Context Protocol) server that provides SMS/RCS messaging capabilit
 
 ## Build
 
+Native build (for local development):
+
 ```bash
-cd productivity/mcp-servers/gmessages
+cd youcoded-messaging/mcp-servers/gmessages
 go build -o gmessages-mcp .
 ```
+
+Windows program shipped in this repo (`gmessages.exe`). Rebuild it with exactly this command (works from Linux or Windows; same settings as the original build: 64-bit Windows, no C compiler, no extra flags):
+
+```bash
+cd youcoded-messaging/mcp-servers/gmessages
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -buildmode=exe -o gmessages.exe .
+go version -m gmessages.exe   # confirm the module versions you expect are embedded
+```
+
+Rebuild and commit the exe whenever `go.mod` changes (for example a security bump): users run the committed exe, so a dependency update does nothing until it is rebuilt. Check with `go run golang.org/x/vuln/cmd/govulncheck@latest -mode=binary gmessages.exe`.
 
 ## MCP Server Configuration
 

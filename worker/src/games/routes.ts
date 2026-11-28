@@ -13,6 +13,7 @@
 // a second router is easy to write and easy to forget to app.route(), and the
 // failure is silent (tests green, 404 in production).
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import type { HonoEnv } from "../types";
 import { requireAuth } from "../auth/middleware";
 import { badRequest, tooMany } from "../lib/errors";
@@ -21,6 +22,7 @@ import { checkRateLimit } from "../lib/rate-limit";
 import type { UserCard } from "../social/graph";
 import { isSoloGame, isValidScore, MAX_SCORE, SOLO_GAMES } from "./registry";
 import { loadRecords } from "./records";
+import { isRoomCode, isRoomGame, issueTicket, ROOM_GAMES } from "./tickets";
 
 export const gameRoutes = new Hono<HonoEnv>();
 
@@ -211,4 +213,28 @@ gameRoutes.get("/games/records", requireAuth, async (c) => {
   const all = await loadRecords(c.env.DB, me);
   const filter = c.req.query("game");
   return c.json(filter ? all.filter((r) => r.game === filter) : all);
+});
+
+// POST /games/ticket { game, room } -> { ticket, username, expires_in }
+//
+// WHY: a WebSocket cannot carry a sign-in header, and the real session token must not go
+// in a web address. This signed-in call hands out a one-time ticket (60 s, one game, one
+// room) that goes on the WebSocket address instead. See games/tickets.ts.
+gameRoutes.post("/games/ticket", requireAuth, async (c) => {
+  const me = c.get("userId");
+  // Per-address limit too (platform binding, absent in tests): stops one network from
+  // cycling through many accounts. Separate key from the analytics paths.
+  const limiter = c.env.EVENT_RATE_LIMITER;
+  if (limiter) {
+    const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    try {
+      if (!(await limiter.limit({ key: `ticket:${ip}` })).success) throw tooMany("too many game tickets, wait a minute");
+    } catch (e) { if (e instanceof HTTPException) throw e; /* limiter down: the per-user cap below still applies */ }
+  }
+  const body = await parseJsonBody<{ game?: unknown; room?: unknown }>(c);
+  if (!isRoomGame(body.game)) throw badRequest(`game must be one of: ${ROOM_GAMES.join(", ")}`);
+  if (!isRoomCode(body.room)) throw badRequest("room must be a 6-character room code");
+  const t = await issueTicket(c.env.DB, me, body.game, body.room, Math.floor(Date.now() / 1000));
+  if (!t) throw tooMany("too many game tickets, wait a minute");
+  return c.json({ ticket: t.ticket, username: t.username, expires_in: t.expiresIn });
 });

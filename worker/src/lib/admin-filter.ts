@@ -114,9 +114,12 @@ export function localTimestampExpr(rawOffset: string | undefined): string {
     : `(timestamp - INTERVAL '${Math.abs(minutes)}' MINUTE)`;
 }
 
-// WHY these expressions (analytics audit, 2026-10-31): Android 1.3.1–1.3.3
-// checked in with platform "desktop", but a phone never fills the OS field and
-// a computer always does — so an empty OS means a phone, for old rows and new.
+// WHY these expressions: a phone never fills the OS field — the pre-1.3.1
+// Kotlin app sent "android" with it empty, and the app from the next release
+// on sends "android" with it empty again — so an empty OS means a phone.
+// CAVEAT (corrected 2026-11-02): phones on 1.3.1–1.3.3 ran the engine's Linux
+// build and sent "desktop" with OS "linux"; nothing in those rows tells them
+// apart from Linux computers, so they are counted as Linux.
 export const PLATFORM_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', 'desktop')";
 // Windows / Mac / Linux / Android, the same four the website's download buttons use.
 export const OS_EXPR = "if(blob4 = 'android' OR blob5 = '', 'android', blob5)";

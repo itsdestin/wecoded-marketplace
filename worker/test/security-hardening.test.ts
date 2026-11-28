@@ -11,7 +11,6 @@ import { MAX_THEME_LIKES_PER_USER } from "../src/themes/routes";
 import { MAX_LEASES_PER_ROOM } from "../src/sync/room";
 import { resolvePat, __resetPatCacheForTests } from "../src/auth/pat";
 import { createTestAccount, issueTestSession } from "./helpers";
-import { dashboardHtml } from "../src/admin/dashboard-html";
 
 const REGISTRY_KEY = "theme-registry:slugs";
 async function seedRegistry(slugs: string[]) {
@@ -23,23 +22,17 @@ const authed = (token: string, method = "POST", body?: unknown) => ({
   ...(body === undefined ? {} : { body: JSON.stringify(body) }),
 });
 
-describe("escapeHtml / admin dashboard", () => {
+describe("escapeHtml / removed admin dashboard", () => {
   it("escapes the five dangerous characters", () => {
     expect(escapeHtml(`<img src=x onerror="a('b')">&`)).toBe("&lt;img src=x onerror=&quot;a(&#39;b&#39;)&quot;&gt;&amp;");
     expect(escapeHtml(null)).toBe("");
   });
 
-  it("the dashboard page escapes table values and error text, and pins the chart library", () => {
-    expect(dashboardHtml).toContain("function esc(");
-    expect(dashboardHtml).toContain("esc(r[k])");
-    expect(dashboardHtml).toContain("esc(e)");
-    expect(dashboardHtml).toMatch(/chart\.umd\.min\.js"[^>]*integrity="sha384-/);
-  });
-
-  it("the page's escape function really neutralises markup", () => {
-    const fn = dashboardHtml.match(/function esc\(v\) \{[\s\S]*?\n\}/)![0];
-    const esc = new Function(`${fn}; return esc;`)();
-    expect(esc("<img src=x onerror=alert(1)>")).not.toContain("<");
+  // WHY: the old web page was deleted (it could not sign in and read fields the API
+  // never returned); the in-app Analytics page uses /admin/analytics instead. Pin that
+  // the page stays gone so a stray re-add is noticed.
+  it("the removed /admin/dashboard web page no longer exists", async () => {
+    expect((await SELF.fetch("https://test.local/admin/dashboard")).status).toBe(404);
   });
 });
 

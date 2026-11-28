@@ -8,6 +8,10 @@ export interface Env {
   // metadata-only "space-updated" signals between a user's own devices so
   // pulls happen instantly instead of waiting for the 120s poll (SyncHub §6).
   SYNC_HUB: DurableObjectNamespace;
+  // Versus-game relay rooms. Binding names are what partyserver turns into the
+  // URL name (CONNECTFOUR -> /parties/connectfour/<room>), so do not rename.
+  CONNECTFOUR: DurableObjectNamespace;
+  CHESS: DurableObjectNamespace;
   // Optional: omitted in [env.test] (vitest-pool-workers can't resolve AE binding).
   // All callers must use env.APP_ANALYTICS?.writeDataPoint() to stay test-safe.
   APP_ANALYTICS?: AnalyticsEngineDataset;
@@ -54,6 +58,13 @@ export interface Env {
   // "1" = refuse sign-ins that are not bound to the starting computer (card #55).
   // Leave unset until every supported app sends a loopback port; see auth/device-flow.ts.
   REQUIRE_LOOPBACK_SIGNIN?: string;
+  // Phone alert channel for the hourly attack alarms (src/security/alarms.ts). Secret, pushed by CI
+  // from repo secret NTFY_TOPIC; unset -> alarms only go to the server log.
+  NTFY_TOPIC?: string;
+  // Optional overrides for the alarm thresholds (per hour). Unset -> the defaults in alarms.ts.
+  ALARM_SIGNIN_START_LIMIT?: string;
+  ALARM_NEW_SESSION_LIMIT?: string;
+  ALARM_GAME_TICKET_LIMIT?: string;
   // Seconds GET /stats may be served from the KV copy (default 300). "0" disables
   // the cache; tests set it so data changes show up at once.
   STATS_CACHE_TTL_SEC?: string;

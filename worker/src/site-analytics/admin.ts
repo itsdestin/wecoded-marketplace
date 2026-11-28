@@ -50,10 +50,24 @@ websiteAdminRoutes.get('/admin/analytics/website', requireAdminAuth, async c => 
 });
 // WHY random, not the row id: a guessable code lets anyone inflate another post's visits.
 // Campaigns registered before codes existed get one the next time the dashboard copies them.
+// WHY rejection sampling (code scanning, 2026-11): `byte % 31` made the first 8 letters slightly
+// likelier than the rest. Dropping bytes at or above the largest multiple of the alphabet size
+// keeps every letter equally likely, so codes are exactly as hard to guess as their length says.
+export function randomCode(length: number, random: (n: number) => Uint8Array = n => crypto.getRandomValues(new Uint8Array(n))): string {
+  const size = CODE_ALPHABET.length;
+  const limit = 256 - (256 % size);
+  let out = '';
+  while (out.length < length) {
+    for (const b of random(length * 2)) {
+      if (b < limit) out += CODE_ALPHABET[b % size];
+      if (out.length === length) break;
+    }
+  }
+  return out;
+}
 async function assignCode(db: D1Database, source: string, campaign: string): Promise<string | null> {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const bytes = crypto.getRandomValues(new Uint8Array(6));
-    const candidate = [...bytes].map(b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+    const candidate = randomCode(6);
     try {
       await db.prepare('UPDATE site_campaigns SET code=? WHERE source=? AND campaign=? AND code IS NULL').bind(candidate, source, campaign).run();
     } catch (e) {

@@ -1,7 +1,7 @@
 {
   "name": "youcoded-messaging",
   "description": "Send and read SMS via the gmessages MCP server (Google Messages)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": { "name": "itsdestin" },
   "license": "MIT",
   "recommends": ["youcoded-core"],

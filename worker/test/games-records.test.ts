@@ -219,49 +219,39 @@ describe("head-to-head attestation (§6.2)", () => {
   });
 });
 
-describe("forfeits (§6.3)", () => {
-  it("refuses a single report while the opponent is still connected", async () => {
+// Card #43 (Destin, 2026-11-10): forfeits are switched off on the server. Every claim gets
+// the same refusal and nothing is recorded — including the case that used to succeed.
+describe("forfeits (§6.3) are switched off", () => {
+  it("refuses a claim while the opponent is still connected", async () => {
     const { b, wsA, wsB, match } = await twoPlayers("forfeit-live");
     const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await rejected).toMatchObject({ reason: "opponent-still-connected" });
+    expect(await rejected).toMatchObject({ reason: "forfeits-off" });
     expect(await matchRows(match)).toHaveLength(0);
     wsA.close(); wsB.close();
   });
 
-  it("accepts it once the presence room independently sees the opponent gone", async () => {
-    const { a, b, wsA, wsB, match } = await twoPlayers("forfeit-gone");
-
-    // Wait for the room's OWN offline signal rather than assuming the close
-    // landed — this is the state the forfeit claim is checked against.
+  it("refuses a claim once the opponent is gone, and records no win", async () => {
+    const { b, wsA, wsB, match } = await twoPlayers("forfeit-gone");
     const left = nextMessage(wsA, "user-left");
     wsB.close(1000, "bye");
     expect((await left).id).toBe(b.userId);
 
-    const rec = nextMessage(wsA, "game-record");
+    const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await rec).toMatchObject({ source: "forfeit", record: { wins: 1, losses: 0 } });
-
-    const rows = await matchRows(match);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ winner: a.userId, source: "forfeit" });
-
-    // Retrying the forfeit does not stack a second win.
-    const again = nextMessage(wsA, "game-record");
-    wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: match, opponent: b.userId }));
-    expect(await again).toMatchObject({ source: "already-recorded" });
-    expect(await matchRows(match)).toHaveLength(1);
+    expect(await rejected).toMatchObject({ reason: "forfeits-off" });
+    expect(await matchRows(match)).toHaveLength(0);
     wsA.close();
   });
 
-  it("cannot be claimed against a non-friend", async () => {
+  it("gives a non-friend claim the same refusal", async () => {
     const a = await createTestAccount();
-    const stranger = await createTestAccount(); // never connects, so "gone" is trivially true
+    const stranger = await createTestAccount();
     const wsA = await connect(await issueTestSession(a));
     await nextMessage(wsA, "presence");
     const rejected = nextMessage(wsA, "game-result-rejected");
     wsA.send(JSON.stringify({ type: "game-forfeit", game: "chess", match_id: "FF-STRANGER", opponent: stranger.userId }));
-    expect((await rejected).reason).toBe("not-friends");
+    expect((await rejected).reason).toBe("forfeits-off");
     expect(await matchRows("FF-STRANGER")).toHaveLength(0);
     wsA.close();
   });
@@ -311,5 +301,52 @@ describe("GET /games/records", () => {
   it("requires a session", async () => {
     const res = await SELF.fetch("https://test.local/games/records");
     expect(res.status).toBe(401);
+  });
+});
+
+// Card #43(b): game-result / game-forfeit are capped per account.
+describe("game message rate limit", () => {
+  it("drops a flood without closing the socket, hurting presence, or blocking honest play", async () => {
+    const { a, b, wsA, wsB, match } = await twoPlayers("flood");
+    let closed = false;
+    wsA.addEventListener("close", () => { closed = true; });
+    // 200 junk-but-valid-shaped reports, each for a different match id: before the cap each
+    // one parked a storage slot in the shared room.
+    for (let i = 0; i < 200; i++) wsA.send(result("chess", `FLOOD-${match}-${i}`, b.userId, "win"));
+    wsA.send(JSON.stringify({ type: "ping" }));
+    await nextMessage(wsA, "pong");
+    // The pong comes back before the slower report handlers finish (they check friendship
+    // in the database first), so wait until the slot count stops changing.
+    let mine = 0, stable = 0;
+    for (let i = 0; i < 60 && stable < 5; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      const n = await runInDurableObject(presenceStub(), async (_i, state) => {
+        const slots = await state.storage.list({ prefix: "result:" });
+        return [...slots.keys()].filter((k) => k.includes(`FLOOD-${match}`)).length;
+      });
+      stable = n === mine ? stable + 1 : 0; mine = n;
+    }
+    expect(mine).toBe(30); // capped, not 200
+    expect(closed).toBe(false);
+    // presence still works for this account after the flood
+    wsA.send(JSON.stringify({ type: "status", status: "in-game" }));
+    wsA.send(JSON.stringify({ type: "ping" }));
+    await nextMessage(wsA, "pong");
+    // the other player is not limited by A's flood
+    const pending = nextMessage(wsB, "game-result-pending");
+    wsB.send(result("chess", `${match}-honest`, a.userId, "win"));
+    expect(await pending).toMatchObject({ opponent: a.userId });
+    wsA.close(); wsB.close();
+  });
+
+  it("a normal run of matches is never limited", async () => {
+    const { a, b, wsA, wsB, match } = await twoPlayers("honest");
+    for (let i = 0; i < 20; i++) {
+      const rec = nextMessage(wsA, "game-record");
+      wsA.send(result("chess", `${match}-${i}`, b.userId, "win"));
+      wsB.send(result("chess", `${match}-${i}`, a.userId, "loss"));
+      expect(await rec).toMatchObject({ source: "attested" });
+    }
+    wsA.close(); wsB.close();
   });
 });

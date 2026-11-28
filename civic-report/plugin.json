@@ -1,6 +1,6 @@
 {
   "name": "civic-report",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generate a source-linked report on your federal representatives from your address, personalized by angle/tone/depth.",
   "author": {
     "name": "@destin"

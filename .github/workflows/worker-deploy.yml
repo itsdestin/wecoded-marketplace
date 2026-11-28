@@ -8,6 +8,11 @@ on:
       - ".github/workflows/worker-deploy.yml"
   workflow_dispatch: {}
 
+# WHY (code scanning, 2026-11): read-only unless a job asks for more. Jobs that write
+# (publishing, signing, check runs) declare their own permissions, which override this.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -55,6 +60,12 @@ jobs:
           # Repo secret MARKETPLACE_KNOWN_DEV_DEVICES must exist before this runs.
           # Compute a device's hash with youcoded-admin skills/analytics/scripts/device-hash.mjs.
           echo "${{ secrets.MARKETPLACE_KNOWN_DEV_DEVICES }}" | npx wrangler secret put KNOWN_DEV_DEVICES
+          # WHY (security apparatus, 2026-11): phone alert channel for the hourly attack alarms
+          # (worker/src/security/alarms.ts). Guarded, unlike the lines above: a missing alert
+          # channel must never stop a deploy; the alarms then only reach the server log.
+          if [ -n "${{ secrets.NTFY_TOPIC }}" ]; then
+            echo "${{ secrets.NTFY_TOPIC }}" | npx wrangler secret put NTFY_TOPIC
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
